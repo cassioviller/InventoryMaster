@@ -4,6 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { 
   User, 
   Package, 
@@ -12,9 +15,13 @@ import {
   Eye,
   FileText,
   Download,
-  Loader2
+  Loader2,
+  Calendar,
+  Building2
 } from 'lucide-react';
 import { authenticatedRequest } from '@/lib/auth';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface ReportFilters {
   employeeId?: string;
@@ -28,11 +35,17 @@ interface ReportFilters {
 
 export default function Reports() {
   const [employeeFilters, setEmployeeFilters] = useState<ReportFilters>({
-    year: '2024',
+    year: '2025',
   });
   const [stockFilters, setStockFilters] = useState<ReportFilters>({});
   const [movementFilters, setMovementFilters] = useState<ReportFilters>({});
   const [consumptionFilters, setConsumptionFilters] = useState<ReportFilters>({});
+  
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportTitle, setReportTitle] = useState('');
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportType, setReportType] = useState<'employee' | 'stock' | 'movements' | 'consumption'>('employee');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { data: employees } = useQuery({
     queryKey: ['/api/employees?active=true'],
@@ -50,20 +63,90 @@ export default function Reports() {
     },
   });
 
-  const generateEmployeeReport = () => {
-    console.log('Generating employee report with filters:', employeeFilters);
+  const generateEmployeeReport = async () => {
+    setIsGenerating(true);
+    try {
+      const params = new URLSearchParams();
+      if (employeeFilters.employeeId && employeeFilters.employeeId !== 'all') params.append('employeeId', employeeFilters.employeeId);
+      if (employeeFilters.month) params.append('month', employeeFilters.month);
+      if (employeeFilters.year) params.append('year', employeeFilters.year);
+      
+      const res = await authenticatedRequest(`/api/reports/employee-movements?${params}`);
+      const data = await res.json();
+      
+      setReportData(data);
+      setReportType('employee');
+      setReportTitle('Relatório de Movimentação por Funcionário');
+      setReportDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const generateStockReport = () => {
-    console.log('Generating stock report with filters:', stockFilters);
+  const generateStockReport = async () => {
+    setIsGenerating(true);
+    try {
+      const params = new URLSearchParams();
+      if (stockFilters.categoryId && stockFilters.categoryId !== 'all') params.append('categoryId', stockFilters.categoryId);
+      
+      const res = await authenticatedRequest(`/api/reports/stock?${params}`);
+      const data = await res.json();
+      
+      setReportData(data);
+      setReportType('stock');
+      setReportTitle('Relatório de Estoque Atual');
+      setReportDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const generateMovementReport = () => {
-    console.log('Generating movement report with filters:', movementFilters);
+  const generateMovementReport = async () => {
+    setIsGenerating(true);
+    try {
+      const params = new URLSearchParams();
+      if (movementFilters.startDate) params.append('startDate', movementFilters.startDate);
+      if (movementFilters.endDate) params.append('endDate', movementFilters.endDate);
+      if (movementFilters.type && movementFilters.type !== 'all') params.append('type', movementFilters.type);
+      
+      const res = await authenticatedRequest(`/api/reports/general-movements?${params}`);
+      const data = await res.json();
+      
+      setReportData(data);
+      setReportType('movements');
+      setReportTitle('Relatório de Movimentações Gerais');
+      setReportDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
-  const generateConsumptionReport = () => {
-    console.log('Generating consumption report with filters:', consumptionFilters);
+  const generateConsumptionReport = async () => {
+    setIsGenerating(true);
+    try {
+      const params = new URLSearchParams();
+      if (consumptionFilters.startDate) params.append('startDate', consumptionFilters.startDate);
+      if (consumptionFilters.endDate) params.append('endDate', consumptionFilters.endDate);
+      if (consumptionFilters.categoryId && consumptionFilters.categoryId !== 'all') params.append('categoryId', consumptionFilters.categoryId);
+      
+      const res = await authenticatedRequest(`/api/reports/material-consumption?${params}`);
+      const data = await res.json();
+      
+      setReportData(data);
+      setReportType('consumption');
+      setReportTitle('Relatório de Consumo por Material');
+      setReportDialogOpen(true);
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const monthOptions = [

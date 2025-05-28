@@ -107,7 +107,7 @@ export default function Reports() {
                 <SelectValue placeholder="Todos os funcionários" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os funcionários</SelectItem>
+                <SelectItem value="all">Todos os funcionários</SelectItem>
                 {employees?.map((employee: any) => (
                   <SelectItem key={employee.id} value={employee.id.toString()}>
                     {employee.name} - {employee.department}
@@ -194,7 +194,7 @@ export default function Reports() {
                 <SelectValue placeholder="Todas as categorias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
+                <SelectItem value="all">Todas as categorias</SelectItem>
                 {categories?.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -267,7 +267,7 @@ export default function Reports() {
                 <SelectValue placeholder="Todos os tipos" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os tipos</SelectItem>
+                <SelectItem value="all">Todos os tipos</SelectItem>
                 <SelectItem value="entry">Entrada</SelectItem>
                 <SelectItem value="exit">Saída</SelectItem>
               </SelectContent>
@@ -337,7 +337,7 @@ export default function Reports() {
                 <SelectValue placeholder="Todas as categorias" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
+                <SelectItem value="all">Todas as categorias</SelectItem>
                 {categories?.map((category: any) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}

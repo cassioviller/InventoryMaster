@@ -7,9 +7,27 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { useQuery } from '@tanstack/react-query';
+import { authenticatedRequest } from '@/lib/auth';
 
 export function Header() {
   const { user, logout } = useAuth();
+
+  // Buscar materiais com estoque baixo para notificações
+  const { data: lowStockItems } = useQuery({
+    queryKey: ['/api/dashboard/low-stock'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/dashboard/low-stock');
+      return res.json();
+    },
+  });
+
+  const notificationCount = lowStockItems?.length || 0;
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -25,14 +43,36 @@ export function Header() {
 
           {/* User Info */}
           <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                  3
-                </span>
-              </Button>
-            </div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 relative">
+                  <Bell className="w-5 h-5" />
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80" align="end">
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm">Notificações</h4>
+                  <div className="space-y-2">
+                    {notificationCount === 0 ? (
+                      <p className="text-sm text-gray-500">Nenhuma notificação</p>
+                    ) : (
+                      lowStockItems?.map((item: any) => (
+                        <div key={item.id} className="p-2 bg-red-50 border border-red-200 rounded text-sm">
+                          <p className="font-medium text-red-700">Estoque Baixo</p>
+                          <p className="text-red-600">{item.name}: {item.currentStock} {item.unit}</p>
+                          <p className="text-xs text-red-500">Mínimo: {item.minimumStock}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

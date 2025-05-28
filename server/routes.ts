@@ -32,6 +32,14 @@ function requireAdmin(req: any, res: any, next: any) {
   next();
 }
 
+// Middleware to verify super admin (only axiomtech can create users)
+function requireSuperAdmin(req: any, res: any, next: any) {
+  if (req.user.username !== 'axiomtech') {
+    return res.status(403).json({ message: 'Super admin access required' });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
@@ -101,7 +109,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", authenticateToken, requireAdmin, async (req, res) => {
+  app.post("/api/users", authenticateToken, requireSuperAdmin, async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(userData);

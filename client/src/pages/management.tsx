@@ -21,19 +21,29 @@ import { CategoryModal } from '@/components/modals/category-modal';
 import { EmployeeModal } from '@/components/modals/employee-modal';
 import { SupplierModal } from '@/components/modals/supplier-modal';
 import { ThirdPartyModal } from '@/components/modals/third-party-modal';
-import type { Material, Category, Employee, Supplier, ThirdParty } from '@shared/schema';
+import { useAuth } from '@/hooks/use-auth';
+import type { Material, Category, Employee, Supplier, ThirdParty, User } from '@shared/schema';
 
-type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties';
+type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users';
 
-const tabItems = [
-  { id: 'materials' as const, label: 'Materiais' },
-  { id: 'categories' as const, label: 'Categorias' },
-  { id: 'employees' as const, label: 'Funcionários' },
-  { id: 'suppliers' as const, label: 'Fornecedores' },
-  { id: 'third-parties' as const, label: 'Terceiros' },
-];
+const getTabItems = (canCreateUsers: boolean) => {
+  const baseItems = [
+    { id: 'materials' as const, label: 'Materiais' },
+    { id: 'categories' as const, label: 'Categorias' },
+    { id: 'employees' as const, label: 'Funcionários' },
+    { id: 'suppliers' as const, label: 'Fornecedores' },
+    { id: 'third-parties' as const, label: 'Terceiros' },
+  ];
+  
+  if (canCreateUsers) {
+    baseItems.push({ id: 'users' as const, label: 'Usuários' });
+  }
+  
+  return baseItems;
+};
 
 export default function Management() {
+  const { canCreateUsers } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('materials');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -42,7 +52,10 @@ export default function Management() {
   const [employeeModalOpen, setEmployeeModalOpen] = useState(false);
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [thirdPartyModalOpen, setThirdPartyModalOpen] = useState(false);
+  const [userModalOpen, setUserModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  
+  const tabItems = getTabItems(canCreateUsers);
 
   const { data: materials, isLoading: materialsLoading } = useQuery({
     queryKey: ['/api/materials', searchQuery, selectedCategory],

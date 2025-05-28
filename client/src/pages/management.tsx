@@ -526,6 +526,82 @@ export default function Management() {
           </div>
         );
 
+      case 'users':
+        if (!canCreateUsers) return null;
+        
+        return (
+          <div className="space-y-4">
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome de Usuário</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Data de Criação</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {usersLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : users?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        Nenhum usuário encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    users?.map((user) => (
+                      <TableRow key={user.id}>
+                        <TableCell className="font-medium">{user.username}</TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>
+                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+                            {user.role === 'admin' ? 'Administrador' : 'Usuário'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={user.isActive ? 'default' : 'destructive'}>
+                            {user.isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {new Date(user.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(user)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -619,6 +695,13 @@ export default function Management() {
         thirdParty={editingItem}
         onClose={handleModalClose}
       />
+      {canCreateUsers && (
+        <UserModal
+          open={userModalOpen}
+          onOpenChange={setUserModalOpen}
+          editingUser={editingItem}
+        />
+      )}
     </div>
   );
 }

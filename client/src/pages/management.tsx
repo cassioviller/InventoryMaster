@@ -21,6 +21,7 @@ import { CategoryModal } from '@/components/modals/category-modal';
 import { EmployeeModal } from '@/components/modals/employee-modal';
 import { SupplierModal } from '@/components/modals/supplier-modal';
 import { ThirdPartyModal } from '@/components/modals/third-party-modal';
+import { UserModal } from '@/components/modals/user-modal';
 import { useAuth } from '@/hooks/use-auth';
 import type { Material, Category, Employee, Supplier, ThirdParty, User } from '@shared/schema';
 
@@ -152,6 +153,9 @@ export default function Management() {
       case 'third-parties':
         setThirdPartyModalOpen(true);
         break;
+      case 'users':
+        setUserModalOpen(true);
+        break;
     }
   };
 
@@ -172,6 +176,9 @@ export default function Management() {
         break;
       case 'third-parties':
         setThirdPartyModalOpen(true);
+        break;
+      case 'users':
+        setUserModalOpen(true);
         break;
     }
   };

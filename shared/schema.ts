@@ -19,8 +19,9 @@ export const users = pgTable("users", {
 // Categories for materials
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
+  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -33,6 +34,7 @@ export const materials = pgTable("materials", {
   minimumStock: integer("minimum_stock").notNull().default(0),
   unit: varchar("unit", { length: 20 }).default('unidade'),
   description: text("description"),
+  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -44,6 +46,7 @@ export const employees = pgTable("employees", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   isActive: boolean("is_active").notNull().default(true),
+  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -56,6 +59,7 @@ export const suppliers = pgTable("suppliers", {
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   isActive: boolean("is_active").notNull().default(true),
+  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -69,6 +73,7 @@ export const thirdParties = pgTable("third_parties", {
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   isActive: boolean("is_active").notNull().default(true),
+  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

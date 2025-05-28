@@ -13,6 +13,7 @@ interface AuthContextType {
   login: (credentials: LoginData) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  canCreateUsers: boolean;
 }
 
 export function useAuth(): AuthContextType {
@@ -73,5 +74,6 @@ export function useAuth(): AuthContextType {
     login,
     logout,
     isAuthenticated: !!user,
+    canCreateUsers: user?.username === 'axiomtech',
   };
 }

@@ -186,7 +186,7 @@ const exportToPDF = (data: any[], filename: string, reportType: string) => {
                 </div>
                 <div style="text-align: center; width: 200px;">
                     <div style="border-bottom: 1px solid #000; height: 50px; margin-bottom: 10px;"></div>
-                    <p style="margin: 0; font-size: 12px;">Supervisor/Gerente</p>
+                    <p style="margin: 0; font-size: 12px;">${reportType === 'employee' && data.length > 0 ? (data[0].employeeName || 'Funcionário') : 'Supervisor/Gerente'}</p>
                 </div>
             </div>
         </div>

@@ -179,6 +179,16 @@ const exportToPDF = (data: any[], filename: string, reportType: string) => {
         </table>
         <div class="footer">
             <p>Relatório gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | Total de registros: ${data.length}</p>
+            <div style="margin-top: 50px; display: flex; justify-content: space-between;">
+                <div style="text-align: center; width: 200px;">
+                    <div style="border-bottom: 1px solid #000; height: 50px; margin-bottom: 10px;"></div>
+                    <p style="margin: 0; font-size: 12px;">Responsável pelo Almoxarifado</p>
+                </div>
+                <div style="text-align: center; width: 200px;">
+                    <div style="border-bottom: 1px solid #000; height: 50px; margin-bottom: 10px;"></div>
+                    <p style="margin: 0; font-size: 12px;">Supervisor/Gerente</p>
+                </div>
+            </div>
         </div>
     </body>
     </html>
@@ -419,7 +429,10 @@ export default function Reports() {
               {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
               {isGenerating ? 'Gerando...' : 'Visualizar'}
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => exportToPDF(reportData, 'relatorio-funcionario', 'employee')}
+            >
               <FileText className="w-4 h-4 mr-2" />
               PDF
             </Button>

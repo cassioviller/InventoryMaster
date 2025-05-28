@@ -647,13 +647,10 @@ export class DatabaseStorage implements IStorage {
 
     let query = db
       .select({
-        date: materialMovements.date,
-        type: materialMovements.type,
-        notes: materialMovements.notes,
-        employeeName: employees.name,
-        materialName: materials.name,
-        quantity: movementItems.quantity,
-        unit: materials.unit,
+        movement: materialMovements,
+        employee: employees,
+        material: materials,
+        items: movementItems,
       })
       .from(materialMovements)
       .leftJoin(employees, 

@@ -623,23 +623,6 @@ export class DatabaseStorage implements IStorage {
 
   // Reports
   async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number): Promise<any[]> {
-    let query = db
-      .select({
-        movement: materialMovements,
-        employee: employees,
-        items: movementItems,
-        material: materials,
-      })
-      .from(materialMovements)
-      .leftJoin(employees, 
-        or(
-          eq(materialMovements.returnEmployeeId, employees.id),
-          eq(materialMovements.destinationEmployeeId, employees.id)
-        )
-      )
-      .leftJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
-      .leftJoin(materials, eq(movementItems.materialId, materials.id));
-
     const conditions = [];
 
     if (employeeId) {
@@ -662,6 +645,26 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
+    let query = db
+      .select({
+        date: materialMovements.date,
+        type: materialMovements.type,
+        notes: materialMovements.notes,
+        employeeName: employees.name,
+        materialName: materials.name,
+        quantity: movementItems.quantity,
+        unit: materials.unit,
+      })
+      .from(materialMovements)
+      .leftJoin(employees, 
+        or(
+          eq(materialMovements.returnEmployeeId, employees.id),
+          eq(materialMovements.destinationEmployeeId, employees.id)
+        )
+      )
+      .leftJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
+      .leftJoin(materials, eq(movementItems.materialId, materials.id));
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
@@ -672,8 +675,11 @@ export class DatabaseStorage implements IStorage {
   async getStockReport(categoryId?: number): Promise<any[]> {
     let query = db
       .select({
-        material: materials,
-        category: categories,
+        name: materials.name,
+        current_stock: materials.currentStock,
+        minimum_stock: materials.minimumStock,
+        unit: materials.unit,
+        categoryName: categories.name,
       })
       .from(materials)
       .leftJoin(categories, eq(materials.categoryId, categories.id));

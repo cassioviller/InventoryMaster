@@ -518,16 +518,19 @@ export default function Reports() {
                       {reportData.map((item: any, index) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            {item.date && !isNaN(new Date(item.date).getTime()) 
+                              ? format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                              : '-'
+                            }
                           </TableCell>
-                          <TableCell>{item.employeeName}</TableCell>
+                          <TableCell>{item.employeeName || '-'}</TableCell>
                           <TableCell>
                             <Badge variant={item.type === 'entry' ? "secondary" : "outline"}>
                               {item.type === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{item.materialName}</TableCell>
-                          <TableCell>{item.quantity} {item.unit}</TableCell>
+                          <TableCell>{item.materialName || '-'}</TableCell>
+                          <TableCell>{item.quantity || 0} {item.unit || ''}</TableCell>
                           <TableCell>{item.notes || '-'}</TableCell>
                         </TableRow>
                       ))}
@@ -551,7 +554,10 @@ export default function Reports() {
                       {reportData.map((item: any, index) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                            {item.date && !isNaN(new Date(item.date).getTime()) 
+                              ? format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                              : '-'
+                            }
                           </TableCell>
                           <TableCell>
                             <Badge variant={item.type === 'entry' ? "secondary" : "outline"}>
@@ -565,11 +571,11 @@ export default function Reports() {
                               ) : (
                                 <User className="w-4 h-4 text-blue-500" />
                               )}
-                              {item.companyName || item.employeeName || item.thirdPartyName}
+                              {item.companyName || item.employeeName || item.thirdPartyName || '-'}
                             </div>
                           </TableCell>
-                          <TableCell>{item.totalItems} itens</TableCell>
-                          <TableCell>{item.userName}</TableCell>
+                          <TableCell>{item.totalItems || 0} itens</TableCell>
+                          <TableCell>{item.userName || '-'}</TableCell>
                           <TableCell>{item.notes || '-'}</TableCell>
                         </TableRow>
                       ))}
@@ -596,7 +602,10 @@ export default function Reports() {
                           <TableCell className="font-bold">{item.totalConsumed}</TableCell>
                           <TableCell>{item.unit}</TableCell>
                           <TableCell>
-                            {item.lastExit && format(new Date(item.lastExit), 'dd/MM/yyyy', { locale: ptBR })}
+                            {item.lastExit && !isNaN(new Date(item.lastExit).getTime())
+                              ? format(new Date(item.lastExit), 'dd/MM/yyyy', { locale: ptBR })
+                              : '-'
+                            }
                           </TableCell>
                         </TableRow>
                       ))}

@@ -469,11 +469,17 @@ export default function Reports() {
               <Eye className="w-4 h-4 mr-2" />
               Visualizar
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => exportToPDF(reportData, 'relatorio-estoque', 'stock')}
+            >
               <FileText className="w-4 h-4 mr-2" />
               PDF
             </Button>
-            <Button variant="outline">
+            <Button 
+              variant="outline"
+              onClick={() => exportToCSV(reportData, 'relatorio-estoque', 'stock')}
+            >
               <Download className="w-4 h-4 mr-2" />
               CSV
             </Button>

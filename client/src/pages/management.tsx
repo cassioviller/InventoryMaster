@@ -115,6 +115,15 @@ export default function Management() {
     enabled: activeTab === 'third-parties',
   });
 
+  const { data: users, isLoading: usersLoading } = useQuery({
+    queryKey: ['/api/users'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/users');
+      return res.json() as Promise<User[]>;
+    },
+    enabled: activeTab === 'users' && canCreateUsers,
+  });
+
   const getStatusBadge = (currentStock: number, minimumStock: number) => {
     if (currentStock === 0) {
       return <Badge variant="destructive">Crítico</Badge>;

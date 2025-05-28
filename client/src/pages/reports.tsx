@@ -23,6 +23,179 @@ import { authenticatedRequest } from '@/lib/auth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
+// Função para exportar CSV
+const exportToCSV = (data: any[], filename: string, reportType: string) => {
+  if (!data || data.length === 0) return;
+  
+  let headers: string[] = [];
+  let rows: any[][] = [];
+  
+  switch (reportType) {
+    case 'employee':
+      headers = ['Data', 'Funcionário', 'Tipo', 'Material', 'Quantidade', 'Observações'];
+      rows = data.map(item => [
+        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
+        item.employee?.name || item.employeeName || '-',
+        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
+        item.material?.name || item.materialName || '-',
+        `${item.items?.quantity || item.quantity || 0} ${item.material?.unit || item.unit || ''}`,
+        item.movement?.notes || item.notes || '-'
+      ]);
+      break;
+    case 'stock':
+      headers = ['Material', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Unidade', 'Status'];
+      rows = data.map(item => [
+        item.material?.name || item.name,
+        item.category?.name || item.categoryName,
+        item.material?.currentStock || item.current_stock,
+        item.material?.minimumStock || item.minimum_stock,
+        item.material?.unit || item.unit,
+        (item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? 'Baixo' : 'Normal'
+      ]);
+      break;
+    case 'general':
+      headers = ['Data', 'Tipo', 'Origem/Destino', 'Materiais', 'Responsável', 'Observações'];
+      rows = data.map(item => [
+        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
+        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
+        item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || item.companyName || item.employeeName || item.thirdPartyName || '-',
+        `${item.totalItems || 0} itens`,
+        item.user?.name || item.userName || '-',
+        item.movement?.notes || item.notes || '-'
+      ]);
+      break;
+    case 'consumption':
+      headers = ['Material', 'Categoria', 'Total Consumido', 'Unidade', 'Última Saída'];
+      rows = data.map(item => [
+        item.material?.name || item.materialName,
+        item.category?.name || item.categoryName,
+        item.totalConsumed || 0,
+        item.material?.unit || item.unit,
+        item.lastExit ? format(new Date(item.lastExit), 'dd/MM/yyyy') : '-'
+      ]);
+      break;
+  }
+  
+  const csvContent = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.setAttribute('href', url);
+  link.setAttribute('download', `${filename}.csv`);
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Função para exportar PDF
+const exportToPDF = (data: any[], filename: string, reportType: string) => {
+  if (!data || data.length === 0) return;
+  
+  let title = '';
+  let headers: string[] = [];
+  let rows: any[][] = [];
+  
+  switch (reportType) {
+    case 'employee':
+      title = 'Relatório de Movimentação por Funcionário';
+      headers = ['Data', 'Funcionário', 'Tipo', 'Material', 'Quantidade', 'Observações'];
+      rows = data.map(item => [
+        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
+        item.employee?.name || item.employeeName || '-',
+        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
+        item.material?.name || item.materialName || '-',
+        `${item.items?.quantity || item.quantity || 0} ${item.material?.unit || item.unit || ''}`,
+        item.movement?.notes || item.notes || '-'
+      ]);
+      break;
+    case 'stock':
+      title = 'Relatório de Estoque Atual';
+      headers = ['Material', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Unidade', 'Status'];
+      rows = data.map(item => [
+        item.material?.name || item.name,
+        item.category?.name || item.categoryName,
+        item.material?.currentStock || item.current_stock,
+        item.material?.minimumStock || item.minimum_stock,
+        item.material?.unit || item.unit,
+        (item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? 'Baixo' : 'Normal'
+      ]);
+      break;
+    case 'general':
+      title = 'Relatório de Movimentações Gerais';
+      headers = ['Data', 'Tipo', 'Origem/Destino', 'Materiais', 'Responsável', 'Observações'];
+      rows = data.map(item => [
+        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
+        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
+        item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || item.companyName || item.employeeName || item.thirdPartyName || '-',
+        `${item.totalItems || 0} itens`,
+        item.user?.name || item.userName || '-',
+        item.movement?.notes || item.notes || '-'
+      ]);
+      break;
+    case 'consumption':
+      title = 'Relatório de Consumo por Material';
+      headers = ['Material', 'Categoria', 'Total Consumido', 'Unidade', 'Última Saída'];
+      rows = data.map(item => [
+        item.material?.name || item.materialName,
+        item.category?.name || item.categoryName,
+        item.totalConsumed || 0,
+        item.material?.unit || item.unit,
+        item.lastExit ? format(new Date(item.lastExit), 'dd/MM/yyyy') : '-'
+      ]);
+      break;
+  }
+  
+  // Criar conteúdo HTML para PDF
+  const htmlContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>${title}</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; text-align: center; margin-bottom: 30px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; font-weight: bold; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
+        </style>
+    </head>
+    <body>
+        <h1>${title}</h1>
+        <table>
+            <thead>
+                <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+                ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+        </table>
+        <div class="footer">
+            <p>Relatório gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | Total de registros: ${data.length}</p>
+        </div>
+    </body>
+    </html>
+  `;
+  
+  const printWindow = window.open('', '_blank');
+  if (printWindow) {
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 250);
+  }
+};
+
 interface ReportFilters {
   employeeId?: string;
   categoryId?: string;
@@ -518,20 +691,20 @@ export default function Reports() {
                       {reportData.map((item: any, index) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {item.date && !isNaN(new Date(item.date).getTime()) 
-                              ? format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                            {(item.movement?.date || item.date) && !isNaN(new Date(item.movement?.date || item.date).getTime()) 
+                              ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
                               : '-'
                             }
                           </TableCell>
-                          <TableCell>{item.employeeName || '-'}</TableCell>
+                          <TableCell>{item.employee?.name || item.employeeName || '-'}</TableCell>
                           <TableCell>
-                            <Badge variant={item.type === 'entry' ? "secondary" : "outline"}>
-                              {item.type === 'entry' ? 'Entrada' : 'Saída'}
+                            <Badge variant={(item.movement?.type || item.type) === 'entry' ? "secondary" : "outline"}>
+                              {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{item.materialName || '-'}</TableCell>
-                          <TableCell>{item.quantity || 0} {item.unit || ''}</TableCell>
-                          <TableCell>{item.notes || '-'}</TableCell>
+                          <TableCell>{item.material?.name || item.materialName || '-'}</TableCell>
+                          <TableCell>{item.items?.quantity || item.quantity || 0} {item.material?.unit || item.unit || ''}</TableCell>
+                          <TableCell>{item.movement?.notes || item.notes || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -554,29 +727,30 @@ export default function Reports() {
                       {reportData.map((item: any, index) => (
                         <TableRow key={index}>
                           <TableCell>
-                            {item.date && !isNaN(new Date(item.date).getTime()) 
-                              ? format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
+                            {(item.movement?.date || item.date) && !isNaN(new Date(item.movement?.date || item.date).getTime()) 
+                              ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
                               : '-'
                             }
                           </TableCell>
                           <TableCell>
-                            <Badge variant={item.type === 'entry' ? "secondary" : "outline"}>
-                              {item.type === 'entry' ? 'Entrada' : 'Saída'}
+                            <Badge variant={(item.movement?.type || item.type) === 'entry' ? "secondary" : "outline"}>
+                              {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              {item.type === 'entry' ? (
+                              {(item.movement?.type || item.type) === 'entry' ? (
                                 <Building2 className="w-4 h-4 text-green-500" />
                               ) : (
                                 <User className="w-4 h-4 text-blue-500" />
                               )}
-                              {item.companyName || item.employeeName || item.thirdPartyName || '-'}
+                              {item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || 
+                               item.companyName || item.employeeName || item.thirdPartyName || '-'}
                             </div>
                           </TableCell>
                           <TableCell>{item.totalItems || 0} itens</TableCell>
-                          <TableCell>{item.userName || '-'}</TableCell>
-                          <TableCell>{item.notes || '-'}</TableCell>
+                          <TableCell>{item.user?.name || item.userName || '-'}</TableCell>
+                          <TableCell>{item.movement?.notes || item.notes || '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -597,10 +771,10 @@ export default function Reports() {
                     <TableBody>
                       {reportData.map((item: any, index) => (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">{item.materialName}</TableCell>
-                          <TableCell>{item.categoryName}</TableCell>
-                          <TableCell className="font-bold">{item.totalConsumed}</TableCell>
-                          <TableCell>{item.unit}</TableCell>
+                          <TableCell className="font-medium">{item.material?.name || item.materialName}</TableCell>
+                          <TableCell>{item.category?.name || item.categoryName}</TableCell>
+                          <TableCell className="font-bold">{item.totalConsumed || 0}</TableCell>
+                          <TableCell>{item.material?.unit || item.unit}</TableCell>
                           <TableCell>
                             {item.lastExit && !isNaN(new Date(item.lastExit).getTime())
                               ? format(new Date(item.lastExit), 'dd/MM/yyyy', { locale: ptBR })
@@ -618,11 +792,19 @@ export default function Reports() {
                     Total de registros: {reportData.length}
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => exportToCSV(reportData, 'relatorio-funcionario', 'employee')}
+                    >
                       <Download className="w-4 h-4 mr-2" />
                       Exportar CSV
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => exportToPDF(reportData, 'relatorio-funcionario', 'employee')}
+                    >
                       <FileText className="w-4 h-4 mr-2" />
                       Gerar PDF
                     </Button>

@@ -712,6 +712,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/reports/material-consumption", authenticateToken, async (req, res) => {
+    try {
+      const { startDate, endDate, categoryId } = req.query;
+      const report = await storage.getMaterialConsumptionReport(
+        startDate ? new Date(startDate as string) : undefined,
+        endDate ? new Date(endDate as string) : undefined,
+        categoryId ? parseInt(categoryId as string) : undefined
+      );
+      res.json(report);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to generate material consumption report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

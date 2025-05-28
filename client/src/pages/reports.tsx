@@ -240,10 +240,11 @@ export default function Reports() {
           <div className="flex space-x-3 pt-4">
             <Button 
               onClick={generateEmployeeReport}
+              disabled={isGenerating}
               className="flex-1 bg-primary hover:bg-primary/90"
             >
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
+              {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
+              {isGenerating ? 'Gerando...' : 'Visualizar'}
             </Button>
             <Button variant="outline">
               <FileText className="w-4 h-4 mr-2" />
@@ -449,6 +450,180 @@ export default function Reports() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Relatórios */}
+      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
+        <DialogContent className="max-w-6xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              {reportTitle}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            {reportData.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-500">Nenhum dado encontrado para os filtros selecionados</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {reportType === 'stock' && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Estoque Atual</TableHead>
+                        <TableHead>Estoque Mínimo</TableHead>
+                        <TableHead>Unidade</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reportData.map((item: any, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell>{item.category?.name || item.categoryName}</TableCell>
+                          <TableCell>{item.current_stock}</TableCell>
+                          <TableCell>{item.minimum_stock}</TableCell>
+                          <TableCell>{item.unit}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={item.current_stock <= item.minimum_stock ? "destructive" : "secondary"}
+                            >
+                              {item.current_stock <= item.minimum_stock ? "Baixo" : "Normal"}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                {reportType === 'employee' && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Funcionário</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Quantidade</TableHead>
+                        <TableHead>Observações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reportData.map((item: any, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>{item.employeeName}</TableCell>
+                          <TableCell>
+                            <Badge variant={item.type === 'entry' ? "secondary" : "outline"}>
+                              {item.type === 'entry' ? 'Entrada' : 'Saída'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{item.materialName}</TableCell>
+                          <TableCell>{item.quantity} {item.unit}</TableCell>
+                          <TableCell>{item.notes || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                {reportType === 'movements' && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Data</TableHead>
+                        <TableHead>Tipo</TableHead>
+                        <TableHead>Origem/Destino</TableHead>
+                        <TableHead>Materiais</TableHead>
+                        <TableHead>Responsável</TableHead>
+                        <TableHead>Observações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reportData.map((item: any, index) => (
+                        <TableRow key={index}>
+                          <TableCell>
+                            {format(new Date(item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={item.type === 'entry' ? "secondary" : "outline"}>
+                              {item.type === 'entry' ? 'Entrada' : 'Saída'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {item.type === 'entry' ? (
+                                <Building2 className="w-4 h-4 text-green-500" />
+                              ) : (
+                                <User className="w-4 h-4 text-blue-500" />
+                              )}
+                              {item.companyName || item.employeeName || item.thirdPartyName}
+                            </div>
+                          </TableCell>
+                          <TableCell>{item.totalItems} itens</TableCell>
+                          <TableCell>{item.userName}</TableCell>
+                          <TableCell>{item.notes || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                {reportType === 'consumption' && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Total Consumido</TableHead>
+                        <TableHead>Unidade</TableHead>
+                        <TableHead>Última Saída</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {reportData.map((item: any, index) => (
+                        <TableRow key={index}>
+                          <TableCell className="font-medium">{item.materialName}</TableCell>
+                          <TableCell>{item.categoryName}</TableCell>
+                          <TableCell className="font-bold">{item.totalConsumed}</TableCell>
+                          <TableCell>{item.unit}</TableCell>
+                          <TableCell>
+                            {item.lastExit && format(new Date(item.lastExit), 'dd/MM/yyyy', { locale: ptBR })}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+
+                <div className="flex justify-between items-center pt-4 border-t">
+                  <p className="text-sm text-gray-600">
+                    Total de registros: {reportData.length}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      Exportar CSV
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Gerar PDF
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

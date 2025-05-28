@@ -484,16 +484,16 @@ export default function Reports() {
                     <TableBody>
                       {reportData.map((item: any, index) => (
                         <TableRow key={index}>
-                          <TableCell className="font-medium">{item.name}</TableCell>
+                          <TableCell className="font-medium">{item.material?.name || item.name}</TableCell>
                           <TableCell>{item.category?.name || item.categoryName}</TableCell>
-                          <TableCell>{item.current_stock}</TableCell>
-                          <TableCell>{item.minimum_stock}</TableCell>
-                          <TableCell>{item.unit}</TableCell>
+                          <TableCell>{item.material?.currentStock || item.current_stock}</TableCell>
+                          <TableCell>{item.material?.minimumStock || item.minimum_stock}</TableCell>
+                          <TableCell>{item.material?.unit || item.unit}</TableCell>
                           <TableCell>
                             <Badge 
-                              variant={item.current_stock <= item.minimum_stock ? "destructive" : "secondary"}
+                              variant={(item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? "destructive" : "secondary"}
                             >
-                              {item.current_stock <= item.minimum_stock ? "Baixo" : "Normal"}
+                              {(item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? "Baixo" : "Normal"}
                             </Badge>
                           </TableCell>
                         </TableRow>

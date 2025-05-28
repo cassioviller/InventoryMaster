@@ -1,0 +1,261 @@
+# Prompt para Sistema de Gerenciamento de Almoxarifado
+
+Crie um sistema web completo de gerenciamento de almoxarifado com as seguintes especificações:
+
+## Contexto e Objetivo
+
+Desenvolva um sistema web completo para gerenciamento de almoxarifado que permita controle total de estoque com entrada e saída de materiais (sempre em modo múltiplo, mas permitindo adicionar apenas um item quando necessário), relatórios detalhados e dashboard analítico. O sistema deve ser robusto, com validações em todas as camadas, transações seguras e autenticação de usuários.
+
+## Stack Tecnológica
+
+### Frontend
+- React 18 com TypeScript
+- Vite como bundler e servidor de desenvolvimento
+- Wouter para roteamento (mais leve que React Router)
+- shadcn/ui + Radix UI para componentes de interface
+- Tailwind CSS para estilização
+- TanStack Query (React Query v5) para gerenciamento de estado e cache
+- React Hook Form + Zod para validação de formulários
+- Lucide React para ícones
+
+### Backend
+- Node.js com Express.js
+- Drizzle ORM para acesso ao banco de dados
+- Zod schemas para validação
+- @neondatabase/serverless para pool de conexão
+- PostgreSQL como banco de dados
+- JWT para autenticação
+
+## Funcionalidades Detalhadas
+
+### 0. Sistema de Autenticação
+- Página de login com:
+  - Campos para email e senha
+  - Validação de credenciais
+  - Mensagens de erro claras
+  - Proteção contra tentativas excessivas
+- Painel de administração de usuários (exclusivo para admin):
+  - Listagem de todos os usuários cadastrados
+  - Formulário para criar novos usuários
+  - Opções para editar usuários existentes
+  - Opção para desativar/reativar usuários
+  - Definição de permissões básicas
+- Níveis de acesso:
+  - Admin: acesso total, incluindo gerenciamento de usuários
+  - Usuário comum: acesso às funcionalidades do sistema, exceto gerenciamento de usuários
+- Segurança:
+  - Senhas armazenadas com hash
+  - Tokens JWT para sessões
+  - Rotas protegidas no backend
+  - Redirecionamento para login quando não autenticado
+
+### 1. Dashboard Principal
+- Seção "Alertas de Estoque" com cards em tons pastéis (amarelo claro) mostrando:
+  - Nome do material
+  - Estoque atual vs. mínimo
+  - Categoria
+  - Ícone de alerta triangular
+- Cards informativos com estatísticas principais:
+  - Total de Materiais (ícone de caixa azul)
+  - Entradas Hoje (ícone de seta verde para baixo)
+  - Saídas Hoje (ícone de seta laranja para cima)
+  - Itens Críticos (ícone de alerta vermelho)
+- Números destacados em cores diferentes (vermelho para críticos)
+- Atualização automática dos dados 
+
+### 2. Gerenciamento de Materiais
+- Navegação por abas para diferentes entidades (Materiais, Categorias, Funcionários, Fornecedores, Terceiros)
+- Listagem completa de todos os materiais com:
+  - Nome, categoria, estoque atual, estoque mínimo
+  - Status visual com badges coloridos (Normal, Baixo, Crítico)
+- Campo de busca para filtrar materiais
+- Filtro por categoria via dropdown
+- CRUD completo:
+  - Botão "Novo Material" destacado em azul
+  - Modal para criar novo material
+  - Modal para editar material existente
+  - Confirmação para exclusão
+  - Validação para impedir exclusão de material com movimentações
+- Botões de ação para editar/excluir em cada linha
+
+### 3. Entrada de Materiais
+- Formulário para entrada de múltiplos materiais com:
+  - Campo de data com seletor de calendário (padrão: data atual)
+  - Seleção de origem (dropdown):
+    - Fornecedor: exibe seleção de fornecedor
+    - Devolução de funcionário: exibe seleção de funcionário
+    - Devolução de terceiro: exibe seleção de terceiro cadastrado
+  - Lista dinâmica de itens:
+    - Seleção de material (dropdown)
+    - Campo de quantidade (numérico, positivo)
+    - Botão "Adicionar à Lista" destacado em verde
+  - Visualização dos itens adicionados com opção de remover
+  - Botão "Confirmar Entrada" após adicionar pelo menos um item
+- Validações em tempo real
+- Feedback visual após submissão
+- Atualização automática do estoque
+- Nota: Embora o sistema use interface múltipla, é possível adicionar apenas um item quando necessário
+
+### 4. Saída de Materiais
+- Formulário para saída de múltiplos materiais:
+  - Campo de data com seletor de calendário
+  - Seleção de destino (dropdown):
+    - Funcionário: exibe seleção de funcionário
+    - Terceiro: exibe seleção de terceiro cadastrado
+  - Lista dinâmica de itens:
+    - Seleção de material (com indicação de estoque disponível)
+    - Campo de quantidade (com validação de estoque)
+    - Campo de finalidade
+    - Botão "Adicionar à Lista" destacado em vermelho
+  - Visualização dos itens adicionados com opção de remover
+  - Botão "Confirmar Saída" após adicionar pelo menos um item
+- Validação para impedir saída com estoque insuficiente
+- Feedback visual após submissão
+- Atualização automática do estoque
+- Nota: Embora o sistema use interface múltipla, é possível adicionar apenas um item quando necessário
+
+### 5. Relatórios
+- Seções bem definidas para diferentes tipos de relatórios:
+  - Por Funcionário (histórico de saídas e devoluções)
+  - Estoque Atual (lista completa de materiais)
+  - Movimentações Gerais (log de entradas e saídas)
+  - Consumo por Material (total de saídas por período)
+- Interface de filtros:
+  - Funcionário (dropdown)
+  - Categoria (dropdown)
+  - Período (Mês/Ano)
+  - Data inicial/final (calendário)
+  - Tipo de movimentação (dropdown)
+- Botões de ação destacados em azul para visualização
+- Opções de exportação (PDF, CSV)
+- Visualização em tabela com paginação
+
+### 6. Gerenciamento de Entidades
+#### Categorias
+- CRUD completo via modal
+- Validação de nome único
+- Associação com materiais
+
+#### Funcionários
+- Cadastro com:
+  - Nome
+  - Departamento
+  - Contato (opcional)
+- Busca rápida por nome
+- Histórico de movimentações
+
+#### Fornecedores
+- Gestão completa:
+  - Nome
+  - CNPJ
+  - Contato
+  - Endereço (opcional)
+- Histórico de fornecimentos
+
+#### Terceiros
+- Cadastro completo:
+  - Nome
+  - Documento (CPF/CNPJ)
+  - Contato
+  - Endereço (opcional)
+  - Tipo (pessoa física/jurídica)
+- Busca rápida por nome ou documento
+- Histórico de movimentações (entradas e saídas)
+- Integração completa nos fluxos de entrada e saída
+
+## Estrutura do Banco de Dados
+
+### Tabelas Principais
+1. **users** - Usuários do sistema com níveis de acesso
+2. **categories** - Categorias de materiais
+3. **materials** - Materiais do estoque com campos para nome, categoria, estoque atual e mínimo
+4. **employees** - Funcionários da empresa
+5. **suppliers** - Fornecedores
+6. **third_parties** - Terceiros (pessoas físicas ou jurídicas)
+7. **material_movements** - Movimentações unificadas (entradas e saídas)
+8. **movement_items** - Itens das movimentações
+9. **audit_log** - Log de auditoria para rastreamento de mudanças
+
+### Relacionamentos Principais
+- Usuário → Nível de acesso
+- Material → Categoria (many-to-one)
+- Movimentação → Fornecedor, Funcionário ou Terceiro
+- Item Movimentação → Movimentação, Material
+
+## API Endpoints Necessários
+
+### Autenticação
+- Login de usuário
+- Logout
+- Verificar status de autenticação
+
+### Usuários (acesso apenas para admin)
+- Listar, criar, atualizar e remover usuários
+
+### Materiais
+- Listar, buscar, criar, atualizar e remover materiais
+- Buscar materiais com estoque baixo
+- Buscar materiais por nome
+
+### Movimentações
+- Listar e criar entradas de materiais
+- Listar e criar saídas de materiais
+- Listar todas as movimentações
+- Ver detalhes de uma movimentação específica
+
+### Dashboard
+- Obter estatísticas gerais
+- Obter dados para gráficos
+
+### Entidades
+- CRUD para categorias, funcionários, fornecedores e terceiros
+- Busca de terceiros por nome ou documento
+
+## UX/UI
+
+### Paleta de Cores
+- Azul primário (#1a73e8) para elementos de navegação e botões principais
+- Verde (#34a853) para ações de adição/confirmação
+- Vermelho (#ea4335) para alertas e ações de remoção
+- Amarelo claro (#fff8e1) para cards de alerta
+- Cinza claro (#f8f9fa) para fundos e separadores
+- Branco (#ffffff) para cards e áreas de conteúdo
+
+### Elementos de Design
+- Cards com sombras suaves para seções principais
+- Badges coloridos para status (Normal, Baixo, Crítico)
+- Ícones consistentes para ações e categorias
+- Botões com cores distintas por função:
+  - Azul para visualização/navegação
+  - Verde para adição/confirmação
+  - Vermelho para remoção/cancelamento
+- Formulários com validação visual em tempo real
+- Toast notifications para feedback de ações
+- Loading indicators para estados de carregamento
+
+### Layout e Navegação
+- Menu superior com ícones e texto
+- Indicador de usuário logado no canto superior direito
+- Contador de notificações
+- Layout responsivo para todas as telas
+- Agrupamento lógico de informações relacionadas
+- Consistência nos padrões de design em todas as telas
+
+## Requisitos Técnicos Adicionais
+
+- Implementar cache inteligente com TanStack Query
+- Implementar paginação eficiente no backend e frontend
+- Otimizar consultas ao banco com índices apropriados
+- Implementar tratamento de erros global
+- Adicionar logs detalhados para depuração
+
+## Observações Finais
+
+- Todas as movimentações (entrada e saída) usam interface múltipla, mas permitem adicionar apenas um item quando necessário
+- O sistema de autenticação deve garantir que apenas o admin tenha acesso ao painel de gerenciamento de usuários
+- Garanta que o controle de estoque seja preciso e consistente
+- Implemente validações robustas em todas as camadas
+- Mantenha o código organizado e bem estruturado
+- Use TypeScript corretamente com tipagem adequada
+- Certifique-se de que terceiros possam ser selecionados tanto na entrada quanto na saída de materiais
+- Mantenha a fidelidade visual com as imagens de referência fornecidas

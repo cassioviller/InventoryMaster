@@ -34,18 +34,14 @@ export default function SuperAdmin() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ['/api/users'],
   });
 
   const createUserMutation = useMutation({
     mutationFn: async (data: CreateUserFormData) => {
       const { confirmPassword, ...userData } = data;
-      return apiRequest('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
+      return apiRequest('/api/users', 'POST', userData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -66,9 +62,7 @@ export default function SuperAdmin() {
 
   const deleteUserMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/users/${id}`, {
-        method: 'DELETE',
-      });
+      return apiRequest(`/api/users/${id}`, 'DELETE');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });
@@ -283,14 +277,14 @@ export default function SuperAdmin() {
                         <Loader2 className="h-6 w-6 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  ) : users?.length === 0 ? (
+                  ) : users.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users?.map((user: User) => (
+                    users.map((user: User) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.username}</TableCell>
                         <TableCell>{user.email}</TableCell>

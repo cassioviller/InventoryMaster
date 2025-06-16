@@ -30,7 +30,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
 }
 
 function Router() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, isSuperAdmin } = useAuth();
 
   if (isLoading) {
     return (
@@ -43,14 +43,28 @@ function Router() {
   return (
     <Switch>
       <Route path="/login">
-        {isAuthenticated ? <Redirect to="/" /> : <Login />}
+        {isAuthenticated ? (
+          isSuperAdmin ? <Redirect to="/super-admin" /> : <Redirect to="/" />
+        ) : (
+          <Login />
+        )}
+      </Route>
+      
+      <Route path="/super-admin">
+        <ProtectedRoute>
+          {isSuperAdmin ? <SuperAdmin /> : <Redirect to="/" />}
+        </ProtectedRoute>
       </Route>
       
       <Route path="/">
         <ProtectedRoute>
-          <AuthenticatedLayout>
-            <Dashboard />
-          </AuthenticatedLayout>
+          {isSuperAdmin ? (
+            <Redirect to="/super-admin" />
+          ) : (
+            <AuthenticatedLayout>
+              <Dashboard />
+            </AuthenticatedLayout>
+          )}
         </ProtectedRoute>
       </Route>
       

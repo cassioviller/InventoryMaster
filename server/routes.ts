@@ -40,6 +40,14 @@ function requireSuperAdmin(req: any, res: any, next: any) {
   next();
 }
 
+// Middleware to verify system super admin (cassio)
+function requireSystemSuperAdmin(req: any, res: any, next: any) {
+  if (req.user.role !== 'super_admin') {
+    return res.status(403).json({ message: 'System super admin access required' });
+  }
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {

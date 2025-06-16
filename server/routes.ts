@@ -100,8 +100,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // User management routes (admin only)
-  app.get("/api/users", authenticateToken, requireAdmin, async (req, res) => {
+  // User management routes (admin or system super admin)
+  app.get("/api/users", authenticateToken, async (req, res) => {
+    // Allow access for admins or system super admins
+    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Admin or Super Admin access required' });
+    }
     try {
       const users = await storage.getAllUsers();
       res.json(users.map(user => ({
@@ -117,7 +121,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/users", authenticateToken, requireSuperAdmin, async (req, res) => {
+  app.post("/api/users", authenticateToken, async (req, res) => {
+    // Allow access for super admins (axiomtech) or system super admins (cassio)
+    if (req.user.username !== 'axiomtech' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
+    }
     try {
       const userData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(userData);
@@ -170,6 +178,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(400).json({ message: "Failed to update user" });
+    }
+  });
+
+  app.delete("/api/users/:id", authenticateToken, async (req, res) => {
+    // Allow access for super admins (axiomtech) or system super admins (cassio)
+    if (req.user.username !== 'axiomtech' && req.user.role !== 'super_admin') {
+      return res.status(403).json({ message: 'Super admin access required' });
+    }
+    
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Prevent deletion of super admin users
+      const userToDelete = await storage.getUser(id);
+      if (userToDelete?.role === 'super_admin') {
+        return res.status(403).json({ message: 'Cannot delete super admin users' });
+      }
+      
+      await storage.deleteUser(id);
+      
+      await storage.createAuditLog({
+        userId: req.user.id,
+        action: 'DELETE',
+        tableName: 'users',
+        recordId: id,
+        oldValues: JSON.stringify(userToDelete),
+        newValues: null,
+      });
+
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete user" });
     }
   });
 

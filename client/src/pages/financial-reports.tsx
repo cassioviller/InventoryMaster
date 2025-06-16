@@ -30,7 +30,7 @@ export default function FinancialReports() {
     queryKey: ['/api/reports/financial-stock'],
   });
 
-  const sortedData = reportData ? [...reportData].sort((a: FinancialStockItem, b: FinancialStockItem) => {
+  const sortedData = reportData && Array.isArray(reportData) ? [...reportData].sort((a: FinancialStockItem, b: FinancialStockItem) => {
     let compareValue = 0;
     
     switch (sortBy) {

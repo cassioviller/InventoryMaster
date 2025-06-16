@@ -100,6 +100,14 @@ function Router() {
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>
+      
+      <Route path="/financial-reports">
+        <ProtectedRoute>
+          <AuthenticatedLayout>
+            <FinancialReports />
+          </AuthenticatedLayout>
+        </ProtectedRoute>
+      </Route>
 
       {/* Redirect to login if not authenticated */}
       <Route>

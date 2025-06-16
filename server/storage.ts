@@ -23,62 +23,62 @@ export interface IStorage {
   verifyPassword(password: string, hash: string): Promise<boolean>;
 
   // Categories
-  getAllCategories(): Promise<Category[]>;
-  getCategory(id: number): Promise<Category | undefined>;
+  getAllCategories(ownerId?: number): Promise<Category[]>;
+  getCategory(id: number, ownerId?: number): Promise<Category | undefined>;
   createCategory(category: InsertCategory): Promise<Category>;
-  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
-  deleteCategory(id: number): Promise<void>;
+  updateCategory(id: number, category: Partial<InsertCategory>, ownerId?: number): Promise<Category>;
+  deleteCategory(id: number, ownerId?: number): Promise<void>;
 
   // Materials
-  getAllMaterials(): Promise<(Material & { category: Category })[]>;
-  getMaterial(id: number): Promise<Material | undefined>;
-  getMaterialsWithLowStock(): Promise<(Material & { category: Category })[]>;
-  getMaterialsByCategory(categoryId: number): Promise<Material[]>;
-  searchMaterials(query: string): Promise<(Material & { category: Category })[]>;
+  getAllMaterials(ownerId?: number): Promise<(Material & { category: Category })[]>;
+  getMaterial(id: number, ownerId?: number): Promise<Material | undefined>;
+  getMaterialsWithLowStock(ownerId?: number): Promise<(Material & { category: Category })[]>;
+  getMaterialsByCategory(categoryId: number, ownerId?: number): Promise<Material[]>;
+  searchMaterials(query: string, ownerId?: number): Promise<(Material & { category: Category })[]>;
   createMaterial(material: InsertMaterial): Promise<Material>;
-  updateMaterial(id: number, material: Partial<InsertMaterial>): Promise<Material>;
-  deleteMaterial(id: number): Promise<void>;
-  updateMaterialStock(id: number, quantity: number, operation: 'add' | 'subtract'): Promise<void>;
+  updateMaterial(id: number, material: Partial<InsertMaterial>, ownerId?: number): Promise<Material>;
+  deleteMaterial(id: number, ownerId?: number): Promise<void>;
+  updateMaterialStock(id: number, quantity: number, operation: 'add' | 'subtract', ownerId?: number): Promise<void>;
 
   // Employees
-  getAllEmployees(): Promise<Employee[]>;
-  getEmployee(id: number): Promise<Employee | undefined>;
-  getActiveEmployees(): Promise<Employee[]>;
-  searchEmployees(query: string): Promise<Employee[]>;
+  getAllEmployees(ownerId?: number): Promise<Employee[]>;
+  getEmployee(id: number, ownerId?: number): Promise<Employee | undefined>;
+  getActiveEmployees(ownerId?: number): Promise<Employee[]>;
+  searchEmployees(query: string, ownerId?: number): Promise<Employee[]>;
   createEmployee(employee: InsertEmployee): Promise<Employee>;
-  updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee>;
-  deleteEmployee(id: number): Promise<void>;
+  updateEmployee(id: number, employee: Partial<InsertEmployee>, ownerId?: number): Promise<Employee>;
+  deleteEmployee(id: number, ownerId?: number): Promise<void>;
 
   // Suppliers
-  getAllSuppliers(): Promise<Supplier[]>;
-  getSupplier(id: number): Promise<Supplier | undefined>;
-  getActiveSuppliers(): Promise<Supplier[]>;
-  searchSuppliers(query: string): Promise<Supplier[]>;
+  getAllSuppliers(ownerId?: number): Promise<Supplier[]>;
+  getSupplier(id: number, ownerId?: number): Promise<Supplier | undefined>;
+  getActiveSuppliers(ownerId?: number): Promise<Supplier[]>;
+  searchSuppliers(query: string, ownerId?: number): Promise<Supplier[]>;
   createSupplier(supplier: InsertSupplier): Promise<Supplier>;
-  updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier>;
-  deleteSupplier(id: number): Promise<void>;
+  updateSupplier(id: number, supplier: Partial<InsertSupplier>, ownerId?: number): Promise<Supplier>;
+  deleteSupplier(id: number, ownerId?: number): Promise<void>;
 
   // Third Parties
-  getAllThirdParties(): Promise<ThirdParty[]>;
-  getThirdParty(id: number): Promise<ThirdParty | undefined>;
-  getActiveThirdParties(): Promise<ThirdParty[]>;
-  searchThirdParties(query: string): Promise<ThirdParty[]>;
+  getAllThirdParties(ownerId?: number): Promise<ThirdParty[]>;
+  getThirdParty(id: number, ownerId?: number): Promise<ThirdParty | undefined>;
+  getActiveThirdParties(ownerId?: number): Promise<ThirdParty[]>;
+  searchThirdParties(query: string, ownerId?: number): Promise<ThirdParty[]>;
   createThirdParty(thirdParty: InsertThirdParty): Promise<ThirdParty>;
-  updateThirdParty(id: number, thirdParty: Partial<InsertThirdParty>): Promise<ThirdParty>;
-  deleteThirdParty(id: number): Promise<void>;
+  updateThirdParty(id: number, thirdParty: Partial<InsertThirdParty>, ownerId?: number): Promise<ThirdParty>;
+  deleteThirdParty(id: number, ownerId?: number): Promise<void>;
 
   // Material Movements
-  getAllMovements(): Promise<MaterialMovement[]>;
-  getMovement(id: number): Promise<MaterialMovement | undefined>;
-  getMovementsByType(type: 'entry' | 'exit'): Promise<MaterialMovement[]>;
-  getMovementsByDateRange(startDate: Date, endDate: Date): Promise<MaterialMovement[]>;
-  getMovementsByEmployee(employeeId: number): Promise<MaterialMovement[]>;
-  getTodayMovements(): Promise<{ entries: number; exits: number }>;
+  getAllMovements(ownerId?: number): Promise<MaterialMovement[]>;
+  getMovement(id: number, ownerId?: number): Promise<MaterialMovement | undefined>;
+  getMovementsByType(type: 'entry' | 'exit', ownerId?: number): Promise<MaterialMovement[]>;
+  getMovementsByDateRange(startDate: Date, endDate: Date, ownerId?: number): Promise<MaterialMovement[]>;
+  getMovementsByEmployee(employeeId: number, ownerId?: number): Promise<MaterialMovement[]>;
+  getTodayMovements(ownerId?: number): Promise<{ entries: number; exits: number }>;
   createEntry(userId: number, data: CreateEntryData): Promise<MaterialMovement>;
   createExit(userId: number, data: CreateExitData): Promise<MaterialMovement>;
 
   // Dashboard Statistics
-  getDashboardStats(): Promise<{
+  getDashboardStats(ownerId?: number): Promise<{
     totalMaterials: number;
     entriesToday: number;
     exitsToday: number;
@@ -86,10 +86,10 @@ export interface IStorage {
   }>;
 
   // Reports
-  getEmployeeMovementReport(employeeId?: number, month?: number, year?: number): Promise<any[]>;
-  getStockReport(categoryId?: number): Promise<any[]>;
-  getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit'): Promise<any[]>;
-  getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number): Promise<any[]>;
+  getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number): Promise<any[]>;
+  getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
+  getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]>;
+  getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]>;
 
   // Audit Log
   createAuditLog(log: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void>;
@@ -148,12 +148,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Categories
-  async getAllCategories(): Promise<Category[]> {
-    return await db.select().from(categories).orderBy(asc(categories.name));
+  async getAllCategories(ownerId?: number): Promise<Category[]> {
+    const query = db.select().from(categories).orderBy(asc(categories.name));
+    
+    if (ownerId) {
+      query.where(eq(categories.ownerId, ownerId));
+    }
+    
+    return await query;
   }
 
-  async getCategory(id: number): Promise<Category | undefined> {
-    const [category] = await db.select().from(categories).where(eq(categories.id, id));
+  async getCategory(id: number, ownerId?: number): Promise<Category | undefined> {
+    const query = db.select().from(categories).where(eq(categories.id, id));
+    
+    if (ownerId) {
+      query.where(and(eq(categories.id, id), eq(categories.ownerId, ownerId)));
+    }
+    
+    const [category] = await query;
     return category || undefined;
   }
 
@@ -165,17 +177,25 @@ export class DatabaseStorage implements IStorage {
     return newCategory;
   }
 
-  async updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category> {
+  async updateCategory(id: number, category: Partial<InsertCategory>, ownerId?: number): Promise<Category> {
+    const whereClause = ownerId 
+      ? and(eq(categories.id, id), eq(categories.ownerId, ownerId))
+      : eq(categories.id, id);
+      
     const [updatedCategory] = await db
       .update(categories)
       .set(category)
-      .where(eq(categories.id, id))
+      .where(whereClause)
       .returning();
     return updatedCategory;
   }
 
-  async deleteCategory(id: number): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
+  async deleteCategory(id: number, ownerId?: number): Promise<void> {
+    const whereClause = ownerId 
+      ? and(eq(categories.id, id), eq(categories.ownerId, ownerId))
+      : eq(categories.id, id);
+      
+    await db.delete(categories).where(whereClause);
   }
 
   // Materials

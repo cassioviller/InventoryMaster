@@ -33,6 +33,7 @@ export const materials = pgTable("materials", {
   currentStock: integer("current_stock").notNull().default(0),
   minimumStock: integer("minimum_stock").notNull().default(0),
   unit: varchar("unit", { length: 20 }).default('unidade'),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
   description: text("description"),
   ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -110,6 +111,7 @@ export const movementItems = pgTable("movement_items", {
   movementId: integer("movement_id").notNull(),
   materialId: integer("material_id").notNull(),
   quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
   purpose: text("purpose"), // For exits - what the material will be used for
 });
 
@@ -263,6 +265,7 @@ export const createEntrySchema = z.object({
   items: z.array(z.object({
     materialId: z.number(),
     quantity: z.number().min(1),
+    unitPrice: z.number().optional(),
   })),
   notes: z.string().optional(),
 });
@@ -275,6 +278,7 @@ export const createExitSchema = z.object({
   items: z.array(z.object({
     materialId: z.number(),
     quantity: z.number().min(1),
+    unitPrice: z.number().optional(),
     purpose: z.string().optional(),
   })),
   notes: z.string().optional(),

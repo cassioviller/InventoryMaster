@@ -90,6 +90,7 @@ export interface IStorage {
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
   getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]>;
   getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]>;
+  getFinancialStockReport(ownerId?: number): Promise<any[]>;
 
   // Audit Log
   createAuditLog(log: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void>;

@@ -605,9 +605,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const id = parseInt(req.params.id);
       const thirdPartyData = insertThirdPartySchema.partial().parse(req.body);
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
       
-      const oldThirdParty = await storage.getThirdParty(id);
-      const thirdParty = await storage.updateThirdParty(id, thirdPartyData);
+      const oldThirdParty = await storage.getThirdParty(id, ownerId);
+      const thirdParty = await storage.updateThirdParty(id, thirdPartyData, ownerId);
       
       await storage.createAuditLog({
         userId: req.user.id,
@@ -627,9 +628,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete("/api/third-parties/:id", authenticateToken, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
       
-      const oldThirdParty = await storage.getThirdParty(id);
-      await storage.deleteThirdParty(id);
+      const oldThirdParty = await storage.getThirdParty(id, ownerId);
+      await storage.deleteThirdParty(id, ownerId);
       
       await storage.createAuditLog({
         userId: req.user.id,
@@ -637,6 +639,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tableName: 'third_parties',
         recordId: id,
         oldValues: JSON.stringify(oldThirdParty),
+        newValues: null,
       });
 
       res.status(204).send();

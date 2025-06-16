@@ -626,17 +626,25 @@ export class DatabaseStorage implements IStorage {
     return newThirdParty;
   }
 
-  async updateThirdParty(id: number, thirdParty: Partial<InsertThirdParty>): Promise<ThirdParty> {
+  async updateThirdParty(id: number, thirdParty: Partial<InsertThirdParty>, ownerId?: number): Promise<ThirdParty> {
+    const whereClause = ownerId 
+      ? and(eq(thirdParties.id, id), eq(thirdParties.ownerId, ownerId))
+      : eq(thirdParties.id, id);
+      
     const [updatedThirdParty] = await db
       .update(thirdParties)
       .set(thirdParty)
-      .where(eq(thirdParties.id, id))
+      .where(whereClause)
       .returning();
     return updatedThirdParty;
   }
 
-  async deleteThirdParty(id: number): Promise<void> {
-    await db.delete(thirdParties).where(eq(thirdParties.id, id));
+  async deleteThirdParty(id: number, ownerId?: number): Promise<void> {
+    const whereClause = ownerId 
+      ? and(eq(thirdParties.id, id), eq(thirdParties.ownerId, ownerId))
+      : eq(thirdParties.id, id);
+      
+    await db.delete(thirdParties).where(whereClause);
   }
 
   // Material Movements

@@ -216,7 +216,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Categories routes
   app.get("/api/categories", authenticateToken, async (req, res) => {
     try {
-      const categories = await storage.getAllCategories();
+      // Super admin (cassio) sees all data, regular admins see only their data
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
+      const categories = await storage.getAllCategories(ownerId);
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categories" });
@@ -226,6 +228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/categories", authenticateToken, async (req, res) => {
     try {
       const categoryData = insertCategorySchema.parse(req.body);
+      // Set ownerId to current user for data isolation
+      categoryData.ownerId = req.user.id;
       const category = await storage.createCategory(categoryData);
       
       await storage.createAuditLog({

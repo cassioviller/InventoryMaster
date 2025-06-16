@@ -50,7 +50,7 @@ export function useAuth(): AuthContextType {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData): Promise<AuthResponse> => {
-      const res = await apiRequest('POST', '/api/auth/login', credentials);
+      const res = await apiRequest('/api/auth/login', 'POST', credentials);
       return res.json();
     },
     onSuccess: (data) => {

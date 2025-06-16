@@ -31,9 +31,9 @@ export default function Login() {
       await login(data);
       toast({
         title: "Login realizado com sucesso!",
-        description: "Você será redirecionado para o dashboard.",
+        description: "Redirecionando...",
       });
-      setLocation('/');
+      // O redirecionamento é automático baseado no tipo de usuário
     } catch (error) {
       toast({
         title: "Erro no login",

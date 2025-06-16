@@ -694,33 +694,41 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(materialMovements.date));
   }
 
-  async getTodayMovements(): Promise<{ entries: number; exits: number }> {
+  async getTodayMovements(ownerId?: number): Promise<{ entries: number; exits: number }> {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const entriesConditions = [
+      eq(materialMovements.type, 'entry'),
+      gte(materialMovements.date, today),
+      lte(materialMovements.date, tomorrow)
+    ];
+    
+    if (ownerId) {
+      entriesConditions.push(eq(materialMovements.userId, ownerId));
+    }
+
     const [entriesResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(materialMovements)
-      .where(
-        and(
-          eq(materialMovements.type, 'entry'),
-          gte(materialMovements.date, today),
-          lte(materialMovements.date, tomorrow)
-        )
-      );
+      .where(and(...entriesConditions));
+
+    const exitsConditions = [
+      eq(materialMovements.type, 'exit'),
+      gte(materialMovements.date, today),
+      lte(materialMovements.date, tomorrow)
+    ];
+    
+    if (ownerId) {
+      exitsConditions.push(eq(materialMovements.userId, ownerId));
+    }
 
     const [exitsResult] = await db
       .select({ count: sql<number>`count(*)` })
       .from(materialMovements)
-      .where(
-        and(
-          eq(materialMovements.type, 'exit'),
-          gte(materialMovements.date, today),
-          lte(materialMovements.date, tomorrow)
-        )
-      );
+      .where(and(...exitsConditions));
 
     return {
       entries: Number(entriesResult.count) || 0,
@@ -813,22 +821,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Dashboard Statistics
-  async getDashboardStats(): Promise<{
+  async getDashboardStats(ownerId?: number): Promise<{
     totalMaterials: number;
     entriesToday: number;
     exitsToday: number;
     criticalItems: number;
   }> {
-    const [totalMaterialsResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(materials);
+    const totalMaterialsQuery = ownerId 
+      ? db.select({ count: sql<number>`count(*)` }).from(materials).where(eq(materials.ownerId, ownerId))
+      : db.select({ count: sql<number>`count(*)` }).from(materials);
+    
+    const [totalMaterialsResult] = await totalMaterialsQuery;
 
-    const [criticalItemsResult] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(materials)
-      .where(sql`${materials.currentStock} <= ${materials.minimumStock}`);
+    const criticalItemsQuery = ownerId
+      ? db.select({ count: sql<number>`count(*)` }).from(materials).where(
+          and(
+            eq(materials.ownerId, ownerId),
+            sql`${materials.currentStock} <= ${materials.minimumStock}`
+          )
+        )
+      : db.select({ count: sql<number>`count(*)` }).from(materials).where(
+          sql`${materials.currentStock} <= ${materials.minimumStock}`
+        );
+    
+    const [criticalItemsResult] = await criticalItemsQuery;
 
-    const todayMovements = await this.getTodayMovements();
+    const todayMovements = await this.getTodayMovements(ownerId);
 
     return {
       totalMaterials: Number(totalMaterialsResult.count) || 0,

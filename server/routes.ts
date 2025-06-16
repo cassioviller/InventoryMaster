@@ -561,14 +561,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/third-parties", authenticateToken, async (req, res) => {
     try {
       const { search, active } = req.query;
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
       
       let thirdParties;
       if (search) {
-        thirdParties = await storage.searchThirdParties(search as string);
+        thirdParties = await storage.searchThirdParties(search as string, ownerId);
       } else if (active === 'true') {
-        thirdParties = await storage.getActiveThirdParties();
+        thirdParties = await storage.getActiveThirdParties(ownerId);
       } else {
-        thirdParties = await storage.getAllThirdParties();
+        thirdParties = await storage.getAllThirdParties(ownerId);
       }
       
       res.json(thirdParties);
@@ -579,7 +580,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/third-parties", authenticateToken, async (req, res) => {
     try {
-      const thirdPartyData = insertThirdPartySchema.parse(req.body);
+      const thirdPartyData = insertThirdPartySchema.parse({
+        ...req.body,
+        ownerId: req.user.id
+      });
       const thirdParty = await storage.createThirdParty(thirdPartyData);
       
       await storage.createAuditLog({
@@ -587,6 +591,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         action: 'CREATE',
         tableName: 'third_parties',
         recordId: thirdParty.id,
+        oldValues: null,
         newValues: JSON.stringify(thirdPartyData),
       });
 

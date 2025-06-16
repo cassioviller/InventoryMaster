@@ -294,18 +294,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/materials", authenticateToken, async (req, res) => {
     try {
       const { search, categoryId } = req.query;
+      // Super admin (cassio) sees all data, regular admins see only their data
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
       
       let materials;
       if (search) {
-        materials = await storage.searchMaterials(search as string);
+        materials = await storage.searchMaterials(search as string, ownerId);
       } else if (categoryId) {
-        const materialsOnly = await storage.getMaterialsByCategory(parseInt(categoryId as string));
+        const materialsOnly = await storage.getMaterialsByCategory(parseInt(categoryId as string), ownerId);
         materials = await Promise.all(materialsOnly.map(async (material) => {
-          const category = await storage.getCategory(material.categoryId);
+          const category = await storage.getCategory(material.categoryId, ownerId);
           return { ...material, category: category! };
         }));
       } else {
-        materials = await storage.getAllMaterials();
+        materials = await storage.getAllMaterials(ownerId);
       }
       
       res.json(materials);
@@ -316,7 +318,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/materials/low-stock", authenticateToken, async (req, res) => {
     try {
-      const materials = await storage.getMaterialsWithLowStock();
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
+      const materials = await storage.getMaterialsWithLowStock(ownerId);
       res.json(materials);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch low stock materials" });
@@ -390,14 +393,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/employees", authenticateToken, async (req, res) => {
     try {
       const { search, active } = req.query;
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
       
       let employees;
       if (search) {
-        employees = await storage.searchEmployees(search as string);
+        employees = await storage.searchEmployees(search as string, ownerId);
       } else if (active === 'true') {
-        employees = await storage.getActiveEmployees();
+        employees = await storage.getActiveEmployees(ownerId);
       } else {
-        employees = await storage.getAllEmployees();
+        employees = await storage.getAllEmployees(ownerId);
       }
       
       res.json(employees);
@@ -473,14 +477,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/suppliers", authenticateToken, async (req, res) => {
     try {
       const { search, active } = req.query;
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
       
       let suppliers;
       if (search) {
-        suppliers = await storage.searchSuppliers(search as string);
+        suppliers = await storage.searchSuppliers(search as string, ownerId);
       } else if (active === 'true') {
-        suppliers = await storage.getActiveSuppliers();
+        suppliers = await storage.getActiveSuppliers(ownerId);
       } else {
-        suppliers = await storage.getAllSuppliers();
+        suppliers = await storage.getAllSuppliers(ownerId);
       }
       
       res.json(suppliers);
@@ -701,7 +706,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard routes
   app.get("/api/dashboard/stats", authenticateToken, async (req, res) => {
     try {
-      const stats = await storage.getDashboardStats();
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
+      const stats = await storage.getDashboardStats(ownerId);
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch dashboard stats" });
@@ -710,7 +716,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/dashboard/low-stock", authenticateToken, async (req, res) => {
     try {
-      const materials = await storage.getMaterialsWithLowStock();
+      const ownerId = req.user.role === 'super_admin' ? undefined : req.user.id;
+      const materials = await storage.getMaterialsWithLowStock(ownerId);
       res.json(materials);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch low stock alerts" });

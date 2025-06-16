@@ -14,6 +14,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   canCreateUsers: boolean;
+  isSuperAdmin: boolean;
 }
 
 export function useAuth(): AuthContextType {
@@ -75,5 +76,6 @@ export function useAuth(): AuthContextType {
     logout,
     isAuthenticated: !!user,
     canCreateUsers: user?.username === 'axiomtech',
+    isSuperAdmin: user?.role === 'super_admin',
   };
 }

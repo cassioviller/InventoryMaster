@@ -4,7 +4,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // Users table with role-based access
-export const userRoleEnum = pgEnum('user_role', ['admin', 'user']);
+export const userRoleEnum = pgEnum('user_role', ['super_admin', 'admin', 'user']);
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),

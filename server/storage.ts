@@ -149,23 +149,26 @@ export class DatabaseStorage implements IStorage {
 
   // Categories
   async getAllCategories(ownerId?: number): Promise<Category[]> {
-    const query = db.select().from(categories).orderBy(asc(categories.name));
-    
     if (ownerId) {
-      query.where(eq(categories.ownerId, ownerId));
+      return await db
+        .select()
+        .from(categories)
+        .where(eq(categories.ownerId, ownerId))
+        .orderBy(asc(categories.name));
     }
     
-    return await query;
+    return await db
+      .select()
+      .from(categories)
+      .orderBy(asc(categories.name));
   }
 
   async getCategory(id: number, ownerId?: number): Promise<Category | undefined> {
-    const query = db.select().from(categories).where(eq(categories.id, id));
+    const whereClause = ownerId 
+      ? and(eq(categories.id, id), eq(categories.ownerId, ownerId))
+      : eq(categories.id, id);
     
-    if (ownerId) {
-      query.where(and(eq(categories.id, id), eq(categories.ownerId, ownerId)));
-    }
-    
-    const [category] = await query;
+    const [category] = await db.select().from(categories).where(whereClause);
     return category || undefined;
   }
 
@@ -199,24 +202,54 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Materials
-  async getAllMaterials(): Promise<(Material & { category: Category })[]> {
-    return await db
+  async getAllMaterials(ownerId?: number): Promise<(Material & { category: Category })[]> {
+    const query = db
       .select()
       .from(materials)
       .leftJoin(categories, eq(materials.categoryId, categories.id))
-      .orderBy(asc(materials.name))
-      .then(rows => rows.map(row => ({
-        ...row.materials,
-        category: row.categories!
-      })));
+      .orderBy(asc(materials.name));
+
+    if (ownerId) {
+      return await query
+        .where(eq(materials.ownerId, ownerId))
+        .then(rows => rows.map(row => ({
+          ...row.materials,
+          category: row.categories!
+        })));
+    }
+
+    return await query.then(rows => rows.map(row => ({
+      ...row.materials,
+      category: row.categories!
+    })));
   }
 
-  async getMaterial(id: number): Promise<Material | undefined> {
-    const [material] = await db.select().from(materials).where(eq(materials.id, id));
+  async getMaterial(id: number, ownerId?: number): Promise<Material | undefined> {
+    const whereClause = ownerId 
+      ? and(eq(materials.id, id), eq(materials.ownerId, ownerId))
+      : eq(materials.id, id);
+      
+    const [material] = await db.select().from(materials).where(whereClause);
     return material || undefined;
   }
 
-  async getMaterialsWithLowStock(): Promise<(Material & { category: Category })[]> {
+  async getMaterialsWithLowStock(ownerId?: number): Promise<(Material & { category: Category })[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(materials)
+        .leftJoin(categories, eq(materials.categoryId, categories.id))
+        .where(and(
+          sql`${materials.currentStock} <= ${materials.minimumStock}`,
+          eq(materials.ownerId, ownerId)
+        ))
+        .orderBy(asc(materials.name))
+        .then(rows => rows.map(row => ({
+          ...row.materials,
+          category: row.categories!
+        })));
+    }
+
     return await db
       .select()
       .from(materials)
@@ -229,15 +262,32 @@ export class DatabaseStorage implements IStorage {
       })));
   }
 
-  async getMaterialsByCategory(categoryId: number): Promise<Material[]> {
+  async getMaterialsByCategory(categoryId: number, ownerId?: number): Promise<Material[]> {
+    const whereClause = ownerId 
+      ? and(eq(materials.categoryId, categoryId), eq(materials.ownerId, ownerId))
+      : eq(materials.categoryId, categoryId);
+      
     return await db
       .select()
       .from(materials)
-      .where(eq(materials.categoryId, categoryId))
+      .where(whereClause)
       .orderBy(asc(materials.name));
   }
 
-  async searchMaterials(query: string): Promise<(Material & { category: Category })[]> {
+  async searchMaterials(query: string, ownerId?: number): Promise<(Material & { category: Category })[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(materials)
+        .leftJoin(categories, eq(materials.categoryId, categories.id))
+        .where(and(ilike(materials.name, `%${query}%`), eq(materials.ownerId, ownerId)))
+        .orderBy(asc(materials.name))
+        .then(rows => rows.map(row => ({
+          ...row.materials,
+          category: row.categories!
+        })));
+    }
+
     return await db
       .select()
       .from(materials)

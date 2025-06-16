@@ -787,17 +787,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reports/material-consumption", authenticateToken, async (req, res) => {
+  app.get("/api/reports/financial-stock", authenticateToken, async (req: any, res) => {
     try {
-      const { startDate, endDate, categoryId } = req.query;
-      const report = await storage.getMaterialConsumptionReport(
-        startDate ? new Date(startDate as string) : undefined,
-        endDate ? new Date(endDate as string) : undefined,
-        categoryId ? parseInt(categoryId as string) : undefined
-      );
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const report = await storage.getFinancialStockReport(ownerId);
       res.json(report);
     } catch (error) {
-      res.status(500).json({ message: "Failed to generate material consumption report" });
+      res.status(500).json({ message: "Failed to generate financial stock report" });
     }
   });
 

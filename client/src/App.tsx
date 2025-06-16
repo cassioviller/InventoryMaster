@@ -13,6 +13,7 @@ import MaterialEntry from "@/pages/material-entry";
 import MaterialExit from "@/pages/material-exit";
 import Management from "@/pages/management";
 import Reports from "@/pages/reports";
+import FinancialReports from "@/pages/financial-reports";
 import SuperAdmin from "@/pages/super-admin";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";

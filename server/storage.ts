@@ -756,10 +756,21 @@ export class DatabaseStorage implements IStorage {
 
       // Create movement items and update stock
       for (const item of data.items) {
+        // Get material's current unit price if not provided
+        let unitPrice = item.unitPrice;
+        if (!unitPrice) {
+          const [material] = await tx
+            .select({ unitPrice: materials.unitPrice })
+            .from(materials)
+            .where(eq(materials.id, item.materialId));
+          unitPrice = parseFloat(material?.unitPrice || '0');
+        }
+
         await tx.insert(movementItems).values({
           movementId: movement.id,
           materialId: item.materialId,
           quantity: item.quantity,
+          unitPrice: unitPrice.toString(),
         });
 
         // Update material stock
@@ -803,10 +814,21 @@ export class DatabaseStorage implements IStorage {
 
       // Create movement items and update stock
       for (const item of data.items) {
+        // Get material's current unit price if not provided
+        let unitPrice = item.unitPrice;
+        if (!unitPrice) {
+          const [material] = await tx
+            .select({ unitPrice: materials.unitPrice })
+            .from(materials)
+            .where(eq(materials.id, item.materialId));
+          unitPrice = parseFloat(material?.unitPrice || '0');
+        }
+
         await tx.insert(movementItems).values({
           movementId: movement.id,
           materialId: item.materialId,
           quantity: item.quantity,
+          unitPrice: unitPrice.toString(),
           purpose: item.purpose,
         });
 
@@ -1017,6 +1039,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Audit Log
+  async getFinancialStockReport(ownerId?: number): Promise<any[]> {
+    const whereClause = ownerId ? eq(materials.ownerId, ownerId) : undefined;
+    
+    const result = await db
+      .select({
+        id: materials.id,
+        name: materials.name,
+        category: categories.name,
+        unit: materials.unit,
+        currentStock: materials.currentStock,
+        unitPrice: materials.unitPrice,
+      })
+      .from(materials)
+      .leftJoin(categories, eq(materials.categoryId, categories.id))
+      .where(whereClause)
+      .orderBy(asc(categories.name), asc(materials.name));
+
+    // Calculate subtotal for each material and total value
+    const enrichedResult = result.map(item => {
+      const unitPrice = parseFloat(item.unitPrice || '0');
+      const subtotal = item.currentStock * unitPrice;
+      
+      return {
+        ...item,
+        unitPrice,
+        subtotal,
+      };
+    });
+
+    const totalValue = enrichedResult.reduce((sum, item) => sum + item.subtotal, 0);
+
+    return enrichedResult;
+  }
+
   async createAuditLog(log: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void> {
     await db.insert(auditLog).values(log);
   }

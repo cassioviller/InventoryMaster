@@ -308,44 +308,76 @@ export class DatabaseStorage implements IStorage {
     return newMaterial;
   }
 
-  async updateMaterial(id: number, material: Partial<InsertMaterial>): Promise<Material> {
+  async updateMaterial(id: number, material: Partial<InsertMaterial>, ownerId?: number): Promise<Material> {
+    const whereClause = ownerId 
+      ? and(eq(materials.id, id), eq(materials.ownerId, ownerId))
+      : eq(materials.id, id);
+      
     const [updatedMaterial] = await db
       .update(materials)
       .set(material)
-      .where(eq(materials.id, id))
+      .where(whereClause)
       .returning();
     return updatedMaterial;
   }
 
-  async deleteMaterial(id: number): Promise<void> {
-    await db.delete(materials).where(eq(materials.id, id));
+  async deleteMaterial(id: number, ownerId?: number): Promise<void> {
+    const whereClause = ownerId 
+      ? and(eq(materials.id, id), eq(materials.ownerId, ownerId))
+      : eq(materials.id, id);
+      
+    await db.delete(materials).where(whereClause);
   }
 
-  async updateMaterialStock(id: number, quantity: number, operation: 'add' | 'subtract'): Promise<void> {
+  async updateMaterialStock(id: number, quantity: number, operation: 'add' | 'subtract', ownerId?: number): Promise<void> {
+    const whereClause = ownerId 
+      ? and(eq(materials.id, id), eq(materials.ownerId, ownerId))
+      : eq(materials.id, id);
+      
     if (operation === 'add') {
       await db
         .update(materials)
         .set({ currentStock: sql`${materials.currentStock} + ${quantity}` })
-        .where(eq(materials.id, id));
+        .where(whereClause);
     } else {
       await db
         .update(materials)
         .set({ currentStock: sql`${materials.currentStock} - ${quantity}` })
-        .where(eq(materials.id, id));
+        .where(whereClause);
     }
   }
 
   // Employees
-  async getAllEmployees(): Promise<Employee[]> {
+  async getAllEmployees(ownerId?: number): Promise<Employee[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(employees)
+        .where(eq(employees.ownerId, ownerId))
+        .orderBy(asc(employees.name));
+    }
+    
     return await db.select().from(employees).orderBy(asc(employees.name));
   }
 
-  async getEmployee(id: number): Promise<Employee | undefined> {
-    const [employee] = await db.select().from(employees).where(eq(employees.id, id));
+  async getEmployee(id: number, ownerId?: number): Promise<Employee | undefined> {
+    const whereClause = ownerId 
+      ? and(eq(employees.id, id), eq(employees.ownerId, ownerId))
+      : eq(employees.id, id);
+      
+    const [employee] = await db.select().from(employees).where(whereClause);
     return employee || undefined;
   }
 
-  async getActiveEmployees(): Promise<Employee[]> {
+  async getActiveEmployees(ownerId?: number): Promise<Employee[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(employees)
+        .where(and(eq(employees.isActive, true), eq(employees.ownerId, ownerId)))
+        .orderBy(asc(employees.name));
+    }
+    
     return await db
       .select()
       .from(employees)
@@ -353,7 +385,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(employees.name));
   }
 
-  async searchEmployees(query: string): Promise<Employee[]> {
+  async searchEmployees(query: string, ownerId?: number): Promise<Employee[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(employees)
+        .where(
+          and(
+            eq(employees.isActive, true),
+            eq(employees.ownerId, ownerId),
+            or(
+              ilike(employees.name, `%${query}%`),
+              ilike(employees.department, `%${query}%`)
+            )
+          )
+        )
+        .orderBy(asc(employees.name));
+    }
+    
     return await db
       .select()
       .from(employees)
@@ -377,30 +426,58 @@ export class DatabaseStorage implements IStorage {
     return newEmployee;
   }
 
-  async updateEmployee(id: number, employee: Partial<InsertEmployee>): Promise<Employee> {
+  async updateEmployee(id: number, employee: Partial<InsertEmployee>, ownerId?: number): Promise<Employee> {
+    const whereClause = ownerId 
+      ? and(eq(employees.id, id), eq(employees.ownerId, ownerId))
+      : eq(employees.id, id);
+      
     const [updatedEmployee] = await db
       .update(employees)
       .set(employee)
-      .where(eq(employees.id, id))
+      .where(whereClause)
       .returning();
     return updatedEmployee;
   }
 
-  async deleteEmployee(id: number): Promise<void> {
-    await db.delete(employees).where(eq(employees.id, id));
+  async deleteEmployee(id: number, ownerId?: number): Promise<void> {
+    const whereClause = ownerId 
+      ? and(eq(employees.id, id), eq(employees.ownerId, ownerId))
+      : eq(employees.id, id);
+      
+    await db.delete(employees).where(whereClause);
   }
 
   // Suppliers
-  async getAllSuppliers(): Promise<Supplier[]> {
+  async getAllSuppliers(ownerId?: number): Promise<Supplier[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(suppliers)
+        .where(eq(suppliers.ownerId, ownerId))
+        .orderBy(asc(suppliers.name));
+    }
+    
     return await db.select().from(suppliers).orderBy(asc(suppliers.name));
   }
 
-  async getSupplier(id: number): Promise<Supplier | undefined> {
-    const [supplier] = await db.select().from(suppliers).where(eq(suppliers.id, id));
+  async getSupplier(id: number, ownerId?: number): Promise<Supplier | undefined> {
+    const whereClause = ownerId 
+      ? and(eq(suppliers.id, id), eq(suppliers.ownerId, ownerId))
+      : eq(suppliers.id, id);
+      
+    const [supplier] = await db.select().from(suppliers).where(whereClause);
     return supplier || undefined;
   }
 
-  async getActiveSuppliers(): Promise<Supplier[]> {
+  async getActiveSuppliers(ownerId?: number): Promise<Supplier[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(suppliers)
+        .where(and(eq(suppliers.isActive, true), eq(suppliers.ownerId, ownerId)))
+        .orderBy(asc(suppliers.name));
+    }
+    
     return await db
       .select()
       .from(suppliers)
@@ -408,7 +485,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(suppliers.name));
   }
 
-  async searchSuppliers(query: string): Promise<Supplier[]> {
+  async searchSuppliers(query: string, ownerId?: number): Promise<Supplier[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(suppliers)
+        .where(
+          and(
+            eq(suppliers.isActive, true),
+            eq(suppliers.ownerId, ownerId),
+            or(
+              ilike(suppliers.name, `%${query}%`),
+              ilike(suppliers.cnpj, `%${query}%`)
+            )
+          )
+        )
+        .orderBy(asc(suppliers.name));
+    }
+    
     return await db
       .select()
       .from(suppliers)
@@ -432,30 +526,58 @@ export class DatabaseStorage implements IStorage {
     return newSupplier;
   }
 
-  async updateSupplier(id: number, supplier: Partial<InsertSupplier>): Promise<Supplier> {
+  async updateSupplier(id: number, supplier: Partial<InsertSupplier>, ownerId?: number): Promise<Supplier> {
+    const whereClause = ownerId 
+      ? and(eq(suppliers.id, id), eq(suppliers.ownerId, ownerId))
+      : eq(suppliers.id, id);
+      
     const [updatedSupplier] = await db
       .update(suppliers)
       .set(supplier)
-      .where(eq(suppliers.id, id))
+      .where(whereClause)
       .returning();
     return updatedSupplier;
   }
 
-  async deleteSupplier(id: number): Promise<void> {
-    await db.delete(suppliers).where(eq(suppliers.id, id));
+  async deleteSupplier(id: number, ownerId?: number): Promise<void> {
+    const whereClause = ownerId 
+      ? and(eq(suppliers.id, id), eq(suppliers.ownerId, ownerId))
+      : eq(suppliers.id, id);
+      
+    await db.delete(suppliers).where(whereClause);
   }
 
   // Third Parties
-  async getAllThirdParties(): Promise<ThirdParty[]> {
+  async getAllThirdParties(ownerId?: number): Promise<ThirdParty[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(thirdParties)
+        .where(eq(thirdParties.ownerId, ownerId))
+        .orderBy(asc(thirdParties.name));
+    }
+    
     return await db.select().from(thirdParties).orderBy(asc(thirdParties.name));
   }
 
-  async getThirdParty(id: number): Promise<ThirdParty | undefined> {
-    const [thirdParty] = await db.select().from(thirdParties).where(eq(thirdParties.id, id));
+  async getThirdParty(id: number, ownerId?: number): Promise<ThirdParty | undefined> {
+    const whereClause = ownerId 
+      ? and(eq(thirdParties.id, id), eq(thirdParties.ownerId, ownerId))
+      : eq(thirdParties.id, id);
+      
+    const [thirdParty] = await db.select().from(thirdParties).where(whereClause);
     return thirdParty || undefined;
   }
 
-  async getActiveThirdParties(): Promise<ThirdParty[]> {
+  async getActiveThirdParties(ownerId?: number): Promise<ThirdParty[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(thirdParties)
+        .where(and(eq(thirdParties.isActive, true), eq(thirdParties.ownerId, ownerId)))
+        .orderBy(asc(thirdParties.name));
+    }
+    
     return await db
       .select()
       .from(thirdParties)
@@ -463,7 +585,24 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(thirdParties.name));
   }
 
-  async searchThirdParties(query: string): Promise<ThirdParty[]> {
+  async searchThirdParties(query: string, ownerId?: number): Promise<ThirdParty[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(thirdParties)
+        .where(
+          and(
+            eq(thirdParties.isActive, true),
+            eq(thirdParties.ownerId, ownerId),
+            or(
+              ilike(thirdParties.name, `%${query}%`),
+              ilike(thirdParties.document, `%${query}%`)
+            )
+          )
+        )
+        .orderBy(asc(thirdParties.name));
+    }
+    
     return await db
       .select()
       .from(thirdParties)

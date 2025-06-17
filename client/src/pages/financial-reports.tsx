@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, DollarSign, Package, TrendingUp } from "lucide-react";
+import { Loader2, DollarSign, Package, TrendingUp, Download, FileText } from "lucide-react";
+import { exportToPDF, exportToExcel, formatCurrency } from "@/lib/export-utils";
 import {
   Table,
   TableBody,
@@ -52,11 +53,44 @@ export default function FinancialReports() {
   const totalItems = sortedData.length;
   const highValueItems = sortedData.filter((item: FinancialStockItem) => item.subtotal > 1000).length;
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
+  const handleExportPDF = () => {
+    if (!sortedData.length) return;
+    
+    const exportData = {
+      title: 'Relatório Financeiro do Estoque',
+      filename: `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`,
+      headers: ['Material', 'Categoria', 'Estoque', 'Unidade', 'Preço Unit.', 'Valor Total'],
+      data: sortedData.map(item => [
+        item.name,
+        item.category,
+        item.currentStock.toString(),
+        item.unit,
+        formatCurrency(item.unitPrice),
+        formatCurrency(item.subtotal)
+      ])
+    };
+    
+    exportToPDF(exportData);
+  };
+
+  const handleExportExcel = () => {
+    if (!sortedData.length) return;
+    
+    const exportData = {
+      title: 'Relatório Financeiro do Estoque',
+      filename: `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`,
+      headers: ['Material', 'Categoria', 'Estoque', 'Unidade', 'Preço Unitário', 'Valor Total'],
+      data: sortedData.map(item => [
+        item.name,
+        item.category,
+        item.currentStock,
+        item.unit,
+        item.unitPrice,
+        item.subtotal
+      ])
+    };
+    
+    exportToExcel(exportData);
   };
 
   if (isLoading) {
@@ -79,12 +113,31 @@ export default function FinancialReports() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Relatório Financeiro do Estoque</h1>
-        <Button 
-          onClick={() => window.print()}
-          variant="outline"
-        >
-          Imprimir Relatório
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={handleExportPDF}
+            variant="outline"
+            size="sm"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            PDF
+          </Button>
+          <Button 
+            onClick={handleExportExcel}
+            variant="outline"
+            size="sm"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Excel
+          </Button>
+          <Button 
+            onClick={() => window.print()}
+            variant="outline"
+            size="sm"
+          >
+            Imprimir
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}

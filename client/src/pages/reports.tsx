@@ -22,819 +22,424 @@ import {
 import { authenticatedRequest } from '@/lib/auth';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { exportToPDF, exportToExcel, formatDate } from '@/lib/export-utils';
 
-// Função para exportar CSV
-const exportToCSV = (data: any[], filename: string, reportType: string) => {
-  if (!data || data.length === 0) return;
-  
-  let headers: string[] = [];
-  let rows: any[][] = [];
-  
-  switch (reportType) {
-    case 'employee':
-      headers = ['Data', 'Funcionário', 'Tipo', 'Material', 'Quantidade', 'Observações'];
-      rows = data.map(item => [
-        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
-        item.employee?.name || item.employeeName || '-',
-        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
-        item.material?.name || item.materialName || '-',
-        `${item.items?.quantity || item.quantity || 0} ${item.material?.unit || item.unit || ''}`,
-        item.movement?.notes || item.notes || '-'
-      ]);
-      break;
-    case 'stock':
-      headers = ['Material', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Unidade', 'Status'];
-      rows = data.map(item => [
-        item.material?.name || item.name,
-        item.category?.name || item.categoryName,
-        item.material?.currentStock || item.current_stock,
-        item.material?.minimumStock || item.minimum_stock,
-        item.material?.unit || item.unit,
-        (item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? 'Baixo' : 'Normal'
-      ]);
-      break;
-    case 'general':
-      headers = ['Data', 'Tipo', 'Origem/Destino', 'Materiais', 'Responsável', 'Observações'];
-      rows = data.map(item => [
-        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
-        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
-        item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || item.companyName || item.employeeName || item.thirdPartyName || '-',
-        `${item.totalItems || 0} itens`,
-        item.user?.name || item.userName || '-',
-        item.movement?.notes || item.notes || '-'
-      ]);
-      break;
-    case 'consumption':
-      headers = ['Material', 'Categoria', 'Total Consumido', 'Unidade', 'Última Saída'];
-      rows = data.map(item => [
-        item.material?.name || item.materialName,
-        item.category?.name || item.categoryName,
-        item.totalConsumed || 0,
-        item.material?.unit || item.unit,
-        item.lastExit ? format(new Date(item.lastExit), 'dd/MM/yyyy') : '-'
-      ]);
-      break;
+type ReportType = 'employee' | 'stock' | 'general' | 'consumption';
+
+interface ReportCard {
+  type: ReportType;
+  title: string;
+  description: string;
+  icon: any;
+  endpoint: string;
+}
+
+const reportCards: ReportCard[] = [
+  {
+    type: 'employee',
+    title: 'Movimentação por Funcionário',
+    description: 'Relatório de movimentações realizadas por funcionário específico',
+    icon: User,
+    endpoint: '/api/reports/employee-movement'
+  },
+  {
+    type: 'stock',
+    title: 'Relatório de Estoque',
+    description: 'Situação atual do estoque com alertas de itens críticos',
+    icon: Package,
+    endpoint: '/api/reports/stock'
+  },
+  {
+    type: 'general',
+    title: 'Movimentações Gerais',
+    description: 'Histórico completo de entradas e saídas de materiais',
+    icon: ArrowRightLeft,
+    endpoint: '/api/reports/general-movements'
+  },
+  {
+    type: 'consumption',
+    title: 'Consumo de Materiais',
+    description: 'Análise de consumo de materiais por período',
+    icon: BarChart3,
+    endpoint: '/api/reports/material-consumption'
   }
-  
-  const csvContent = [
-    headers.join(','),
-    ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-  ].join('\n');
-  
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  const url = URL.createObjectURL(blob);
-  link.setAttribute('href', url);
-  link.setAttribute('download', `${filename}.csv`);
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+];
 
-// Função para exportar PDF
-const exportToPDF = (data: any[], filename: string, reportType: string) => {
-  if (!data || data.length === 0) return;
+// Função para preparar dados de exportação
+const prepareExportData = (data: any[], reportType: ReportType) => {
+  if (!data || data.length === 0) return null;
   
   let title = '';
+  let filename = '';
   let headers: string[] = [];
   let rows: any[][] = [];
   
   switch (reportType) {
     case 'employee':
       title = 'Relatório de Movimentação por Funcionário';
+      filename = `relatorio-funcionario-${new Date().toISOString().split('T')[0]}`;
       headers = ['Data', 'Funcionário', 'Tipo', 'Material', 'Quantidade', 'Observações'];
       rows = data.map(item => [
-        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
+        formatDate(item.movement?.date || item.date),
         item.employee?.name || item.employeeName || '-',
         (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
         item.material?.name || item.materialName || '-',
-        `${item.items?.quantity || item.quantity || 0} ${item.material?.unit || item.unit || ''}`,
+        `${item.quantity || 0} ${item.material?.unit || item.unit || ''}`,
         item.movement?.notes || item.notes || '-'
       ]);
       break;
+      
     case 'stock':
       title = 'Relatório de Estoque Atual';
+      filename = `relatorio-estoque-${new Date().toISOString().split('T')[0]}`;
       headers = ['Material', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Unidade', 'Status'];
       rows = data.map(item => [
-        item.material?.name || item.name,
-        item.category?.name || item.categoryName,
-        item.material?.currentStock || item.current_stock,
-        item.material?.minimumStock || item.minimum_stock,
-        item.material?.unit || item.unit,
-        (item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? 'Baixo' : 'Normal'
+        item.name || item.material?.name,
+        item.category || item.categoryName,
+        item.currentStock || item.current_stock || 0,
+        item.minimumStock || item.minimum_stock || 0,
+        item.unit || item.material?.unit || '',
+        (item.currentStock || 0) <= (item.minimumStock || 0) ? 'Crítico' : 'Normal'
       ]);
       break;
+      
     case 'general':
       title = 'Relatório de Movimentações Gerais';
+      filename = `relatorio-movimentacoes-${new Date().toISOString().split('T')[0]}`;
       headers = ['Data', 'Tipo', 'Origem/Destino', 'Materiais', 'Responsável', 'Observações'];
       rows = data.map(item => [
-        (item.movement?.date || item.date) ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm') : '-',
-        (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
-        item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || item.companyName || item.employeeName || item.thirdPartyName || '-',
+        formatDate(item.date),
+        item.type === 'entry' ? 'Entrada' : 'Saída',
+        item.supplier || item.employee || item.thirdParty || '-',
         `${item.totalItems || 0} itens`,
-        item.user?.name || item.userName || '-',
-        item.movement?.notes || item.notes || '-'
+        item.user || '-',
+        item.notes || '-'
       ]);
       break;
+      
     case 'consumption':
-      title = 'Relatório de Consumo por Material';
-      headers = ['Material', 'Categoria', 'Total Consumido', 'Unidade', 'Última Saída'];
+      title = 'Relatório de Consumo de Materiais';
+      filename = `relatorio-consumo-${new Date().toISOString().split('T')[0]}`;
+      headers = ['Material', 'Categoria', 'Quantidade Consumida', 'Unidade', 'Período'];
       rows = data.map(item => [
-        item.material?.name || item.materialName,
-        item.category?.name || item.categoryName,
-        item.totalConsumed || 0,
-        item.material?.unit || item.unit,
-        item.lastExit ? format(new Date(item.lastExit), 'dd/MM/yyyy') : '-'
+        item.materialName || '-',
+        item.categoryName || '-',
+        item.totalQuantity || 0,
+        item.unit || '',
+        `${formatDate(item.startDate)} - ${formatDate(item.endDate)}`
       ]);
       break;
   }
   
-  // Criar conteúdo HTML para PDF
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>${title}</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; text-align: center; margin-bottom: 30px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-            th { background-color: #f2f2f2; font-weight: bold; }
-            tr:nth-child(even) { background-color: #f9f9f9; }
-            .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #666; }
-        </style>
-    </head>
-    <body>
-        <h1>${title}</h1>
-        <table>
-            <thead>
-                <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-            </thead>
-            <tbody>
-                ${rows.map(row => `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`).join('')}
-            </tbody>
-        </table>
-        <div class="footer">
-            <p>Relatório gerado em ${format(new Date(), 'dd/MM/yyyy HH:mm')} | Total de registros: ${data.length}</p>
-            <div style="margin-top: 50px; display: flex; justify-content: space-between;">
-                <div style="text-align: center; width: 200px;">
-                    <div style="border-bottom: 1px solid #000; height: 50px; margin-bottom: 10px;"></div>
-                    <p style="margin: 0; font-size: 12px;">Responsável pelo Almoxarifado</p>
-                </div>
-                <div style="text-align: center; width: 200px;">
-                    <div style="border-bottom: 1px solid #000; height: 50px; margin-bottom: 10px;"></div>
-                    <p style="margin: 0; font-size: 12px;">${reportType === 'employee' && data.length > 0 ? (data[0].employeeName || 'Funcionário') : 'Supervisor/Gerente'}</p>
-                </div>
-            </div>
-        </div>
-    </body>
-    </html>
-  `;
-  
-  const printWindow = window.open('', '_blank');
-  if (printWindow) {
-    printWindow.document.write(htmlContent);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 250);
-  }
+  return { title, filename, headers, data: rows };
 };
 
-interface ReportFilters {
-  employeeId?: string;
-  categoryId?: string;
-  month?: string;
-  year?: string;
-  startDate?: string;
-  endDate?: string;
-  type?: string;
-}
-
 export default function Reports() {
-  const [employeeFilters, setEmployeeFilters] = useState<ReportFilters>({
-    year: '2025',
-  });
-  const [stockFilters, setStockFilters] = useState<ReportFilters>({});
-  const [movementFilters, setMovementFilters] = useState<ReportFilters>({});
-  const [consumptionFilters, setConsumptionFilters] = useState<ReportFilters>({});
-  
-  const [reportDialogOpen, setReportDialogOpen] = useState(false);
-  const [reportTitle, setReportTitle] = useState('');
+  const [selectedReport, setSelectedReport] = useState<ReportType | null>(null);
   const [reportData, setReportData] = useState<any[]>([]);
-  const [reportType, setReportType] = useState<'employee' | 'stock' | 'movements' | 'consumption'>('employee');
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [filters, setFilters] = useState({
+    employeeId: '',
+    month: '',
+    year: '',
+    categoryId: '',
+    startDate: '',
+    endDate: '',
+    type: ''
+  });
 
   const { data: employees } = useQuery({
-    queryKey: ['/api/employees?active=true'],
-    queryFn: async () => {
-      const res = await authenticatedRequest('/api/employees?active=true');
-      return res.json();
-    },
+    queryKey: ['/api/employees'],
   });
 
   const { data: categories } = useQuery({
     queryKey: ['/api/categories'],
-    queryFn: async () => {
-      const res = await authenticatedRequest('/api/categories');
-      return res.json();
-    },
   });
 
-  const generateEmployeeReport = async () => {
-    setIsGenerating(true);
+  const generateReport = async (reportType: ReportType) => {
+    setIsLoading(true);
     try {
-      const params = new URLSearchParams();
-      if (employeeFilters.employeeId && employeeFilters.employeeId !== 'all') params.append('employeeId', employeeFilters.employeeId);
-      if (employeeFilters.month) params.append('month', employeeFilters.month);
-      if (employeeFilters.year) params.append('year', employeeFilters.year);
+      const reportCard = reportCards.find(card => card.type === reportType);
+      if (!reportCard) return;
+
+      const queryParams = new URLSearchParams();
       
-      const res = await authenticatedRequest(`/api/reports/employee-movements?${params}`);
-      const data = await res.json();
+      // Adiciona filtros baseados no tipo de relatório
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) queryParams.append(key, value);
+      });
+
+      const response = await authenticatedRequest(`${reportCard.endpoint}?${queryParams}`);
+      const data = await response.json();
       
       setReportData(data);
-      setReportType('employee');
-      setReportTitle('Relatório de Movimentação por Funcionário');
-      setReportDialogOpen(true);
+      setSelectedReport(reportType);
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
     } finally {
-      setIsGenerating(false);
+      setIsLoading(false);
     }
   };
 
-  const generateStockReport = async () => {
-    setIsGenerating(true);
-    try {
-      const params = new URLSearchParams();
-      if (stockFilters.categoryId && stockFilters.categoryId !== 'all') params.append('categoryId', stockFilters.categoryId);
-      
-      const res = await authenticatedRequest(`/api/reports/stock?${params}`);
-      const data = await res.json();
-      
-      setReportData(data);
-      setReportType('stock');
-      setReportTitle('Relatório de Estoque Atual');
-      setReportDialogOpen(true);
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-    } finally {
-      setIsGenerating(false);
+  const handleExportPDF = () => {
+    if (!selectedReport || !reportData.length) return;
+    
+    const exportData = prepareExportData(reportData, selectedReport);
+    if (exportData) {
+      exportToPDF(exportData);
     }
   };
 
-  const generateMovementReport = async () => {
-    setIsGenerating(true);
-    try {
-      const params = new URLSearchParams();
-      if (movementFilters.startDate) params.append('startDate', movementFilters.startDate);
-      if (movementFilters.endDate) params.append('endDate', movementFilters.endDate);
-      if (movementFilters.type && movementFilters.type !== 'all') params.append('type', movementFilters.type);
-      
-      const res = await authenticatedRequest(`/api/reports/general-movements?${params}`);
-      const data = await res.json();
-      
-      setReportData(data);
-      setReportType('movements');
-      setReportTitle('Relatório de Movimentações Gerais');
-      setReportDialogOpen(true);
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-    } finally {
-      setIsGenerating(false);
+  const handleExportExcel = () => {
+    if (!selectedReport || !reportData.length) return;
+    
+    const exportData = prepareExportData(reportData, selectedReport);
+    if (exportData) {
+      exportToExcel(exportData);
     }
   };
-
-  const generateConsumptionReport = async () => {
-    setIsGenerating(true);
-    try {
-      const params = new URLSearchParams();
-      if (consumptionFilters.startDate) params.append('startDate', consumptionFilters.startDate);
-      if (consumptionFilters.endDate) params.append('endDate', consumptionFilters.endDate);
-      if (consumptionFilters.categoryId && consumptionFilters.categoryId !== 'all') params.append('categoryId', consumptionFilters.categoryId);
-      
-      const res = await authenticatedRequest(`/api/reports/material-consumption?${params}`);
-      const data = await res.json();
-      
-      setReportData(data);
-      setReportType('consumption');
-      setReportTitle('Relatório de Consumo por Material');
-      setReportDialogOpen(true);
-    } catch (error) {
-      console.error('Erro ao gerar relatório:', error);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const monthOptions = [
-    { value: '1', label: 'Janeiro' },
-    { value: '2', label: 'Fevereiro' },
-    { value: '3', label: 'Março' },
-    { value: '4', label: 'Abril' },
-    { value: '5', label: 'Maio' },
-    { value: '6', label: 'Junho' },
-    { value: '7', label: 'Julho' },
-    { value: '8', label: 'Agosto' },
-    { value: '9', label: 'Setembro' },
-    { value: '10', label: 'Outubro' },
-    { value: '11', label: 'Novembro' },
-    { value: '12', label: 'Dezembro' },
-  ];
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {/* Employee Reports */}
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">Relatórios</h1>
+      </div>
+
+      {/* Report Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {reportCards.map((card) => {
+          const Icon = card.icon;
+          return (
+            <Card key={card.type} className="cursor-pointer hover:shadow-md transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <Icon className="h-8 w-8 text-blue-500" />
+                  <Button
+                    size="sm"
+                    onClick={() => generateReport(card.type)}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+                <CardTitle className="text-lg">{card.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">{card.description}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+
+      {/* Filters Section */}
       <Card>
         <CardHeader>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-blue-50 rounded">
-              <User className="w-4 h-4 text-primary" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-medium text-gray-900">Por Funcionário</CardTitle>
-              <p className="text-sm text-gray-600">Histórico de saídas e devoluções</p>
-            </div>
-          </div>
+          <CardTitle>Filtros</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Funcionário</label>
-            <Select 
-              value={employeeFilters.employeeId} 
-              onValueChange={(value) => setEmployeeFilters(prev => ({ ...prev, employeeId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os funcionários" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os funcionários</SelectItem>
-                {employees?.map((employee: any) => (
-                  <SelectItem key={employee.id} value={employee.id.toString()}>
-                    {employee.name} - {employee.department}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mês</label>
-              <Select 
-                value={employeeFilters.month} 
-                onValueChange={(value) => setEmployeeFilters(prev => ({ ...prev, month: value }))}
-              >
+              <label className="text-sm font-medium">Funcionário</label>
+              <Select value={filters.employeeId} onValueChange={(value) => setFilters({...filters, employeeId: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o mês" />
+                  <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  {monthOptions.map((month) => (
-                    <SelectItem key={month.value} value={month.value}>
-                      {month.label}
+                  <SelectItem value="">Todos</SelectItem>
+                  {employees?.map((employee: any) => (
+                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                      {employee.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
+
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Ano</label>
-              <Select 
-                value={employeeFilters.year} 
-                onValueChange={(value) => setEmployeeFilters(prev => ({ ...prev, year: value }))}
-              >
+              <label className="text-sm font-medium">Categoria</label>
+              <Select value={filters.categoryId} onValueChange={(value) => setFilters({...filters, categoryId: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o ano" />
+                  <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2023">2023</SelectItem>
-                  <SelectItem value="2022">2022</SelectItem>
+                  <SelectItem value="">Todas</SelectItem>
+                  {categories?.map((category: any) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Data Início</label>
+              <Input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => setFilters({...filters, startDate: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Data Fim</label>
+              <Input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => setFilters({...filters, endDate: e.target.value})}
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium">Tipo</label>
+              <Select value={filters.type} onValueChange={(value) => setFilters({...filters, type: value})}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="entry">Entrada</SelectItem>
+                  <SelectItem value="exit">Saída</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-
-          <div className="flex space-x-3 pt-4">
-            <Button 
-              onClick={generateEmployeeReport}
-              disabled={isGenerating}
-              className="flex-1 bg-primary hover:bg-primary/90"
-            >
-              {isGenerating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
-              {isGenerating ? 'Gerando...' : 'Visualizar'}
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => exportToPDF(reportData, 'relatorio-funcionario', 'employee')}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              PDF
-            </Button>
-          </div>
         </CardContent>
       </Card>
 
-      {/* Current Stock Reports */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-green-50 rounded">
-              <Package className="w-4 h-4 text-green-500" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-medium text-gray-900">Estoque Atual</CardTitle>
-              <p className="text-sm text-gray-600">Lista completa de materiais</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
-            <Select 
-              value={stockFilters.categoryId} 
-              onValueChange={(value) => setStockFilters(prev => ({ ...prev, categoryId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todas as categorias" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {categories?.map((category: any) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex space-x-3 pt-16">
-            <Button 
-              onClick={generateStockReport}
-              className="flex-1 bg-primary hover:bg-primary/90"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => exportToPDF(reportData, 'relatorio-estoque', 'stock')}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              PDF
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => exportToCSV(reportData, 'relatorio-estoque', 'stock')}
-            >
-              <Download className="w-4 h-4 mr-2" />
-              CSV
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* General Movements Reports */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-yellow-50 rounded">
-              <ArrowRightLeft className="w-4 h-4 text-yellow-600" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-medium text-gray-900">Movimentações Gerais</CardTitle>
-              <p className="text-sm text-gray-600">Log de entradas e saídas</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Inicial</label>
-              <Input 
-                type="date" 
-                value={movementFilters.startDate || ''}
-                onChange={(e) => setMovementFilters(prev => ({ ...prev, startDate: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Final</label>
-              <Input 
-                type="date" 
-                value={movementFilters.endDate || ''}
-                onChange={(e) => setMovementFilters(prev => ({ ...prev, endDate: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Tipo</label>
-            <Select 
-              value={movementFilters.type} 
-              onValueChange={(value) => setMovementFilters(prev => ({ ...prev, type: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os tipos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                <SelectItem value="entry">Entrada</SelectItem>
-                <SelectItem value="exit">Saída</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <Button 
-              onClick={generateMovementReport}
-              className="flex-1 bg-primary hover:bg-primary/90"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
-            </Button>
-            <Button variant="outline">
-              <FileText className="w-4 h-4 mr-2" />
-              PDF
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              CSV
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Material Consumption Reports */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center space-x-3">
-            <div className="flex items-center justify-center w-8 h-8 bg-red-50 rounded">
-              <BarChart3 className="w-4 h-4 text-red-500" />
-            </div>
-            <div>
-              <CardTitle className="text-lg font-medium text-gray-900">Consumo por Material</CardTitle>
-              <p className="text-sm text-gray-600">Total de saídas por período</p>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Inicial</label>
-              <Input 
-                type="date" 
-                value={consumptionFilters.startDate || ''}
-                onChange={(e) => setConsumptionFilters(prev => ({ ...prev, startDate: e.target.value }))}
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Data Final</label>
-              <Input 
-                type="date" 
-                value={consumptionFilters.endDate || ''}
-                onChange={(e) => setConsumptionFilters(prev => ({ ...prev, endDate: e.target.value }))}
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
-            <Select 
-              value={consumptionFilters.categoryId} 
-              onValueChange={(value) => setConsumptionFilters(prev => ({ ...prev, categoryId: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Todas as categorias" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas as categorias</SelectItem>
-                {categories?.map((category: any) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <Button 
-              onClick={generateConsumptionReport}
-              className="flex-1 bg-primary hover:bg-primary/90"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              Visualizar
-            </Button>
-            <Button variant="outline">
-              <FileText className="w-4 h-4 mr-2" />
-              PDF
-            </Button>
-            <Button variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              CSV
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Modal de Relatórios */}
-      <Dialog open={reportDialogOpen} onOpenChange={setReportDialogOpen}>
-        <DialogContent className="max-w-6xl max-h-[80vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              {reportTitle}
-            </DialogTitle>
-          </DialogHeader>
-          
-          <div className="mt-4">
-            {reportData.length === 0 ? (
-              <div className="text-center py-8">
-                <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-500">Nenhum dado encontrado para os filtros selecionados</p>
+      {/* Report Results */}
+      {selectedReport && reportData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                {reportCards.find(card => card.type === selectedReport)?.title}
+              </CardTitle>
+              <div className="flex gap-2">
+                <Button onClick={handleExportPDF} variant="outline" size="sm">
+                  <FileText className="h-4 w-4 mr-2" />
+                  PDF
+                </Button>
+                <Button onClick={handleExportExcel} variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Excel
+                </Button>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {reportType === 'stock' && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Material</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead>Estoque Atual</TableHead>
-                        <TableHead>Estoque Mínimo</TableHead>
-                        <TableHead>Unidade</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reportData.map((item: any, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{item.material?.name || item.name}</TableCell>
-                          <TableCell>{item.category?.name || item.categoryName}</TableCell>
-                          <TableCell>{item.material?.currentStock || item.current_stock}</TableCell>
-                          <TableCell>{item.material?.minimumStock || item.minimum_stock}</TableCell>
-                          <TableCell>{item.material?.unit || item.unit}</TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={(item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? "destructive" : "secondary"}
-                            >
-                              {(item.material?.currentStock || item.current_stock) <= (item.material?.minimumStock || item.minimum_stock) ? "Baixo" : "Normal"}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-
-                {reportType === 'employee' && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {selectedReport === 'employee' && (
+                      <>
                         <TableHead>Data</TableHead>
                         <TableHead>Funcionário</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Material</TableHead>
                         <TableHead>Quantidade</TableHead>
                         <TableHead>Observações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reportData.map((item: any, index) => (
-                        <TableRow key={index}>
-                          <TableCell>
-                            {(item.movement?.date || item.date) && !isNaN(new Date(item.movement?.date || item.date).getTime()) 
-                              ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
-                              : '-'
-                            }
-                          </TableCell>
-                          <TableCell>{item.employee?.name || item.employeeName || '-'}</TableCell>
-                          <TableCell>
-                            <Badge variant={(item.movement?.type || item.type) === 'entry' ? "secondary" : "outline"}>
-                              {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{item.material?.name || item.materialName || '-'}</TableCell>
-                          <TableCell>{item.items?.quantity || item.quantity || 0} {item.material?.unit || item.unit || ''}</TableCell>
-                          <TableCell>{item.movement?.notes || item.notes || '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-
-                {reportType === 'movements' && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
+                      </>
+                    )}
+                    {selectedReport === 'stock' && (
+                      <>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Estoque Atual</TableHead>
+                        <TableHead>Estoque Mínimo</TableHead>
+                        <TableHead>Unidade</TableHead>
+                        <TableHead>Status</TableHead>
+                      </>
+                    )}
+                    {selectedReport === 'general' && (
+                      <>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
                         <TableHead>Origem/Destino</TableHead>
                         <TableHead>Materiais</TableHead>
                         <TableHead>Responsável</TableHead>
                         <TableHead>Observações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reportData.map((item: any, index) => (
-                        <TableRow key={index}>
+                      </>
+                    )}
+                    {selectedReport === 'consumption' && (
+                      <>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Quantidade Consumida</TableHead>
+                        <TableHead>Unidade</TableHead>
+                        <TableHead>Período</TableHead>
+                      </>
+                    )}
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData.map((item, index) => (
+                    <TableRow key={index}>
+                      {selectedReport === 'employee' && (
+                        <>
+                          <TableCell>{formatDate(item.movement?.date || item.date)}</TableCell>
+                          <TableCell>{item.employee?.name || item.employeeName || '-'}</TableCell>
                           <TableCell>
-                            {(item.movement?.date || item.date) && !isNaN(new Date(item.movement?.date || item.date).getTime()) 
-                              ? format(new Date(item.movement?.date || item.date), 'dd/MM/yyyy HH:mm', { locale: ptBR })
-                              : '-'
-                            }
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={(item.movement?.type || item.type) === 'entry' ? "secondary" : "outline"}>
+                            <Badge variant={(item.movement?.type || item.type) === 'entry' ? 'default' : 'secondary'}>
                               {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {(item.movement?.type || item.type) === 'entry' ? (
-                                <Building2 className="w-4 h-4 text-green-500" />
-                              ) : (
-                                <User className="w-4 h-4 text-blue-500" />
-                              )}
-                              {item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || 
-                               item.companyName || item.employeeName || item.thirdPartyName || '-'}
-                            </div>
-                          </TableCell>
-                          <TableCell>{item.totalItems || 0} itens</TableCell>
-                          <TableCell>{item.user?.name || item.userName || '-'}</TableCell>
+                          <TableCell>{item.material?.name || item.materialName || '-'}</TableCell>
+                          <TableCell>{item.quantity || 0} {item.material?.unit || item.unit || ''}</TableCell>
                           <TableCell>{item.movement?.notes || item.notes || '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-
-                {reportType === 'consumption' && (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Material</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead>Total Consumido</TableHead>
-                        <TableHead>Unidade</TableHead>
-                        <TableHead>Última Saída</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {reportData.map((item: any, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="font-medium">{item.material?.name || item.materialName}</TableCell>
-                          <TableCell>{item.category?.name || item.categoryName}</TableCell>
-                          <TableCell className="font-bold">{item.totalConsumed || 0}</TableCell>
-                          <TableCell>{item.material?.unit || item.unit}</TableCell>
+                        </>
+                      )}
+                      {selectedReport === 'stock' && (
+                        <>
+                          <TableCell>{item.name || item.material?.name}</TableCell>
+                          <TableCell>{item.category || item.categoryName}</TableCell>
+                          <TableCell>{item.currentStock || item.current_stock || 0}</TableCell>
+                          <TableCell>{item.minimumStock || item.minimum_stock || 0}</TableCell>
+                          <TableCell>{item.unit || item.material?.unit || ''}</TableCell>
                           <TableCell>
-                            {item.lastExit && !isNaN(new Date(item.lastExit).getTime())
-                              ? format(new Date(item.lastExit), 'dd/MM/yyyy', { locale: ptBR })
-                              : '-'
-                            }
+                            <Badge variant={(item.currentStock || 0) <= (item.minimumStock || 0) ? 'destructive' : 'default'}>
+                              {(item.currentStock || 0) <= (item.minimumStock || 0) ? 'Crítico' : 'Normal'}
+                            </Badge>
                           </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                )}
-
-                <div className="flex justify-between items-center pt-4 border-t">
-                  <p className="text-sm text-gray-600">
-                    Total de registros: {reportData.length}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => exportToCSV(reportData, 'relatorio-funcionario', 'employee')}
-                    >
-                      <Download className="w-4 h-4 mr-2" />
-                      Exportar CSV
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => exportToPDF(reportData, 'relatorio-funcionario', 'employee')}
-                    >
-                      <FileText className="w-4 h-4 mr-2" />
-                      Gerar PDF
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+                        </>
+                      )}
+                      {selectedReport === 'general' && (
+                        <>
+                          <TableCell>{formatDate(item.date)}</TableCell>
+                          <TableCell>
+                            <Badge variant={item.type === 'entry' ? 'default' : 'secondary'}>
+                              {item.type === 'entry' ? 'Entrada' : 'Saída'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{item.supplier || item.employee || item.thirdParty || '-'}</TableCell>
+                          <TableCell>{item.totalItems || 0} itens</TableCell>
+                          <TableCell>{item.user || '-'}</TableCell>
+                          <TableCell>{item.notes || '-'}</TableCell>
+                        </>
+                      )}
+                      {selectedReport === 'consumption' && (
+                        <>
+                          <TableCell>{item.materialName || '-'}</TableCell>
+                          <TableCell>{item.categoryName || '-'}</TableCell>
+                          <TableCell>{item.totalQuantity || 0}</TableCell>
+                          <TableCell>{item.unit || ''}</TableCell>
+                          <TableCell>{formatDate(item.startDate)} - {formatDate(item.endDate)}</TableCell>
+                        </>
+                      )}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

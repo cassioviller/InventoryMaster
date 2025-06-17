@@ -26,11 +26,11 @@ export default function Reports() {
   const [reportData, setReportData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState({
-    employeeId: '',
-    categoryId: '',
+    employeeId: 'all',
+    categoryId: 'all',
     startDate: '',
     endDate: '',
-    type: ''
+    type: 'all'
   });
 
   const { data: employees = [] } = useQuery({
@@ -55,7 +55,7 @@ export default function Reports() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.employeeId && filters.employeeId !== '') {
+      if (filters.employeeId && filters.employeeId !== 'all') {
         params.append('employeeId', filters.employeeId);
       }
       if (filters.startDate) params.append('startDate', filters.startDate);
@@ -63,7 +63,6 @@ export default function Reports() {
 
       const response = await authenticatedRequest(`/api/reports/employee-movement?${params}`);
       const data = await response.json();
-      console.log('Employee report data:', data);
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('employee');
     } catch (error) {
@@ -78,7 +77,9 @@ export default function Reports() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.categoryId) params.append('categoryId', filters.categoryId);
+      if (filters.categoryId && filters.categoryId !== 'all') {
+        params.append('categoryId', filters.categoryId);
+      }
 
       const response = await authenticatedRequest(`/api/reports/stock?${params}`);
       const data = await response.json();
@@ -98,7 +99,9 @@ export default function Reports() {
       const params = new URLSearchParams();
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
-      if (filters.type) params.append('type', filters.type);
+      if (filters.type && filters.type !== 'all') {
+        params.append('type', filters.type);
+      }
 
       const response = await authenticatedRequest(`/api/reports/general-movements?${params}`);
       const data = await response.json();
@@ -118,7 +121,9 @@ export default function Reports() {
       const params = new URLSearchParams();
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
-      if (filters.categoryId) params.append('categoryId', filters.categoryId);
+      if (filters.categoryId && filters.categoryId !== 'all') {
+        params.append('categoryId', filters.categoryId);
+      }
 
       const response = await authenticatedRequest(`/api/reports/material-consumption?${params}`);
       const data = await response.json();
@@ -262,11 +267,11 @@ export default function Reports() {
 
   const clearFilters = () => {
     setFilters({
-      employeeId: '',
-      categoryId: '',
+      employeeId: 'all',
+      categoryId: 'all',
       startDate: '',
       endDate: '',
-      type: ''
+      type: 'all'
     });
     setReportData([]);
     setActiveReport(null);
@@ -386,7 +391,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os funcionários" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os funcionários</SelectItem>
+                  <SelectItem value="all">Todos os funcionários</SelectItem>
                   {((employees as any) || []).map((employee: any) => (
                     <SelectItem key={employee.id} value={employee.id.toString()}>
                       {employee.name}
@@ -403,7 +408,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
                   {((categories as any) || []).map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -438,7 +443,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="entry">Entrada</SelectItem>
                   <SelectItem value="exit">Saída</SelectItem>
                 </SelectContent>

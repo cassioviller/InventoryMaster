@@ -251,7 +251,7 @@ export default function Reports() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos</SelectItem>
-                  {(employees as any[])?.map((employee: any) => (
+                  {((employees as any) || []).map((employee: any) => (
                     <SelectItem key={employee.id} value={employee.id.toString()}>
                       {employee.name}
                     </SelectItem>
@@ -268,7 +268,7 @@ export default function Reports() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
-                  {categories.map((category: any) => (
+                  {((categories as any) || []).map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>

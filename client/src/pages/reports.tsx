@@ -435,9 +435,10 @@ export default function Reports() {
               <label className="text-sm font-medium mb-1 block">Tipo</label>
               <Select value={filters.type} onValueChange={(value) => setFilters({...filters, type: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar tipo" />
+                  <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Todos os tipos</SelectItem>
                   <SelectItem value="entry">Entrada</SelectItem>
                   <SelectItem value="exit">Saída</SelectItem>
                 </SelectContent>

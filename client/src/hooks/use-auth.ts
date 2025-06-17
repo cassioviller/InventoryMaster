@@ -75,7 +75,7 @@ export function useAuth(): AuthContextType {
     login,
     logout,
     isAuthenticated: !!user,
-    canCreateUsers: user?.username === 'axiomtech',
+    canCreateUsers: user?.role === 'super_admin',
     isSuperAdmin: user?.role === 'super_admin',
   };
 }

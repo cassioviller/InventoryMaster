@@ -17,6 +17,7 @@ interface MaterialItem {
   materialId: number;
   materialName: string;
   quantity: number;
+  unitPrice: number;
 }
 
 export default function MaterialEntry() {
@@ -25,6 +26,7 @@ export default function MaterialEntry() {
   const [addedItems, setAddedItems] = useState<MaterialItem[]>([]);
   const [selectedMaterial, setSelectedMaterial] = useState('');
   const [quantity, setQuantity] = useState('');
+  const [unitPrice, setUnitPrice] = useState('');
 
   const form = useForm<Omit<CreateEntryData, 'items'>>({
     resolver: zodResolver(createEntrySchema.omit({ items: true })),
@@ -98,10 +100,10 @@ export default function MaterialEntry() {
   const originType = form.watch('originType');
 
   const addMaterial = () => {
-    if (!selectedMaterial || !quantity || parseInt(quantity) <= 0) {
+    if (!selectedMaterial || !quantity || parseInt(quantity) <= 0 || !unitPrice || parseFloat(unitPrice) <= 0) {
       toast({
         title: "Dados inválidos",
-        description: "Selecione um material e informe uma quantidade válida.",
+        description: "Selecione um material e informe uma quantidade e valor unitário válidos.",
         variant: "destructive",
       });
       return;
@@ -115,17 +117,21 @@ export default function MaterialEntry() {
     if (existingItemIndex >= 0) {
       const updatedItems = [...addedItems];
       updatedItems[existingItemIndex].quantity += parseInt(quantity);
+      // Atualiza o preço unitário para o mais recente
+      updatedItems[existingItemIndex].unitPrice = parseFloat(unitPrice);
       setAddedItems(updatedItems);
     } else {
       setAddedItems([...addedItems, {
         materialId: parseInt(selectedMaterial),
         materialName: material.name,
         quantity: parseInt(quantity),
+        unitPrice: parseFloat(unitPrice),
       }]);
     }
 
     setSelectedMaterial('');
     setQuantity('');
+    setUnitPrice('');
   };
 
   const removeItem = (index: number) => {
@@ -293,7 +299,7 @@ export default function MaterialEntry() {
             {/* Material Selection */}
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Materiais</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
                   <Select value={selectedMaterial} onValueChange={setSelectedMaterial}>
@@ -319,6 +325,17 @@ export default function MaterialEntry() {
                     onChange={(e) => setQuantity(e.target.value)}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Valor Unitário (R$)</label>
+                  <Input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="0.00"
+                    value={unitPrice}
+                    onChange={(e) => setUnitPrice(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="mt-4">
                 <Button type="button" onClick={addMaterial} className="bg-green-500 hover:bg-green-600">
@@ -336,11 +353,19 @@ export default function MaterialEntry() {
                   <div className="space-y-3">
                     {addedItems.map((item, index) => (
                       <div key={index} className="flex items-center justify-between bg-white p-3 rounded border">
-                        <div>
+                        <div className="flex-1">
                           <span className="font-medium text-gray-900">{item.materialName}</span>
-                          <Badge variant="secondary" className="ml-2">
-                            Quantidade: {item.quantity}
-                          </Badge>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="secondary">
+                              Qtd: {item.quantity}
+                            </Badge>
+                            <Badge variant="outline">
+                              R$ {item.unitPrice.toFixed(2)}/un
+                            </Badge>
+                            <Badge variant="default">
+                              Total: R$ {(item.quantity * item.unitPrice).toFixed(2)}
+                            </Badge>
+                          </div>
                         </div>
                         <Button
                           type="button"
@@ -353,6 +378,15 @@ export default function MaterialEntry() {
                         </Button>
                       </div>
                     ))}
+                  </div>
+                  {/* Total Summary */}
+                  <div className="mt-4 pt-4 border-t border-gray-300">
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold text-gray-900">Total Geral:</span>
+                      <span className="text-xl font-bold text-green-600">
+                        R$ {addedItems.reduce((total, item) => total + (item.quantity * item.unitPrice), 0).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

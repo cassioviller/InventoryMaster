@@ -55,12 +55,15 @@ export default function Reports() {
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
-      if (filters.employeeId) params.append('employeeId', filters.employeeId);
+      if (filters.employeeId && filters.employeeId !== '') {
+        params.append('employeeId', filters.employeeId);
+      }
       if (filters.startDate) params.append('startDate', filters.startDate);
       if (filters.endDate) params.append('endDate', filters.endDate);
 
       const response = await authenticatedRequest(`/api/reports/employee-movement?${params}`);
       const data = await response.json();
+      console.log('Employee report data:', data);
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('employee');
     } catch (error) {
@@ -281,14 +284,14 @@ export default function Reports() {
 
       {/* Report Generation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
+        <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <User className="h-5 w-5 text-blue-500" />
               <CardTitle className="text-lg">Movimentação por Funcionário</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 flex items-end">
             <Button 
               onClick={generateEmployeeReport} 
               disabled={isLoading}
@@ -302,14 +305,14 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <Package className="h-5 w-5 text-green-500" />
               <CardTitle className="text-lg">Relatório de Estoque</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 flex items-end">
             <Button 
               onClick={generateStockReport} 
               disabled={isLoading}
@@ -323,14 +326,14 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <ArrowRightLeft className="h-5 w-5 text-orange-500" />
               <CardTitle className="text-lg">Movimentações Gerais</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 flex items-end">
             <Button 
               onClick={generateMovementsReport} 
               disabled={isLoading}
@@ -344,14 +347,14 @@ export default function Reports() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5 text-purple-500" />
               <CardTitle className="text-lg">Consumo de Materiais</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex-1 flex items-end">
             <Button 
               onClick={generateConsumptionReport} 
               disabled={isLoading}
@@ -380,9 +383,10 @@ export default function Reports() {
               <label className="text-sm font-medium mb-1 block">Funcionário</label>
               <Select value={filters.employeeId} onValueChange={(value) => setFilters({...filters, employeeId: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar funcionário" />
+                  <SelectValue placeholder="Todos os funcionários" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Todos os funcionários</SelectItem>
                   {((employees as any) || []).map((employee: any) => (
                     <SelectItem key={employee.id} value={employee.id.toString()}>
                       {employee.name}
@@ -396,9 +400,10 @@ export default function Reports() {
               <label className="text-sm font-medium mb-1 block">Categoria</label>
               <Select value={filters.categoryId} onValueChange={(value) => setFilters({...filters, categoryId: value})}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar categoria" />
+                  <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="">Todas as categorias</SelectItem>
                   {((categories as any) || []).map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}

@@ -886,7 +886,32 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Reports
-  async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number): Promise<any[]> {
+  async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number): Promise<any[]> {
+    // Query simplificada que busca todas as movimentações com funcionários
+    let query = db
+      .select({
+        movement: materialMovements,
+        employee: employees,
+        material: materials,
+        items: movementItems,
+        quantity: movementItems.quantity,
+        employeeName: employees.name,
+        materialName: materials.name,
+        unit: materials.unit,
+        date: materialMovements.date,
+        type: materialMovements.type,
+        notes: materialMovements.notes
+      })
+      .from(materialMovements)
+      .innerJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
+      .innerJoin(materials, eq(movementItems.materialId, materials.id))
+      .leftJoin(employees, 
+        or(
+          eq(materialMovements.returnEmployeeId, employees.id),
+          eq(materialMovements.destinationEmployeeId, employees.id)
+        )
+      );
+
     const conditions = [];
 
     if (employeeId) {
@@ -908,23 +933,6 @@ export class DatabaseStorage implements IStorage {
         )
       );
     }
-
-    let query = db
-      .select({
-        movement: materialMovements,
-        employee: employees,
-        material: materials,
-        items: movementItems,
-      })
-      .from(materialMovements)
-      .leftJoin(employees, 
-        or(
-          eq(materialMovements.returnEmployeeId, employees.id),
-          eq(materialMovements.destinationEmployeeId, employees.id)
-        )
-      )
-      .leftJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
-      .leftJoin(materials, eq(movementItems.materialId, materials.id));
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;

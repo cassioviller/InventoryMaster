@@ -75,7 +75,13 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function formatDate(date: string | Date): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateObj.toLocaleDateString('pt-BR');
+export function formatDate(date: string | Date | null | undefined): string {
+  if (!date) return '-';
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return '-';
+    return dateObj.toLocaleDateString('pt-BR');
+  } catch {
+    return '-';
+  }
 }

@@ -41,7 +41,6 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
     defaultValues: {
       name: '',
       categoryId: 0,
-      currentStock: 0,
       minimumStock: 0,
       unit: 'unidade',
       description: '',
@@ -111,7 +110,6 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
       form.reset({
         name: material.name,
         categoryId: material.categoryId,
-        currentStock: material.currentStock,
         minimumStock: material.minimumStock,
         unit: material.unit || 'unidade',
         description: material.description || '',
@@ -120,7 +118,6 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
       form.reset({
         name: '',
         categoryId: 0,
-        currentStock: 0,
         minimumStock: 0,
         unit: 'unidade',
         description: '',
@@ -196,45 +193,24 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="currentStock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estoque Atual</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="minimumStock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estoque Mínimo *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="minimumStock"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Estoque Mínimo *</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      min="0" 
+                      {...field}
+                      onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}

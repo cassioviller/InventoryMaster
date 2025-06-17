@@ -304,7 +304,10 @@ export class DatabaseStorage implements IStorage {
   async createMaterial(material: InsertMaterial): Promise<Material> {
     const [newMaterial] = await db
       .insert(materials)
-      .values(material)
+      .values({
+        ...material,
+        currentStock: 0 // Sempre inicia com estoque 0
+      })
       .returning();
     return newMaterial;
   }

@@ -166,7 +166,7 @@ export default function Reports() {
       
       // Adiciona filtros baseados no tipo de relatório
       Object.entries(filters).forEach(([key, value]) => {
-        if (value) queryParams.append(key, value);
+        if (value && value !== 'all') queryParams.append(key, value);
       });
 
       const response = await authenticatedRequest(`${reportCard.endpoint}?${queryParams}`);
@@ -250,8 +250,8 @@ export default function Reports() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
-                  {employees?.map((employee: any) => (
+                  <SelectItem value="all">Todos</SelectItem>
+                  {(employees as any[])?.map((employee: any) => (
                     <SelectItem key={employee.id} value={employee.id.toString()}>
                       {employee.name}
                     </SelectItem>
@@ -267,8 +267,8 @@ export default function Reports() {
                   <SelectValue placeholder="Todas" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas</SelectItem>
-                  {categories?.map((category: any) => (
+                  <SelectItem value="all">Todas</SelectItem>
+                  {categories.map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
                     </SelectItem>
@@ -302,7 +302,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos</SelectItem>
+                  <SelectItem value="all">Todos</SelectItem>
                   <SelectItem value="entry">Entrada</SelectItem>
                   <SelectItem value="exit">Saída</SelectItem>
                 </SelectContent>

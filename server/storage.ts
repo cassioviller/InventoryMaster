@@ -1057,6 +1057,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(materials.categoryId, categoryId));
     }
 
+    if (ownerId) {
+      conditions.push(eq(materialMovements.userId, ownerId));
+    }
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }

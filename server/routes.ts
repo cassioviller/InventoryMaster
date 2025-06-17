@@ -733,7 +733,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reports routes
-  app.get("/api/reports/employee-movements", authenticateToken, async (req, res) => {
+  app.get("/api/reports/employee-movement", authenticateToken, async (req, res) => {
     try {
       const { employeeId, month, year } = req.query;
       const report = await storage.getEmployeeMovementReport(

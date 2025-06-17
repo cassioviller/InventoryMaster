@@ -776,10 +776,13 @@ export class DatabaseStorage implements IStorage {
           unitPrice: unitPrice.toString(),
         });
 
-        // Update material stock
+        // Update material stock and unit price
         await tx
           .update(materials)
-          .set({ currentStock: sql`${materials.currentStock} + ${item.quantity}` })
+          .set({ 
+            currentStock: sql`${materials.currentStock} + ${item.quantity}`,
+            unitPrice: unitPrice.toString() // Atualiza o preço unitário do material
+          })
           .where(eq(materials.id, item.materialId));
       }
 

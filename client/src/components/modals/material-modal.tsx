@@ -219,7 +219,7 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
                 <FormItem>
                   <FormLabel>Unidade</FormLabel>
                   <FormControl>
-                    <Input placeholder="unidade" {...field} />
+                    <Input placeholder="unidade" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -236,6 +236,7 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
                     <Textarea 
                       placeholder="Descrição opcional do material"
                       {...field}
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage />

@@ -733,13 +733,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reports routes
-  app.get("/api/reports/employee-movement", authenticateToken, async (req, res) => {
+  app.get("/api/reports/employee-movement", authenticateToken, async (req: any, res) => {
     try {
       const { employeeId, month, year } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const report = await storage.getEmployeeMovementReport(
         employeeId ? parseInt(employeeId as string) : undefined,
         month ? parseInt(month as string) : undefined,
-        year ? parseInt(year as string) : undefined
+        year ? parseInt(year as string) : undefined,
+        ownerId
       );
       res.json(report);
     } catch (error) {
@@ -747,11 +749,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reports/stock", authenticateToken, async (req, res) => {
+  app.get("/api/reports/stock", authenticateToken, async (req: any, res) => {
     try {
       const { categoryId } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const report = await storage.getStockReport(
-        categoryId ? parseInt(categoryId as string) : undefined
+        categoryId ? parseInt(categoryId as string) : undefined,
+        ownerId
       );
       res.json(report);
     } catch (error) {
@@ -759,13 +763,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reports/general-movements", authenticateToken, async (req, res) => {
+  app.get("/api/reports/general-movements", authenticateToken, async (req: any, res) => {
     try {
       const { startDate, endDate, type } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const report = await storage.getGeneralMovementsReport(
         startDate ? new Date(startDate as string) : undefined,
         endDate ? new Date(endDate as string) : undefined,
-        type as 'entry' | 'exit' | undefined
+        type as 'entry' | 'exit' | undefined,
+        ownerId
       );
       res.json(report);
     } catch (error) {
@@ -773,13 +779,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reports/material-consumption", authenticateToken, async (req, res) => {
+  app.get("/api/reports/material-consumption", authenticateToken, async (req: any, res) => {
     try {
       const { startDate, endDate, categoryId } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const report = await storage.getMaterialConsumptionReport(
         startDate ? new Date(startDate as string) : undefined,
         endDate ? new Date(endDate as string) : undefined,
-        categoryId ? parseInt(categoryId as string) : undefined
+        categoryId ? parseInt(categoryId as string) : undefined,
+        ownerId
       );
       res.json(report);
     } catch (error) {

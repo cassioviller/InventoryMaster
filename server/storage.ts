@@ -941,7 +941,7 @@ export class DatabaseStorage implements IStorage {
     return await baseQuery.orderBy(desc(materialMovements.date));
   }
 
-  async getStockReport(categoryId?: number): Promise<any[]> {
+  async getStockReport(categoryId?: number, ownerId?: number): Promise<any[]> {
     let query = db
       .select({
         name: materials.name,
@@ -953,14 +953,24 @@ export class DatabaseStorage implements IStorage {
       .from(materials)
       .leftJoin(categories, eq(materials.categoryId, categories.id));
 
+    const conditions = [];
+    
     if (categoryId) {
-      query = query.where(eq(materials.categoryId, categoryId)) as any;
+      conditions.push(eq(materials.categoryId, categoryId));
+    }
+
+    if (ownerId) {
+      conditions.push(eq(materials.ownerId, ownerId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
     }
 
     return await query.orderBy(asc(materials.name));
   }
 
-  async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit'): Promise<any[]> {
+  async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]> {
     let query = db
       .select({
         movement: materialMovements,
@@ -1004,6 +1014,10 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(materialMovements.type, type));
     }
 
+    if (ownerId) {
+      conditions.push(eq(materialMovements.userId, ownerId));
+    }
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
@@ -1011,7 +1025,7 @@ export class DatabaseStorage implements IStorage {
     return await query.orderBy(desc(materialMovements.date));
   }
 
-  async getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number): Promise<any[]> {
+  async getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]> {
     let query = db
       .select({
         material: materials,

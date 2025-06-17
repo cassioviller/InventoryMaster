@@ -153,6 +153,7 @@ export default function MaterialEntry() {
       items: addedItems.map(item => ({
         materialId: item.materialId,
         quantity: item.quantity,
+        unitPrice: item.unitPrice,
       })),
     };
 

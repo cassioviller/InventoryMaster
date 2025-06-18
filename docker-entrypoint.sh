@@ -15,6 +15,13 @@ wait_for_db() {
   
   echo "DATABASE_URL: $DATABASE_URL"
   
+  # Validar formato da DATABASE_URL
+  if echo "$DATABASE_URL" | grep -q "localhost"; then
+    echo "⚠️ ATENÇÃO: DATABASE_URL contém 'localhost' - isso não funcionará no EasyPanel!"
+    echo "Configure a DATABASE_URL com o hostname interno do PostgreSQL"
+    echo "Exemplo: postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable"
+  fi
+  
   # Extrair componentes da DATABASE_URL usando regex mais robusto
   DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\):.*/\1/p')
   DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')

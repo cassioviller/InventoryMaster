@@ -220,6 +220,22 @@ export default function Reports() {
           item.material?.unit || item.unit || ''
         ]);
         break;
+      case 'financial':
+        title = 'Relatório Financeiro de Estoque';
+        filename = `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`;
+        headers = ['Material', 'Categoria', 'Estoque', 'Preço Unit.', 'Subtotal'];
+        const totalValue = reportData.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+        rows = [
+          ...reportData.map(item => [
+            item.name || '-',
+            item.category || '-',
+            `${item.currentStock || 0} ${item.unit || ''}`,
+            `R$ ${(item.unitPrice || 0).toFixed(2)}`,
+            `R$ ${(item.subtotal || 0).toFixed(2)}`
+          ]),
+          ['', '', '', 'TOTAL GERAL:', `R$ ${totalValue.toFixed(2)}`]
+        ];
+        break;
     }
 
     exportToPDF({ title, filename, headers, data: rows });
@@ -283,6 +299,22 @@ export default function Reports() {
           item.totalConsumed || 0,
           item.material?.unit || item.unit || ''
         ]);
+        break;
+      case 'financial':
+        title = 'Relatório Financeiro de Estoque';
+        filename = `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`;
+        headers = ['Material', 'Categoria', 'Estoque', 'Preço Unit.', 'Subtotal'];
+        const totalValueExcel = reportData.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+        rows = [
+          ...reportData.map(item => [
+            item.name || '-',
+            item.category || '-',
+            `${item.currentStock || 0} ${item.unit || ''}`,
+            `R$ ${(item.unitPrice || 0).toFixed(2)}`,
+            `R$ ${(item.subtotal || 0).toFixed(2)}`
+          ]),
+          ['', '', '', 'TOTAL GERAL:', `R$ ${totalValueExcel.toFixed(2)}`]
+        ];
         break;
     }
 

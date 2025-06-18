@@ -60,6 +60,7 @@ export const suppliers = pgTable("suppliers", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
+  notes: text("notes"), // Materials and services provided
   isActive: boolean("is_active").notNull().default(true),
   ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),

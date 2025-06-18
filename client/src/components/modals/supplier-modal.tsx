@@ -43,6 +43,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
       email: '',
       phone: '',
       address: '',
+      notes: '',
       isActive: true,
     },
   });
@@ -105,6 +106,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
         email: supplier.email || '',
         phone: supplier.phone || '',
         address: supplier.address || '',
+        notes: supplier.notes || '',
         isActive: supplier.isActive,
       });
     } else {
@@ -114,6 +116,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
         email: '',
         phone: '',
         address: '',
+        notes: '',
         isActive: true,
       });
     }
@@ -210,6 +213,24 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
                   <FormControl>
                     <Textarea 
                       placeholder="Endereço completo"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Observações / Materiais Fornecidos</FormLabel>
+                  <FormControl>
+                    <Textarea 
+                      placeholder="Descreva os materiais e serviços fornecidos por este fornecedor..."
+                      rows={4}
                       {...field}
                     />
                   </FormControl>

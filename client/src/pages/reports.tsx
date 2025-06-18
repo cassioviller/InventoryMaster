@@ -255,6 +255,20 @@ export default function Reports() {
           ['', '', '', 'TOTAL GERAL:', `R$ ${totalValue.toFixed(2)}`]
         ];
         break;
+      case 'supplier-tracking':
+        title = 'Relatório de Rastreamento de Fornecedores';
+        filename = `relatorio-fornecedores-${new Date().toISOString().split('T')[0]}`;
+        headers = ['Material', 'Categoria', 'Fornecedor', 'Estoque Atual', 'Unidade', 'Custo Unitário', 'Valor Total'];
+        rows = reportData.map(item => [
+          item.material?.name || item.materialName || '-',
+          item.category?.name || item.categoryName || '-',
+          item.supplier?.name || item.supplierName || 'Sem fornecedor',
+          item.currentStock || 0,
+          item.material?.unit || item.unit || '',
+          `R$ ${(item.unitCost || 0).toFixed(2)}`,
+          `R$ ${(item.totalValue || 0).toFixed(2)}`
+        ]);
+        break;
     }
 
     exportToPDF({ title, filename, headers, data: rows });
@@ -334,6 +348,20 @@ export default function Reports() {
           ]),
           ['', '', '', 'TOTAL GERAL:', `R$ ${totalValueExcel.toFixed(2)}`]
         ];
+        break;
+      case 'supplier-tracking':
+        title = 'Relatório de Rastreamento de Fornecedores';
+        filename = `relatorio-fornecedores-${new Date().toISOString().split('T')[0]}`;
+        headers = ['Material', 'Categoria', 'Fornecedor', 'Estoque Atual', 'Unidade', 'Custo Unitário', 'Valor Total'];
+        rows = reportData.map(item => [
+          item.material?.name || item.materialName || '-',
+          item.category?.name || item.categoryName || '-',
+          item.supplier?.name || item.supplierName || 'Sem fornecedor',
+          item.currentStock || 0,
+          item.material?.unit || item.unit || '',
+          `R$ ${(item.unitCost || 0).toFixed(2)}`,
+          `R$ ${(item.totalValue || 0).toFixed(2)}`
+        ]);
         break;
     }
 
@@ -618,6 +646,17 @@ export default function Reports() {
                         <TableHead>Unidade</TableHead>
                       </>
                     )}
+                    {activeReport === 'supplier-tracking' && (
+                      <>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Categoria</TableHead>
+                        <TableHead>Fornecedor</TableHead>
+                        <TableHead>Estoque Atual</TableHead>
+                        <TableHead>Unidade</TableHead>
+                        <TableHead>Custo Unitário</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                      </>
+                    )}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -673,6 +712,17 @@ export default function Reports() {
                           <TableCell>{item.category?.name || item.categoryName || '-'}</TableCell>
                           <TableCell>{item.totalConsumed || 0}</TableCell>
                           <TableCell>{item.material?.unit || item.unit || ''}</TableCell>
+                        </>
+                      )}
+                      {activeReport === 'supplier-tracking' && (
+                        <>
+                          <TableCell>{item.material?.name || item.materialName || '-'}</TableCell>
+                          <TableCell>{item.category?.name || item.categoryName || '-'}</TableCell>
+                          <TableCell>{item.supplier?.name || item.supplierName || 'Sem fornecedor'}</TableCell>
+                          <TableCell>{item.currentStock || 0}</TableCell>
+                          <TableCell>{item.material?.unit || item.unit || ''}</TableCell>
+                          <TableCell>R$ {(item.unitCost || 0).toFixed(2)}</TableCell>
+                          <TableCell>R$ {(item.totalValue || 0).toFixed(2)}</TableCell>
                         </>
                       )}
                     </TableRow>

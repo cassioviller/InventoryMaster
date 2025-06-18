@@ -3,6 +3,10 @@ set -e
 
 echo "🚀 Iniciando Sistema de Gerenciamento de Almoxarifado..."
 
+# Construir DATABASE_URL automaticamente se necessário
+echo "🔧 Configurando conexão com banco de dados..."
+source /usr/local/bin/build-database-url.sh
+
 # Função para aguardar o banco de dados estar disponível
 wait_for_db() {
   echo "⏳ Aguardando banco de dados estar disponível..."

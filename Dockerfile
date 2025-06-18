@@ -24,9 +24,12 @@ RUN npm run build
 EXPOSE 5013
 
 # Valores padrão para variáveis de ambiente
-ENV DATABASE_URL=${DATABASE_URL:-postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable}
 ENV NODE_ENV=${NODE_ENV:-production}
 ENV PORT=${PORT:-5013}
+
+# Script para construir DATABASE_URL automaticamente
+COPY build-database-url.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/build-database-url.sh
 
 # Usar o script de entrada para inicialização
 ENTRYPOINT ["./docker-entrypoint.sh"]

@@ -17,17 +17,28 @@ No EasyPanel, crie um serviço PostgreSQL:
 
 ### 2. Configurar a Aplicação
 
-#### Variáveis de Ambiente Necessárias:
+#### Variáveis de Ambiente:
 
-**IMPORTANTE**: Use a URL de conexão interna gerada pelo EasyPanel
+O sistema detecta automaticamente as configurações do PostgreSQL. Configure uma das opções:
 
+**Opção A - Detecção Automática (Recomendada):**
+```env
+POSTGRES_USER=almox2
+POSTGRES_PASSWORD=almox3
+POSTGRES_HOST=viajey_almox
+POSTGRES_DB=almox1
+NODE_ENV=production
+PORT=5013
+```
+
+**Opção B - Configuração Manual:**
 ```env
 DATABASE_URL=postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
 NODE_ENV=production
 PORT=5013
 ```
 
-**Substitua pelos valores do seu banco PostgreSQL no EasyPanel:**
+**Substitua pelos valores reais do seu PostgreSQL no EasyPanel:**
 - `almox2` = usuário do banco
 - `almox3` = senha do banco  
 - `viajey_almox` = nome do serviço PostgreSQL (hostname interno)

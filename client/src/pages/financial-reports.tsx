@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,47 +30,55 @@ export default function FinancialReports() {
   const [materialSearch, setMaterialSearch] = useState('');
 
   const { data: reportData, isLoading, error } = useQuery({
-    queryKey: ['/api/reports/financial-stock', materialSearch],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      if (materialSearch) {
-        params.append('materialSearch', materialSearch);
-      }
-      const response = await fetch(`/api/reports/financial-stock?${params}`);
-      return response.json();
-    },
+    queryKey: ['/api/reports/financial-stock'],
   });
 
-  const sortedData = reportData && Array.isArray(reportData) ? [...reportData].sort((a: FinancialStockItem, b: FinancialStockItem) => {
-    let compareValue = 0;
+  // Filter and sort data locally to avoid excessive API calls
+  const filteredAndSortedData = useMemo(() => {
+    if (!reportData || !Array.isArray(reportData)) return [];
     
-    switch (sortBy) {
-      case 'name':
-        compareValue = a.name.localeCompare(b.name);
-        break;
-      case 'category':
-        compareValue = a.category.localeCompare(b.category);
-        break;
-      case 'value':
-        compareValue = a.subtotal - b.subtotal;
-        break;
+    // First filter by search term
+    let filtered = reportData;
+    if (materialSearch.trim()) {
+      const searchTerm = materialSearch.toLowerCase();
+      filtered = reportData.filter((item: FinancialStockItem) => 
+        item.name.toLowerCase().includes(searchTerm) || 
+        item.category.toLowerCase().includes(searchTerm)
+      );
     }
     
-    return sortOrder === 'asc' ? compareValue : -compareValue;
-  }) : [];
+    // Then sort
+    return [...filtered].sort((a: FinancialStockItem, b: FinancialStockItem) => {
+      let compareValue = 0;
+      
+      switch (sortBy) {
+        case 'name':
+          compareValue = a.name.localeCompare(b.name);
+          break;
+        case 'category':
+          compareValue = a.category.localeCompare(b.category);
+          break;
+        case 'value':
+          compareValue = a.subtotal - b.subtotal;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? compareValue : -compareValue;
+    });
+  }, [reportData, materialSearch, sortBy, sortOrder]);
 
-  const totalValue = sortedData.reduce((sum: number, item: FinancialStockItem) => sum + item.subtotal, 0);
-  const totalItems = sortedData.length;
-  const highValueItems = sortedData.filter((item: FinancialStockItem) => item.subtotal > 1000).length;
+  const totalValue = filteredAndSortedData.reduce((sum: number, item: FinancialStockItem) => sum + item.subtotal, 0);
+  const totalItems = filteredAndSortedData.length;
+  const highValueItems = filteredAndSortedData.filter((item: FinancialStockItem) => item.subtotal > 1000).length;
 
   const handleExportPDF = () => {
-    if (!sortedData.length) return;
+    if (!filteredAndSortedData.length) return;
     
     const exportData = {
       title: 'Relatório Financeiro do Estoque',
       filename: `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`,
       headers: ['Material', 'Categoria', 'Estoque', 'Unidade', 'Preço Unit.', 'Valor Total'],
-      data: sortedData.map(item => [
+      data: filteredAndSortedData.map(item => [
         item.name,
         item.category,
         item.currentStock.toString(),
@@ -84,13 +92,13 @@ export default function FinancialReports() {
   };
 
   const handleExportExcel = () => {
-    if (!sortedData.length) return;
+    if (!filteredAndSortedData.length) return;
     
     const exportData = {
       title: 'Relatório Financeiro do Estoque',
       filename: `relatorio-financeiro-${new Date().toISOString().split('T')[0]}`,
       headers: ['Material', 'Categoria', 'Estoque', 'Unidade', 'Preço Unitário', 'Valor Total'],
-      data: sortedData.map(item => [
+      data: filteredAndSortedData.map(item => [
         item.name,
         item.category,
         item.currentStock,
@@ -249,7 +257,7 @@ export default function FinancialReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedData.map((item: FinancialStockItem) => (
+              {filteredAndSortedData.map((item: FinancialStockItem) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>{item.category}</TableCell>

@@ -35,6 +35,7 @@ export const materials = pgTable("materials", {
   unit: varchar("unit", { length: 20 }).default('unidade'),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
   description: text("description"),
+  lastSupplierId: integer("last_supplier_id"),
   ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -141,6 +142,10 @@ export const materialRelations = relations(materials, ({ one, many }) => ({
   category: one(categories, {
     fields: [materials.categoryId],
     references: [categories.id],
+  }),
+  lastSupplier: one(suppliers, {
+    fields: [materials.lastSupplierId],
+    references: [suppliers.id],
   }),
   movementItems: many(movementItems),
 }));

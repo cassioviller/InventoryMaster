@@ -776,13 +776,20 @@ export class DatabaseStorage implements IStorage {
           unitPrice: unitPrice.toString(),
         });
 
-        // Update material stock and unit price
+        // Update material stock, unit price, and supplier tracking
+        const updateData: any = {
+          currentStock: sql`${materials.currentStock} + ${item.quantity}`,
+          unitPrice: unitPrice.toString()
+        };
+
+        // Se a entrada veio de um fornecedor (não é devolução), atualiza o último fornecedor
+        if (data.originType === 'supplier' && data.supplierId) {
+          updateData.lastSupplierId = data.supplierId;
+        }
+
         await tx
           .update(materials)
-          .set({ 
-            currentStock: sql`${materials.currentStock} + ${item.quantity}`,
-            unitPrice: unitPrice.toString() // Atualiza o preço unitário do material
-          })
+          .set(updateData)
           .where(eq(materials.id, item.materialId));
       }
 

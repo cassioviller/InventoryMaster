@@ -748,7 +748,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (endDate) {
         adjustedEndDate = new Date(endDate as string);
-        adjustedEndDate.setHours(23, 59, 59, 999);
+        // Add one day and set to start of day to include the entire end date
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(0, 0, 0, 0);
       }
       
       const report = await storage.getEmployeeMovementReport(
@@ -794,7 +796,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (endDate) {
         adjustedEndDate = new Date(endDate as string);
-        adjustedEndDate.setHours(23, 59, 59, 999);
+        // Add one day and set to start of day to include the entire end date
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(0, 0, 0, 0);
       }
       
       const report = await storage.getGeneralMovementsReport(
@@ -824,7 +828,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (endDate) {
         adjustedEndDate = new Date(endDate as string);
-        adjustedEndDate.setHours(23, 59, 59, 999);
+        // Add one day and set to start of day to include the entire end date
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(0, 0, 0, 0);
       }
       
       const report = await storage.getMaterialConsumptionReport(

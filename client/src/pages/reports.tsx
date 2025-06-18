@@ -544,13 +544,13 @@ export default function Reports() {
                       {activeReport === 'stock' && (
                         <>
                           <TableCell>{item.name || '-'}</TableCell>
-                          <TableCell>{item.category || '-'}</TableCell>
-                          <TableCell>{item.currentStock || 0}</TableCell>
-                          <TableCell>{item.minimumStock || 0}</TableCell>
+                          <TableCell>{item.categoryName || '-'}</TableCell>
+                          <TableCell>{item.current_stock || 0}</TableCell>
+                          <TableCell>{item.minimum_stock || 0}</TableCell>
                           <TableCell>{item.unit || ''}</TableCell>
                           <TableCell>
-                            <Badge variant={(item.currentStock || 0) <= (item.minimumStock || 0) ? 'destructive' : 'default'}>
-                              {(item.currentStock || 0) <= (item.minimumStock || 0) ? 'Crítico' : 'Normal'}
+                            <Badge variant={(item.current_stock || 0) <= (item.minimum_stock || 0) ? 'destructive' : 'default'}>
+                              {(item.current_stock || 0) <= (item.minimum_stock || 0) ? 'Crítico' : 'Normal'}
                             </Badge>
                           </TableCell>
                         </>
@@ -563,9 +563,11 @@ export default function Reports() {
                               {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
-                          <TableCell>{item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || '-'}</TableCell>
-                          <TableCell>{item.totalItems || 0} itens</TableCell>
-                          <TableCell>{item.user?.name || item.userName || '-'}</TableCell>
+                          <TableCell>
+                            {item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-'}
+                          </TableCell>
+                          <TableCell>{item.items?.quantity || 0} {item.material?.unit || ''}</TableCell>
+                          <TableCell>{item.user?.username || '-'}</TableCell>
                           <TableCell>{item.movement?.notes || item.notes || '-'}</TableCell>
                         </>
                       )}
@@ -573,7 +575,7 @@ export default function Reports() {
                         <>
                           <TableCell>{item.material?.name || item.materialName || '-'}</TableCell>
                           <TableCell>{item.category?.name || item.categoryName || '-'}</TableCell>
-                          <TableCell>{item.totalQuantity || 0}</TableCell>
+                          <TableCell>{item.totalConsumed || 0}</TableCell>
                           <TableCell>{item.material?.unit || item.unit || ''}</TableCell>
                         </>
                       )}

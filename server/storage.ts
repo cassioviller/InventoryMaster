@@ -1044,12 +1044,8 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (startDate && endDate) {
-      conditions.push(
-        and(
-          gte(materialMovements.date, startDate),
-          lte(materialMovements.date, endDate)
-        )
-      );
+      conditions.push(gte(materialMovements.date, startDate));
+      conditions.push(lte(materialMovements.date, endDate));
     }
 
     if (categoryId && categoryId !== 0) {

@@ -19,11 +19,19 @@ No EasyPanel, crie um serviço PostgreSQL:
 
 #### Variáveis de Ambiente Necessárias:
 
+**IMPORTANTE**: Use a URL de conexão interna gerada pelo EasyPanel
+
 ```env
-DATABASE_URL=postgres://usuario:senha@almoxarifado-db:5432/almoxarifado?sslmode=disable
+DATABASE_URL=postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
 NODE_ENV=production
 PORT=5013
 ```
+
+**Substitua pelos valores do seu banco PostgreSQL no EasyPanel:**
+- `almox2` = usuário do banco
+- `almox3` = senha do banco  
+- `viajey_almox` = nome do serviço PostgreSQL (hostname interno)
+- `almox1` = nome do banco de dados
 
 #### Configuração do Serviço:
 
@@ -84,10 +92,23 @@ Após o primeiro deploy, use estas credenciais para acessar:
 
 ## Troubleshooting
 
+### Erro "could not translate host name" 
+**Problema**: `psql: error: could not translate host name "almoxarifado_db" to address`
+
+**Solução**:
+1. No EasyPanel, vá até seu serviço PostgreSQL
+2. Copie o **hostname interno** (ex: `viajey_almox`)
+3. Use esse hostname na DATABASE_URL:
+   ```
+   DATABASE_URL=postgres://usuario:senha@viajey_almox:5432/database?sslmode=disable
+   ```
+4. Certifique-se que ambos os serviços estão na mesma rede interna
+
 ### Erro de Conexão com Banco
-- Verifique se a DATABASE_URL está correta
-- Confirme que o banco PostgreSQL está rodando
-- Teste a conectividade entre os serviços
+- Verifique se a DATABASE_URL usa o hostname interno correto
+- Confirme que usuário/senha estão corretos
+- Teste a conectividade: ambos serviços devem estar "running"
+- Verifique se o PostgreSQL aceita conexões externas
 
 ### Erro no Build
 - Verifique os logs do Docker build
@@ -97,4 +118,4 @@ Após o primeiro deploy, use estas credenciais para acessar:
 ### Aplicação não inicia
 - Verifique as variáveis de ambiente
 - Monitore os logs da aplicação
-- Confirme que a porta 5000 está exposta corretamente
+- Confirme que a porta 5013 está exposta corretamente

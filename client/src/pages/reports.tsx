@@ -31,7 +31,9 @@ export default function Reports() {
     categoryId: 'all',
     startDate: '',
     endDate: '',
-    type: 'all'
+    type: 'all',
+    materialSearch: '',
+    supplierSearch: ''
   });
 
   const { data: employees = [] } = useQuery({
@@ -124,7 +126,15 @@ export default function Reports() {
   const generateSupplierTrackingReport = async () => {
     setIsLoading(true);
     try {
-      const response = await authenticatedRequest('/api/reports/supplier-tracking');
+      const params = new URLSearchParams();
+      if (filters.materialSearch) {
+        params.append('materialSearch', filters.materialSearch);
+      }
+      if (filters.supplierSearch) {
+        params.append('supplierSearch', filters.supplierSearch);
+      }
+
+      const response = await authenticatedRequest(`/api/reports/supplier-tracking?${params}`);
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('supplier-tracking');
@@ -374,7 +384,9 @@ export default function Reports() {
       categoryId: 'all',
       startDate: '',
       endDate: '',
-      type: 'all'
+      type: 'all',
+      materialSearch: '',
+      supplierSearch: ''
     });
     setReportData([]);
     setActiveReport(null);
@@ -391,7 +403,7 @@ export default function Reports() {
       </div>
 
       {/* Report Generation Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">

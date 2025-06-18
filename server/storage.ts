@@ -1122,12 +1122,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Relatório de Rastreamento de Fornecedores
-  async getSupplierTrackingReport(ownerId?: number): Promise<any[]> {
+  async getSupplierTrackingReport(ownerId?: number, materialSearch?: string, supplierSearch?: string): Promise<any[]> {
     const conditions = [];
 
     // Filtro obrigatório por usuário (isolamento de dados)
     if (ownerId) {
       conditions.push(eq(materials.ownerId, ownerId));
+    }
+
+    // Filtro de busca por material
+    if (materialSearch && materialSearch.trim()) {
+      conditions.push(ilike(materials.name, `%${materialSearch.trim()}%`));
+    }
+
+    // Filtro de busca por fornecedor
+    if (supplierSearch && supplierSearch.trim()) {
+      conditions.push(ilike(suppliers.name, `%${supplierSearch.trim()}%`));
     }
 
     let query = db

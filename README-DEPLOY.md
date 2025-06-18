@@ -95,14 +95,24 @@ Após o primeiro deploy, use estas credenciais para acessar:
 ### Erro "could not translate host name" 
 **Problema**: `psql: error: could not translate host name "almoxarifado_db" to address`
 
-**Solução**:
-1. No EasyPanel, vá até seu serviço PostgreSQL
-2. Copie o **hostname interno** (ex: `viajey_almox`)
-3. Use esse hostname na DATABASE_URL:
+**Solução Imediata**:
+1. **Adicione variável de ambiente**:
    ```
-   DATABASE_URL=postgres://usuario:senha@viajey_almox:5432/database?sslmode=disable
+   SKIP_DB_CHECK=true
    ```
-4. Certifique-se que ambos os serviços estão na mesma rede interna
+   Isso permite que a aplicação inicie mesmo sem o banco disponível
+
+2. **Configure DATABASE_URL correta**:
+   - No EasyPanel, vá até seu serviço PostgreSQL  
+   - Use exatamente: `postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable`
+   - Substitua apenas os valores pelos seus dados reais
+
+**Verificações Necessárias**:
+- ✅ PostgreSQL deve estar "Running" no EasyPanel
+- ✅ Usuário `almox2` existe no banco
+- ✅ Senha `almox3` está correta  
+- ✅ Banco `almox1` foi criado
+- ✅ Hostname `viajey_almox` é o nome do serviço PostgreSQL
 
 ### Erro de Conexão com Banco
 - Verifique se a DATABASE_URL usa o hostname interno correto

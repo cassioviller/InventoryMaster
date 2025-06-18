@@ -522,6 +522,27 @@ export default function Reports() {
         <Card className="h-full">
           <CardHeader className="pb-3">
             <div className="flex items-center space-x-2">
+              <BarChart3 className="h-5 w-5 text-blue-500" />
+              <CardTitle className="text-lg">Relatório Financeiro do Estoque</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex items-end">
+            <Button 
+              onClick={generateFinancialReport} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading && activeReport === 'financial' ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Gerar Relatório
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
               <Truck className="h-5 w-5 text-teal-500" />
               <CardTitle className="text-lg">Rastreamento de Fornecedores</CardTitle>
             </div>

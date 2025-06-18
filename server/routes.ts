@@ -735,13 +735,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reports routes
   app.get("/api/reports/employee-movement", authenticateToken, async (req: any, res) => {
     try {
-      const { employeeId, month, year } = req.query;
+      const { employeeId, month, year, startDate, endDate } = req.query;
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      let adjustedStartDate: Date | undefined;
+      let adjustedEndDate: Date | undefined;
+      
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setHours(23, 59, 59, 999);
+      }
+      
       const report = await storage.getEmployeeMovementReport(
         employeeId ? parseInt(employeeId as string) : undefined,
         month ? parseInt(month as string) : undefined,
         year ? parseInt(year as string) : undefined,
-        ownerId
+        ownerId,
+        adjustedStartDate,
+        adjustedEndDate
       );
       res.json(report);
     } catch (error) {
@@ -767,9 +783,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { startDate, endDate, type } = req.query;
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      let adjustedStartDate: Date | undefined;
+      let adjustedEndDate: Date | undefined;
+      
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setHours(23, 59, 59, 999);
+      }
+      
       const report = await storage.getGeneralMovementsReport(
-        startDate ? new Date(startDate as string) : undefined,
-        endDate ? new Date(endDate as string) : undefined,
+        adjustedStartDate,
+        adjustedEndDate,
         type as 'entry' | 'exit' | undefined,
         ownerId
       );
@@ -783,9 +813,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { startDate, endDate, categoryId } = req.query;
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      let adjustedStartDate: Date | undefined;
+      let adjustedEndDate: Date | undefined;
+      
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setHours(23, 59, 59, 999);
+      }
+      
       const report = await storage.getMaterialConsumptionReport(
-        startDate ? new Date(startDate as string) : undefined,
-        endDate ? new Date(endDate as string) : undefined,
+        adjustedStartDate,
+        adjustedEndDate,
         categoryId ? parseInt(categoryId as string) : undefined,
         ownerId
       );

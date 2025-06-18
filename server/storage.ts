@@ -886,7 +886,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Reports
-  async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number): Promise<any[]> {
+  async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]> {
     const conditions = [];
 
     // Filtro obrigatório por usuário (isolamento de dados)
@@ -903,15 +903,15 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    if (month && year) {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
-      conditions.push(
-        and(
-          gte(materialMovements.date, startDate),
-          lte(materialMovements.date, endDate)
-        )
-      );
+    // Usar startDate e endDate se fornecidos, senão usar month/year
+    if (startDate && endDate) {
+      conditions.push(gte(materialMovements.date, startDate));
+      conditions.push(lte(materialMovements.date, endDate));
+    } else if (month && year) {
+      const monthStartDate = new Date(year, month - 1, 1);
+      const monthEndDate = new Date(year, month, 0);
+      conditions.push(gte(materialMovements.date, monthStartDate));
+      conditions.push(lte(materialMovements.date, monthEndDate));
     }
 
     let baseQuery = db

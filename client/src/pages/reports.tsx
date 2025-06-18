@@ -269,15 +269,19 @@ export default function Reports() {
         title = 'Relatório de Rastreamento de Fornecedores';
         filename = `relatorio-fornecedores-${new Date().toISOString().split('T')[0]}`;
         headers = ['Material', 'Categoria', 'Fornecedor', 'Estoque Atual', 'Unidade', 'Custo Unitário', 'Valor Total'];
-        rows = reportData.map(item => [
-          item.material?.name || item.materialName || '-',
-          item.category?.name || item.categoryName || '-',
-          item.supplier?.name || item.supplierName || 'Sem fornecedor',
-          item.currentStock || 0,
-          item.material?.unit || item.unit || '',
-          `R$ ${(item.unitCost || 0).toFixed(2)}`,
-          `R$ ${(item.totalValue || 0).toFixed(2)}`
-        ]);
+        rows = reportData.map(item => {
+          const unitCost = typeof item.unitCost === 'number' ? item.unitCost : parseFloat(item.unitCost || '0') || 0;
+          const totalValue = typeof item.totalValue === 'number' ? item.totalValue : parseFloat(item.totalValue || '0') || 0;
+          return [
+            item.material?.name || item.materialName || '-',
+            item.category?.name || item.categoryName || '-',
+            item.supplier?.name || item.supplierName || 'Sem fornecedor',
+            item.currentStock || 0,
+            item.material?.unit || item.unit || '',
+            `R$ ${unitCost.toFixed(2)}`,
+            `R$ ${totalValue.toFixed(2)}`
+          ];
+        });
         break;
     }
 

@@ -914,10 +914,15 @@ export class DatabaseStorage implements IStorage {
     }
 
     // Usar startDate e endDate se fornecidos, senão usar month/year
-    if (startDate && endDate) {
+    if (startDate) {
       conditions.push(gte(materialMovements.date, startDate));
+    }
+    
+    if (endDate) {
       conditions.push(lte(materialMovements.date, endDate));
-    } else if (month && year) {
+    }
+    
+    if (!startDate && !endDate && month && year) {
       const monthStartDate = new Date(year, month - 1, 1);
       const monthEndDate = new Date(year, month, 0);
       conditions.push(gte(materialMovements.date, monthStartDate));
@@ -993,13 +998,12 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(materialMovements.userId, ownerId));
     }
 
-    if (startDate && endDate) {
-      conditions.push(
-        and(
-          gte(materialMovements.date, startDate),
-          lte(materialMovements.date, endDate)
-        )
-      );
+    if (startDate) {
+      conditions.push(gte(materialMovements.date, startDate));
+    }
+    
+    if (endDate) {
+      conditions.push(lte(materialMovements.date, endDate));
     }
 
     if (type) {
@@ -1053,8 +1057,11 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(materialMovements.userId, ownerId));
     }
 
-    if (startDate && endDate) {
+    if (startDate) {
       conditions.push(gte(materialMovements.date, startDate));
+    }
+    
+    if (endDate) {
       conditions.push(lte(materialMovements.date, endDate));
     }
 

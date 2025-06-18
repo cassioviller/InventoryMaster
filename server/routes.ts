@@ -852,7 +852,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/supplier-tracking", authenticateToken, async (req: any, res) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const report = await storage.getSupplierTrackingReport(ownerId);
+      const { materialSearch, supplierSearch } = req.query;
+      const report = await storage.getSupplierTrackingReport(
+        ownerId, 
+        materialSearch as string, 
+        supplierSearch as string
+      );
       res.json(report);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate supplier tracking report" });

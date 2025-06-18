@@ -589,6 +589,59 @@ export default function Reports() {
         </CardContent>
       </Card>
 
+      {/* Supplier Tracking Specific Filters */}
+      {activeReport === 'supplier-tracking' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtros de Busca
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Buscar Material</label>
+                <Input
+                  placeholder="Digite o nome do material..."
+                  value={filters.materialSearch}
+                  onChange={(e) => setFilters({...filters, materialSearch: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium mb-1 block">Buscar Fornecedor</label>
+                <Input
+                  placeholder="Digite o nome do fornecedor..."
+                  value={filters.supplierSearch}
+                  onChange={(e) => setFilters({...filters, supplierSearch: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button onClick={generateSupplierTrackingReport} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Filter className="h-4 w-4 mr-2" />
+                )}
+                Aplicar Filtros
+              </Button>
+              <Button 
+                onClick={() => {
+                  setFilters({...filters, materialSearch: '', supplierSearch: ''});
+                  generateSupplierTrackingReport();
+                }} 
+                variant="outline"
+                disabled={isLoading}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Limpar Filtros
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Report Results */}
       {activeReport && reportData.length > 0 && (
         <Card>
@@ -599,6 +652,7 @@ export default function Reports() {
                 {activeReport === 'stock' && 'Relatório de Estoque'}
                 {activeReport === 'movements' && 'Relatório de Movimentações Gerais'}
                 {activeReport === 'consumption' && 'Relatório de Consumo de Materiais'}
+                {activeReport === 'supplier-tracking' && 'Relatório de Rastreamento de Fornecedores'}
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   ({reportData.length} registros)
                 </span>

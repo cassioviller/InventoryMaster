@@ -1135,8 +1135,7 @@ export class DatabaseStorage implements IStorage {
         .where(
           and(
             eq(movementItems.materialId, item.id),
-            eq(materialMovements.type, 'entry'),
-            ownerId ? eq(materialMovements.ownerId, ownerId) : undefined
+            eq(materialMovements.type, 'entry')
           )
         )
         .orderBy(desc(materialMovements.date))

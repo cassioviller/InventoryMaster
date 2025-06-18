@@ -183,7 +183,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="contato@fornecedor.com" {...field} />
+                    <Input type="email" placeholder="contato@fornecedor.com" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -197,7 +197,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
                 <FormItem>
                   <FormLabel>Telefone</FormLabel>
                   <FormControl>
-                    <Input placeholder="(11) 99999-9999" {...field} />
+                    <Input placeholder="(11) 99999-9999" {...field} value={field.value || ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -214,6 +214,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
                     <Textarea 
                       placeholder="Endereço completo"
                       {...field}
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage />
@@ -232,6 +233,7 @@ export function SupplierModal({ open, onOpenChange, supplier, onClose }: Supplie
                       placeholder="Descreva os materiais e serviços fornecidos por este fornecedor..."
                       rows={4}
                       {...field}
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage />

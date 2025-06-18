@@ -728,6 +728,7 @@ export default function Reports() {
                 {activeReport === 'stock' && 'Relatório de Estoque'}
                 {activeReport === 'movements' && 'Relatório de Movimentações Gerais'}
                 {activeReport === 'consumption' && 'Relatório de Consumo de Materiais'}
+                {activeReport === 'financial' && 'Relatório Financeiro de Estoque'}
                 {activeReport === 'supplier-tracking' && 'Relatório de Rastreamento de Fornecedores'}
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   ({reportData.length} registros)

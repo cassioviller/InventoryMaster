@@ -203,11 +203,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Materials
-  async getAllMaterials(ownerId?: number): Promise<(Material & { category: Category })[]> {
+  async getAllMaterials(ownerId?: number): Promise<(Material & { category: Category, lastSupplier?: Supplier })[]> {
     const query = db
       .select()
       .from(materials)
       .leftJoin(categories, eq(materials.categoryId, categories.id))
+      .leftJoin(suppliers, eq(materials.lastSupplierId, suppliers.id))
       .orderBy(asc(materials.name));
 
     if (ownerId) {
@@ -215,13 +216,15 @@ export class DatabaseStorage implements IStorage {
         .where(eq(materials.ownerId, ownerId))
         .then(rows => rows.map(row => ({
           ...row.materials,
-          category: row.categories!
+          category: row.categories!,
+          lastSupplier: row.suppliers || undefined
         })));
     }
 
     return await query.then(rows => rows.map(row => ({
       ...row.materials,
-      category: row.categories!
+      category: row.categories!,
+      lastSupplier: row.suppliers || undefined
     })));
   }
 
@@ -1116,6 +1119,47 @@ export class DatabaseStorage implements IStorage {
 
   async createAuditLog(log: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void> {
     await db.insert(auditLog).values(log);
+  }
+
+  // Relatório de Rastreamento de Fornecedores
+  async getSupplierTrackingReport(ownerId?: number): Promise<any[]> {
+    const conditions = [];
+
+    // Filtro obrigatório por usuário (isolamento de dados)
+    if (ownerId) {
+      conditions.push(eq(materials.ownerId, ownerId));
+    }
+
+    let query = db
+      .select({
+        materialId: materials.id,
+        materialName: materials.name,
+        categoryName: categories.name,
+        currentStock: materials.currentStock,
+        unit: materials.unit,
+        unitPrice: materials.unitPrice,
+        supplierName: suppliers.name,
+        supplierContact: suppliers.phone,
+        supplierEmail: suppliers.email,
+        lastSupplyDate: sql<string>`(
+          SELECT MAX(mm.date) 
+          FROM material_movements mm
+          INNER JOIN movement_items mi ON mm.id = mi.movement_id
+          WHERE mi.material_id = ${materials.id} 
+          AND mm.type = 'entry' 
+          AND mm.origin_type = 'supplier'
+          AND mm.supplier_id = ${materials.lastSupplierId}
+        )`.as('lastSupplyDate')
+      })
+      .from(materials)
+      .leftJoin(categories, eq(materials.categoryId, categories.id))
+      .leftJoin(suppliers, eq(materials.lastSupplierId, suppliers.id));
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    return await query.orderBy(materials.name);
   }
 }
 

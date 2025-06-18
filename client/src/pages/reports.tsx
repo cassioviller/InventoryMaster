@@ -16,7 +16,8 @@ import {
   Download,
   Loader2,
   Filter,
-  RefreshCw
+  RefreshCw,
+  Truck
 } from 'lucide-react';
 import { authenticatedRequest } from '@/lib/auth';
 import { exportToPDF, exportToExcel } from '@/lib/export-utils';
@@ -57,6 +58,9 @@ export default function Reports() {
             break;
           case 'consumption':
             generateConsumptionReport();
+            break;
+          case 'supplier-tracking':
+            generateSupplierTrackingReport();
             break;
         }
       }, 500); // Debounce de 500ms para evitar múltiplas requisições
@@ -109,6 +113,21 @@ export default function Reports() {
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('stock');
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      setReportData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const generateSupplierTrackingReport = async () => {
+    setIsLoading(true);
+    try {
+      const response = await authenticatedRequest('/api/reports/supplier-tracking');
+      const data = await response.json();
+      setReportData(Array.isArray(data) ? data : []);
+      setActiveReport('supplier-tracking');
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);
       setReportData([]);
@@ -422,6 +441,27 @@ export default function Reports() {
               className="w-full"
             >
               {isLoading && activeReport === 'consumption' ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : null}
+              Gerar Relatório
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card className="h-full">
+          <CardHeader className="pb-3">
+            <div className="flex items-center space-x-2">
+              <Truck className="h-5 w-5 text-teal-500" />
+              <CardTitle className="text-lg">Rastreamento de Fornecedores</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="flex-1 flex items-end">
+            <Button 
+              onClick={generateSupplierTrackingReport} 
+              disabled={isLoading}
+              className="w-full"
+            >
+              {isLoading && activeReport === 'supplier-tracking' ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : null}
               Gerar Relatório

@@ -68,11 +68,11 @@ build_database_url() {
         return 0
     fi
 
-    # Fallback para localhost se nada foi detectado
+    # Fallback para o PostgreSQL padrão do viajey
     if [ -z "$DATABASE_URL" ]; then
-        export DATABASE_URL="postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-        echo "Usando DATABASE_URL padrão (localhost): $DATABASE_URL"
-        echo "AVISO: Configure as variáveis de ambiente do PostgreSQL no EasyPanel"
+        export DATABASE_URL="postgres://viajey:viajey@viajey_viajey:5432/almoxarifado?sslmode=disable"
+        echo "Usando PostgreSQL padrão do viajey: $DATABASE_URL"
+        echo "Banco 'almoxarifado' será criado automaticamente se não existir"
     fi
 }
 

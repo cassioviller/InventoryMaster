@@ -76,9 +76,27 @@ wait_for_db() {
   echo "✅ PostgreSQL está disponível!"
 }
 
+# Criar banco de dados se não existir
+create_database_if_not_exists() {
+  echo "🔧 Verificando se banco 'almoxarifado' existe..."
+  
+  # Extrair componentes da URL para conectar no postgres padrão
+  BASE_URL=$(echo $DATABASE_URL | sed 's|/[^/]*?|/postgres?|')
+  
+  # Tentar criar o banco se não existir
+  if command -v psql >/dev/null 2>&1; then
+    psql "$BASE_URL" -c "CREATE DATABASE almoxarifado;" 2>/dev/null || echo "Banco 'almoxarifado' já existe ou foi criado"
+  else
+    echo "psql não disponível - banco será criado pela aplicação se necessário"
+  fi
+}
+
 # Executar migração/sincronização do banco de dados
 run_db_migration() {
   echo "🔄 Executando migração do banco de dados..."
+  
+  # Criar banco se não existir
+  create_database_if_not_exists
   
   # Tentar executar a migração com retry
   max_migration_attempts=3

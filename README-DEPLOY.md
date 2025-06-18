@@ -21,28 +21,26 @@ No EasyPanel, crie um serviço PostgreSQL:
 
 O sistema detecta automaticamente as configurações do PostgreSQL. Configure uma das opções:
 
-**Opção A - Detecção Automática (Recomendada):**
+**Configuração Simplificada - Use o PostgreSQL existente:**
 ```env
-POSTGRES_USER=almox2
-POSTGRES_PASSWORD=almox3
-POSTGRES_HOST=viajey_almox
-POSTGRES_DB=almox1
 NODE_ENV=production
 PORT=5013
 ```
 
-**Opção B - Configuração Manual:**
+O sistema detectará automaticamente o PostgreSQL do viajey e criará o banco "almoxarifado" separadamente.
+
+**Configuração Manual (alternativa):**
 ```env
-DATABASE_URL=postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
+DATABASE_URL=postgres://viajey:viajey@viajey_viajey:5432/almoxarifado?sslmode=disable
 NODE_ENV=production
 PORT=5013
 ```
 
-**Substitua pelos valores reais do seu PostgreSQL no EasyPanel:**
-- `almox2` = usuário do banco
-- `almox3` = senha do banco  
-- `viajey_almox` = nome do serviço PostgreSQL (hostname interno)
-- `almox1` = nome do banco de dados
+**Dados detectados do seu PostgreSQL:**
+- Usuário: `viajey`
+- Senha: `viajey`  
+- Host: `viajey_viajey`
+- Banco novo: `almoxarifado` (será criado automaticamente)
 
 #### Configuração do Serviço:
 

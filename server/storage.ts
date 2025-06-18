@@ -90,7 +90,7 @@ export interface IStorage {
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
   getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]>;
   getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]>;
-  getFinancialStockReport(ownerId?: number): Promise<any[]>;
+  getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]>;
 
   // Audit Log
   createAuditLog(log: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void>;
@@ -1090,9 +1090,24 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Audit Log
-  async getFinancialStockReport(ownerId?: number): Promise<any[]> {
-    const whereClause = ownerId ? eq(materials.ownerId, ownerId) : undefined;
+  async getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]> {
+    let whereConditions = [];
     
+    if (ownerId) {
+      whereConditions.push(eq(materials.ownerId, ownerId));
+    }
+    
+    if (materialSearch) {
+      whereConditions.push(ilike(materials.name, `%${materialSearch}%`));
+    }
+    
+    if (categoryId) {
+      whereConditions.push(eq(materials.categoryId, categoryId));
+    }
+    
+    const whereClause = whereConditions.length > 0 ? and(...whereConditions) : undefined;
+    
+    // First, get the basic material data
     const result = await db
       .select({
         id: materials.id,
@@ -1107,19 +1122,54 @@ export class DatabaseStorage implements IStorage {
       .where(whereClause)
       .orderBy(asc(categories.name), asc(materials.name));
 
-    // Calculate subtotal for each material and total value
-    const enrichedResult = result.map(item => {
-      const unitPrice = parseFloat(item.unitPrice || '0');
-      const subtotal = item.currentStock * unitPrice;
+    // For each material, calculate the weighted average price based on recent entries
+    const enrichedResult = await Promise.all(result.map(async (item) => {
+      // Get recent entry movements to calculate average price
+      const recentEntries = await db
+        .select({
+          unitPrice: movementItems.unitPrice,
+          quantity: movementItems.quantity,
+        })
+        .from(movementItems)
+        .innerJoin(materialMovements, eq(movementItems.movementId, materialMovements.id))
+        .where(
+          and(
+            eq(movementItems.materialId, item.id),
+            eq(materialMovements.type, 'entry'),
+            ownerId ? eq(materialMovements.ownerId, ownerId) : undefined
+          )
+        )
+        .orderBy(desc(materialMovements.date))
+        .limit(10); // Last 10 entries for weighted average
+
+      let finalUnitPrice = parseFloat(item.unitPrice || '0');
+
+      if (recentEntries.length > 0) {
+        // Calculate weighted average price from recent entries
+        let totalValue = 0;
+        let totalQuantity = 0;
+        
+        recentEntries.forEach(entry => {
+          const price = parseFloat(entry.unitPrice || '0');
+          const qty = entry.quantity || 0;
+          totalValue += price * qty;
+          totalQuantity += qty;
+        });
+        
+        if (totalQuantity > 0) {
+          finalUnitPrice = totalValue / totalQuantity;
+        }
+      }
+
+      const subtotal = item.currentStock * finalUnitPrice;
       
       return {
         ...item,
-        unitPrice,
+        unitPrice: finalUnitPrice,
         subtotal,
+        priceHistory: recentEntries.length > 0 ? `Baseado em ${recentEntries.length} entradas recentes` : 'Preço base do material'
       };
-    });
-
-    const totalValue = enrichedResult.reduce((sum, item) => sum + item.subtotal, 0);
+    }));
 
     return enrichedResult;
   }

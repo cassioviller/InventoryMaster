@@ -848,7 +848,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/reports/financial-stock", authenticateToken, async (req: any, res) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const report = await storage.getFinancialStockReport(ownerId);
+      const { materialSearch, categoryId } = req.query;
+      const report = await storage.getFinancialStockReport(
+        ownerId,
+        materialSearch as string,
+        categoryId ? parseInt(categoryId as string) : undefined
+      );
       res.json(report);
     } catch (error) {
       res.status(500).json({ message: "Failed to generate financial stock report" });

@@ -190,6 +190,29 @@ export default function Reports() {
     }
   };
 
+  const generateFinancialReport = async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.materialSearch) {
+        params.append('materialSearch', filters.materialSearch);
+      }
+      if (filters.categoryId && filters.categoryId !== 'all') {
+        params.append('categoryId', filters.categoryId);
+      }
+
+      const response = await authenticatedRequest(`/api/reports/financial-stock?${params}`);
+      const data = await response.json();
+      setReportData(Array.isArray(data) ? data : []);
+      setActiveReport('financial');
+    } catch (error) {
+      console.error('Erro ao gerar relatório:', error);
+      setReportData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const exportToPDFReport = () => {
     if (!activeReport || !reportData.length) return;
 
@@ -596,6 +619,51 @@ export default function Reports() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Financial Report Specific Filters */}
+      {activeReport === 'financial' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtro de Busca
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-4">
+              <div>
+                <label className="text-sm font-medium mb-1 block">Buscar Material</label>
+                <Input
+                  placeholder="Digite o nome do material..."
+                  value={filters.materialSearch}
+                  onChange={(e) => setFilters({...filters, materialSearch: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              <Button onClick={generateFinancialReport} disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Filter className="h-4 w-4 mr-2" />
+                )}
+                Aplicar Filtro
+              </Button>
+              <Button 
+                onClick={() => {
+                  setFilters({...filters, materialSearch: ''});
+                  generateFinancialReport();
+                }} 
+                variant="outline"
+                disabled={isLoading}
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Limpar Filtro
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Supplier Tracking Specific Filters */}
       {activeReport === 'supplier-tracking' && (

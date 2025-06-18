@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, DollarSign, Package, TrendingUp, Download, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Loader2, DollarSign, Package, TrendingUp, Download, FileText, Search } from "lucide-react";
 import { exportToPDF, exportToExcel, formatCurrency } from "@/lib/export-utils";
 import {
   Table,
@@ -26,9 +27,18 @@ interface FinancialStockItem {
 export default function FinancialReports() {
   const [sortBy, setSortBy] = useState<'name' | 'category' | 'value'>('value');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [materialSearch, setMaterialSearch] = useState('');
 
   const { data: reportData, isLoading, error } = useQuery({
-    queryKey: ['/api/reports/financial-stock'],
+    queryKey: ['/api/reports/financial-stock', materialSearch],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (materialSearch) {
+        params.append('materialSearch', materialSearch);
+      }
+      const response = await fetch(`/api/reports/financial-stock?${params}`);
+      return response.json();
+    },
   });
 
   const sortedData = reportData && Array.isArray(reportData) ? [...reportData].sort((a: FinancialStockItem, b: FinancialStockItem) => {
@@ -176,37 +186,49 @@ export default function FinancialReports() {
         </Card>
       </div>
 
-      {/* Sorting Controls */}
-      <div className="flex gap-2 items-center">
-        <span className="text-sm font-medium">Ordenar por:</span>
-        <Button
-          variant={sortBy === 'name' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSortBy('name')}
-        >
-          Nome
-        </Button>
-        <Button
-          variant={sortBy === 'category' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSortBy('category')}
-        >
-          Categoria
-        </Button>
-        <Button
-          variant={sortBy === 'value' ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSortBy('value')}
-        >
-          Valor
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-        >
-          {sortOrder === 'asc' ? '↑' : '↓'}
-        </Button>
+      {/* Sorting and Search Controls */}
+      <div className="flex gap-4 items-center flex-wrap">
+        <div className="flex gap-2 items-center">
+          <span className="text-sm font-medium">Ordenar por:</span>
+          <Button
+            variant={sortBy === 'name' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('name')}
+          >
+            Nome
+          </Button>
+          <Button
+            variant={sortBy === 'category' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('category')}
+          >
+            Categoria
+          </Button>
+          <Button
+            variant={sortBy === 'value' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setSortBy('value')}
+          >
+            Valor
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+          >
+            {sortOrder === 'asc' ? '↑' : '↓'}
+          </Button>
+        </div>
+        
+        <div className="flex gap-2 items-center">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar material..."
+            value={materialSearch}
+            onChange={(e) => setMaterialSearch(e.target.value)}
+            className="w-64"
+          />
+        </div>
       </div>
 
       {/* Financial Stock Table */}

@@ -782,13 +782,13 @@ export default function Reports() {
                       )}
                       {activeReport === 'supplier-tracking' && (
                         <>
-                          <TableCell>{item.material?.name || item.materialName || '-'}</TableCell>
-                          <TableCell>{item.category?.name || item.categoryName || '-'}</TableCell>
-                          <TableCell>{item.supplier?.name || item.supplierName || 'Sem fornecedor'}</TableCell>
+                          <TableCell>{item.materialName || '-'}</TableCell>
+                          <TableCell>{item.categoryName || '-'}</TableCell>
+                          <TableCell>{item.supplierName || 'Sem fornecedor'}</TableCell>
                           <TableCell>{item.currentStock || 0}</TableCell>
-                          <TableCell>{item.material?.unit || item.unit || ''}</TableCell>
-                          <TableCell>R$ {(item.unitCost || 0).toFixed(2)}</TableCell>
-                          <TableCell>R$ {(item.totalValue || 0).toFixed(2)}</TableCell>
+                          <TableCell>{item.unit || ''}</TableCell>
+                          <TableCell>R$ {parseFloat(item.unitPrice || '0').toFixed(2)}</TableCell>
+                          <TableCell>R$ {parseFloat(item.totalValue || '0').toFixed(2)}</TableCell>
                         </>
                       )}
                     </TableRow>

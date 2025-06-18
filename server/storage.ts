@@ -1148,7 +1148,7 @@ export class DatabaseStorage implements IStorage {
         currentStock: materials.currentStock,
         unit: materials.unit,
         unitPrice: materials.unitPrice,
-        supplierName: suppliers.name,
+        supplierName: sql<string>`COALESCE(${suppliers.name}, 'Sem fornecedor')`.as('supplierName'),
         supplierContact: suppliers.phone,
         supplierEmail: suppliers.email,
         lastSupplyDate: sql<string>`(
@@ -1159,7 +1159,8 @@ export class DatabaseStorage implements IStorage {
           AND mm.type = 'entry' 
           AND mm.origin_type = 'supplier'
           AND mm.supplier_id = ${materials.lastSupplierId}
-        )`.as('lastSupplyDate')
+        )`.as('lastSupplyDate'),
+        totalValue: sql<number>`CAST(${materials.currentStock} AS DECIMAL) * CAST(COALESCE(${materials.unitPrice}, '0') AS DECIMAL)`.as('totalValue')
       })
       .from(materials)
       .leftJoin(categories, eq(materials.categoryId, categories.id))

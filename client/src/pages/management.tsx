@@ -424,13 +424,17 @@ export default function Management() {
                 </TableHeader>
                 <TableBody>
                   {suppliers?.map((supplier) => (
-                    <TableRow key={supplier.id}>
+                    <TableRow 
+                      key={supplier.id}
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => handleEdit(supplier)}
+                    >
                       <TableCell className="font-medium">{supplier.name}</TableCell>
                       <TableCell>{supplier.cnpj}</TableCell>
                       <TableCell>{supplier.email}</TableCell>
                       <TableCell>{supplier.phone}</TableCell>
                       <TableCell>
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
                           <Button
                             variant="ghost"
                             size="sm"

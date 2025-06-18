@@ -21,12 +21,12 @@ RUN chmod +x docker-entrypoint.sh
 RUN npm run build
 
 # Expor a porta utilizada pelo aplicativo
-EXPOSE 5000
+EXPOSE 5013
 
 # Valores padrão para variáveis de ambiente
 ENV DATABASE_URL=${DATABASE_URL:-postgres://almoxarifado_user:senha123forte@almoxarifado_db:5432/almoxarifado?sslmode=disable}
 ENV NODE_ENV=${NODE_ENV:-production}
-ENV PORT=${PORT:-5000}
+ENV PORT=${PORT:-5013}
 
 # Usar o script de entrada para inicialização
 ENTRYPOINT ["./docker-entrypoint.sh"]

@@ -22,7 +22,7 @@ No EasyPanel, crie um serviço PostgreSQL:
 ```env
 DATABASE_URL=postgres://usuario:senha@almoxarifado-db:5432/almoxarifado?sslmode=disable
 NODE_ENV=production
-PORT=5000
+PORT=5013
 ```
 
 #### Configuração do Serviço:
@@ -32,7 +32,7 @@ PORT=5000
 3. **Repositório**: URL do seu repositório Git
 4. **Branch**: main (ou sua branch principal)
 5. **Dockerfile**: `Dockerfile` (raiz do projeto)
-6. **Porta**: 5000
+6. **Porta**: 5013
 7. **Health Check**: `/api/auth/verify`
 
 ### 3. Configuração de Rede
@@ -65,14 +65,14 @@ O Dockerfile executa automaticamente:
 ### Build local (teste):
 ```bash
 docker build -t almoxarifado .
-docker run -p 5000:5000 -e DATABASE_URL="sua_url_aqui" almoxarifado
+docker run -p 5013:5013 -e DATABASE_URL="sua_url_aqui" almoxarifado
 ```
 
 ### Logs de deploy:
 No EasyPanel, monitore os logs durante o deploy para verificar:
 - ✅ Conexão com banco de dados
 - ✅ Migração do schema
-- ✅ Aplicação iniciada na porta 5000
+- ✅ Aplicação iniciada na porta 5013
 
 ## Usuários Padrão
 

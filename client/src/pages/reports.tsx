@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,6 +40,30 @@ export default function Reports() {
   const { data: categories = [] } = useQuery({
     queryKey: ['/api/categories'],
   });
+
+  // Efeito para atualizar automaticamente os relatórios quando os filtros mudarem
+  useEffect(() => {
+    if (activeReport && !isLoading) {
+      const timer = setTimeout(() => {
+        switch (activeReport) {
+          case 'employee':
+            generateEmployeeReport();
+            break;
+          case 'stock':
+            generateStockReport();
+            break;
+          case 'movements':
+            generateMovementsReport();
+            break;
+          case 'consumption':
+            generateConsumptionReport();
+            break;
+        }
+      }, 500); // Debounce de 500ms para evitar múltiplas requisições
+
+      return () => clearTimeout(timer);
+    }
+  }, [filters.startDate, filters.endDate, filters.employeeId, filters.categoryId, filters.type]);
 
   // Função para formatar data de forma segura
   const formatDate = (date: any) => {
@@ -165,34 +189,34 @@ export default function Reports() {
         headers = ['Material', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Unidade', 'Status'];
         rows = reportData.map(item => [
           item.name || '-',
-          item.category || '-',
-          item.currentStock || 0,
-          item.minimumStock || 0,
+          item.categoryName || '-',
+          item.current_stock || 0,
+          item.minimum_stock || 0,
           item.unit || '',
-          (item.currentStock || 0) <= (item.minimumStock || 0) ? 'Crítico' : 'Normal'
+          (item.current_stock || 0) <= (item.minimum_stock || 0) ? 'Crítico' : 'Normal'
         ]);
         break;
       case 'movements':
         title = 'Relatório de Movimentações';
         filename = `relatorio-movimentacoes-${new Date().toISOString().split('T')[0]}`;
-        headers = ['Data', 'Tipo', 'Origem/Destino', 'Total Itens', 'Responsável', 'Observações'];
+        headers = ['Data', 'Tipo', 'Material', 'Quantidade', 'Origem/Destino', 'Responsável'];
         rows = reportData.map(item => [
           formatDate(item.movement?.date || item.date),
           (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
-          item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || '-',
-          item.totalItems || 0,
-          item.user?.name || item.userName || '-',
-          item.movement?.notes || item.notes || '-'
+          item.material?.name || '-',
+          `${item.items?.quantity || 0} ${item.material?.unit || ''}`,
+          item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-',
+          item.user?.username || '-'
         ]);
         break;
       case 'consumption':
         title = 'Relatório de Consumo';
         filename = `relatorio-consumo-${new Date().toISOString().split('T')[0]}`;
-        headers = ['Material', 'Categoria', 'Quantidade', 'Unidade'];
+        headers = ['Material', 'Categoria', 'Quantidade Consumida', 'Unidade'];
         rows = reportData.map(item => [
           item.material?.name || item.materialName || '-',
           item.category?.name || item.categoryName || '-',
-          item.totalQuantity || 0,
+          item.totalConsumed || 0,
           item.material?.unit || item.unit || ''
         ]);
         break;
@@ -229,34 +253,34 @@ export default function Reports() {
         headers = ['Material', 'Categoria', 'Estoque Atual', 'Estoque Mínimo', 'Unidade', 'Status'];
         rows = reportData.map(item => [
           item.name || '-',
-          item.category || '-',
-          item.currentStock || 0,
-          item.minimumStock || 0,
+          item.categoryName || '-',
+          item.current_stock || 0,
+          item.minimum_stock || 0,
           item.unit || '',
-          (item.currentStock || 0) <= (item.minimumStock || 0) ? 'Crítico' : 'Normal'
+          (item.current_stock || 0) <= (item.minimum_stock || 0) ? 'Crítico' : 'Normal'
         ]);
         break;
       case 'movements':
         title = 'Relatório de Movimentações';
         filename = `relatorio-movimentacoes-${new Date().toISOString().split('T')[0]}`;
-        headers = ['Data', 'Tipo', 'Origem/Destino', 'Total Itens', 'Responsável', 'Observações'];
+        headers = ['Data', 'Tipo', 'Material', 'Quantidade', 'Origem/Destino', 'Responsável'];
         rows = reportData.map(item => [
           formatDate(item.movement?.date || item.date),
           (item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída',
-          item.supplier?.companyName || item.employee?.name || item.thirdParty?.companyName || '-',
-          item.totalItems || 0,
-          item.user?.name || item.userName || '-',
-          item.movement?.notes || item.notes || '-'
+          item.material?.name || '-',
+          `${item.items?.quantity || 0} ${item.material?.unit || ''}`,
+          item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-',
+          item.user?.username || '-'
         ]);
         break;
       case 'consumption':
         title = 'Relatório de Consumo';
         filename = `relatorio-consumo-${new Date().toISOString().split('T')[0]}`;
-        headers = ['Material', 'Categoria', 'Quantidade', 'Unidade'];
+        headers = ['Material', 'Categoria', 'Quantidade Consumida', 'Unidade'];
         rows = reportData.map(item => [
           item.material?.name || item.materialName || '-',
           item.category?.name || item.categoryName || '-',
-          item.totalQuantity || 0,
+          item.totalConsumed || 0,
           item.material?.unit || item.unit || ''
         ]);
         break;
@@ -508,10 +532,10 @@ export default function Reports() {
                       <>
                         <TableHead>Data</TableHead>
                         <TableHead>Tipo</TableHead>
+                        <TableHead>Material</TableHead>
+                        <TableHead>Quantidade</TableHead>
                         <TableHead>Origem/Destino</TableHead>
-                        <TableHead>Total Itens</TableHead>
                         <TableHead>Responsável</TableHead>
-                        <TableHead>Observações</TableHead>
                       </>
                     )}
                     {activeReport === 'consumption' && (

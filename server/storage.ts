@@ -889,7 +889,12 @@ export class DatabaseStorage implements IStorage {
   async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number): Promise<any[]> {
     const conditions = [];
 
-    if (employeeId) {
+    // Filtro obrigatório por usuário (isolamento de dados)
+    if (ownerId) {
+      conditions.push(eq(materialMovements.userId, ownerId));
+    }
+
+    if (employeeId && employeeId !== 0) {
       conditions.push(
         or(
           eq(materialMovements.returnEmployeeId, employeeId),
@@ -971,35 +976,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]> {
-    let query = db
-      .select({
-        movement: materialMovements,
-        user: users,
-        supplier: suppliers,
-        employee: employees,
-        thirdParty: thirdParties,
-        items: movementItems,
-        material: materials,
-      })
-      .from(materialMovements)
-      .leftJoin(users, eq(materialMovements.userId, users.id))
-      .leftJoin(suppliers, eq(materialMovements.supplierId, suppliers.id))
-      .leftJoin(employees, 
-        or(
-          eq(materialMovements.returnEmployeeId, employees.id),
-          eq(materialMovements.destinationEmployeeId, employees.id)
-        )
-      )
-      .leftJoin(thirdParties,
-        or(
-          eq(materialMovements.returnThirdPartyId, thirdParties.id),
-          eq(materialMovements.destinationThirdPartyId, thirdParties.id)
-        )
-      )
-      .leftJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
-      .leftJoin(materials, eq(movementItems.materialId, materials.id));
-
     const conditions = [];
+
+    // Filtro obrigatório por usuário (isolamento de dados)
+    if (ownerId) {
+      conditions.push(eq(materialMovements.userId, ownerId));
+    }
 
     if (startDate && endDate) {
       conditions.push(
@@ -1014,9 +996,35 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(materialMovements.type, type));
     }
 
-    if (ownerId) {
-      conditions.push(eq(materialMovements.userId, ownerId));
-    }
+    let query = db
+      .select({
+        movement: materialMovements,
+        user: users,
+        supplier: suppliers,
+        employee: employees,
+        thirdParty: thirdParties,
+        items: movementItems,
+        material: materials,
+        category: categories
+      })
+      .from(materialMovements)
+      .innerJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
+      .innerJoin(materials, eq(movementItems.materialId, materials.id))
+      .leftJoin(categories, eq(materials.categoryId, categories.id))
+      .leftJoin(users, eq(materialMovements.userId, users.id))
+      .leftJoin(suppliers, eq(materialMovements.supplierId, suppliers.id))
+      .leftJoin(employees, 
+        or(
+          eq(materialMovements.returnEmployeeId, employees.id),
+          eq(materialMovements.destinationEmployeeId, employees.id)
+        )
+      )
+      .leftJoin(thirdParties,
+        or(
+          eq(materialMovements.returnThirdPartyId, thirdParties.id),
+          eq(materialMovements.destinationThirdPartyId, thirdParties.id)
+        )
+      );
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
@@ -1026,23 +1034,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]> {
-    let query = db
-      .select({
-        material: materials,
-        category: categories,
-        totalConsumed: sql<number>`sum(${movementItems.quantity})`,
-      })
-      .from(materials)
-      .leftJoin(categories, eq(materials.categoryId, categories.id))
-      .leftJoin(movementItems, eq(materials.id, movementItems.materialId))
-      .leftJoin(materialMovements, 
-        and(
-          eq(movementItems.movementId, materialMovements.id),
-          eq(materialMovements.type, 'exit')
-        )
-      );
+    const conditions = [
+      eq(materialMovements.type, 'exit')
+    ];
 
-    const conditions = [];
+    // Filtro obrigatório por usuário (isolamento de dados)
+    if (ownerId) {
+      conditions.push(eq(materialMovements.userId, ownerId));
+    }
 
     if (startDate && endDate) {
       conditions.push(
@@ -1053,13 +1052,20 @@ export class DatabaseStorage implements IStorage {
       );
     }
 
-    if (categoryId) {
+    if (categoryId && categoryId !== 0) {
       conditions.push(eq(materials.categoryId, categoryId));
     }
 
-    if (ownerId) {
-      conditions.push(eq(materialMovements.userId, ownerId));
-    }
+    let query = db
+      .select({
+        material: materials,
+        category: categories,
+        totalConsumed: sql<number>`sum(${movementItems.quantity})`,
+      })
+      .from(materialMovements)
+      .innerJoin(movementItems, eq(materialMovements.id, movementItems.movementId))
+      .innerJoin(materials, eq(movementItems.materialId, materials.id))
+      .leftJoin(categories, eq(materials.categoryId, categories.id));
 
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;

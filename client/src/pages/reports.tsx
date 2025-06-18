@@ -587,12 +587,12 @@ export default function Reports() {
                               {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
+                          <TableCell>{item.material?.name || '-'}</TableCell>
+                          <TableCell>{item.items?.quantity || 0} {item.material?.unit || ''}</TableCell>
                           <TableCell>
                             {item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-'}
                           </TableCell>
-                          <TableCell>{item.items?.quantity || 0} {item.material?.unit || ''}</TableCell>
                           <TableCell>{item.user?.username || '-'}</TableCell>
-                          <TableCell>{item.movement?.notes || item.notes || '-'}</TableCell>
                         </>
                       )}
                       {activeReport === 'consumption' && (

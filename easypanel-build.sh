@@ -42,13 +42,13 @@ mkdir -p uploads
 echo "=== Arquivos de build gerados ==="
 ls -la dist/ || echo "Diretório dist vazio"
 
-# Executar migração de compatibilidade se DATABASE_URL estiver disponível
-echo "=== Verificando compatibilidade do banco de dados ==="
+# Executar inicialização completa do EasyPanel se DATABASE_URL estiver disponível
+echo "=== Preparando inicialização completa para EasyPanel ==="
 if [ ! -z "$DATABASE_URL" ]; then
-  echo "Executando migração de compatibilidade..."
-  npx tsx server/migrate-schema.ts || echo "Migração não executada, continuando..."
+  echo "Executando inicialização completa do banco de dados..."
+  npx tsx server/easypanel-init.ts || echo "Inicialização não executada, será feita no startup"
 else
-  echo "DATABASE_URL não definida, migração será executada no startup"
+  echo "DATABASE_URL não definida, inicialização será executada no startup"
 fi
 
 echo "=== Build EasyPanel concluído com sucesso ==="

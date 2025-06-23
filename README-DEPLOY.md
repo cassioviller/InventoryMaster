@@ -18,10 +18,24 @@
 - Branch: `main`
 
 #### 2. Variáveis de Ambiente Obrigatórias
+
+**Opção 1 - Configuração Manual (Recomendada):**
 ```env
 NODE_ENV=production
 PORT=5013
 DATABASE_URL=postgres://viajey:viajey@viajey_viajey:5432/viajey?sslmode=require
+SESSION_SECRET=seu-valor-secreto-unico-aqui
+```
+
+**Opção 2 - Detecção Automática:**
+```env
+NODE_ENV=production
+PORT=5013
+POSTGRES_HOST=viajey_viajey
+POSTGRES_USER=viajey
+POSTGRES_PASSWORD=viajey
+POSTGRES_DB=viajey
+POSTGRES_PORT=5432
 SESSION_SECRET=seu-valor-secreto-unico-aqui
 ```
 

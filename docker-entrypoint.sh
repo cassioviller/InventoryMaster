@@ -3,11 +3,34 @@ set -e
 
 echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
 
-# Verificar variáveis de ambiente essenciais
-echo "Verificando variáveis de ambiente..."
-: "${DATABASE_URL:?Variável DATABASE_URL não está configurada}"
-: "${NODE_ENV:?Variável NODE_ENV não está configurada}"
-: "${PORT:?Variável PORT não está configurada}"
+# Verificar e configurar DATABASE_URL automaticamente
+echo "Verificando configuração do banco de dados..."
+
+if [ -z "$DATABASE_URL" ]; then
+  echo "DATABASE_URL não definida - configurando automaticamente..."
+  
+  # Configuração padrão para o PostgreSQL do viajey
+  POSTGRES_USER="${POSTGRES_USER:-viajey}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-viajey}"
+  POSTGRES_HOST="${POSTGRES_HOST:-viajey_viajey}"
+  POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+  POSTGRES_DB="${POSTGRES_DB:-viajey}"
+  
+  # Construir DATABASE_URL
+  DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=require"
+  export DATABASE_URL
+  
+  echo "DATABASE_URL configurada: postgres://$POSTGRES_USER:***@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
+fi
+
+# Verificar outras variáveis essenciais
+: "${NODE_ENV:=production}"
+: "${PORT:=5013}"
+
+echo "Configuração:"
+echo "- NODE_ENV: $NODE_ENV"
+echo "- PORT: $PORT"
+echo "- DATABASE_URL: ${DATABASE_URL//:*@/:***@}"
 
 # Aguardar PostgreSQL estar pronto com timeout mais robusto
 echo "Aguardando inicialização do PostgreSQL..."

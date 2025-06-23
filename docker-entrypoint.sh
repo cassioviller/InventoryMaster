@@ -40,9 +40,10 @@ ATTEMPTS=0
 while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
   if timeout 10 node -e "
     const { Pool } = require('pg');
+    const ssl = process.env.DATABASE_URL.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
     const pool = new Pool({ 
       connectionString: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false }
+      ssl: ssl
     });
     pool.query('SELECT 1').then(() => {
       console.log('PostgreSQL conectado com sucesso');

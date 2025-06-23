@@ -12,7 +12,7 @@ export async function initializeDatabase() {
     const baseUrl = process.env.DATABASE_URL.replace(/\/[^\/]+(\?|$)/, '/postgres$1');
     const basePool = new Pool({ 
       connectionString: baseUrl,
-      ssl: { rejectUnauthorized: false }
+      ssl: baseUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false }
     });
     
     try {
@@ -33,7 +33,7 @@ export async function initializeDatabase() {
     const almoxUrl = process.env.DATABASE_URL.replace(/\/[^\/]+(\?|$)/, '/almoxarifado$1');
     const pool = new Pool({ 
       connectionString: almoxUrl,
-      ssl: { rejectUnauthorized: false }
+      ssl: almoxUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false }
     });
 
     // Verificar se as tabelas já existem

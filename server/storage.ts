@@ -670,12 +670,38 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(materialMovements.createdAt));
   }
 
-  async getMovement(id: number): Promise<MaterialMovement | undefined> {
+  async getMovement(id: number, ownerId?: number): Promise<MaterialMovement | undefined> {
+    if (ownerId) {
+      const [movement] = await db
+        .select()
+        .from(materialMovements)
+        .where(
+          and(
+            eq(materialMovements.id, id),
+            eq(materialMovements.userId, ownerId)
+          )
+        );
+      return movement || undefined;
+    }
+    
     const [movement] = await db.select().from(materialMovements).where(eq(materialMovements.id, id));
     return movement || undefined;
   }
 
-  async getMovementsByType(type: 'entry' | 'exit'): Promise<MaterialMovement[]> {
+  async getMovementsByType(type: 'entry' | 'exit', ownerId?: number): Promise<MaterialMovement[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(materialMovements)
+        .where(
+          and(
+            eq(materialMovements.type, type),
+            eq(materialMovements.userId, ownerId)
+          )
+        )
+        .orderBy(desc(materialMovements.createdAt));
+    }
+    
     return await db
       .select()
       .from(materialMovements)
@@ -683,7 +709,21 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(materialMovements.createdAt));
   }
 
-  async getMovementsByDateRange(startDate: Date, endDate: Date): Promise<MaterialMovement[]> {
+  async getMovementsByDateRange(startDate: Date, endDate: Date, ownerId?: number): Promise<MaterialMovement[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(materialMovements)
+        .where(
+          and(
+            gte(materialMovements.date, startDate),
+            lte(materialMovements.date, endDate),
+            eq(materialMovements.userId, ownerId)
+          )
+        )
+        .orderBy(desc(materialMovements.date));
+    }
+    
     return await db
       .select()
       .from(materialMovements)
@@ -696,16 +736,22 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(materialMovements.date));
   }
 
-  async getMovementsByEmployee(employeeId: number): Promise<MaterialMovement[]> {
+  async getMovementsByEmployee(employeeId: number, ownerId?: number): Promise<MaterialMovement[]> {
+    const conditions = [
+      or(
+        eq(materialMovements.returnEmployeeId, employeeId),
+        eq(materialMovements.destinationEmployeeId, employeeId)
+      )
+    ];
+    
+    if (ownerId) {
+      conditions.push(eq(materialMovements.userId, ownerId));
+    }
+    
     return await db
       .select()
       .from(materialMovements)
-      .where(
-        or(
-          eq(materialMovements.returnEmployeeId, employeeId),
-          eq(materialMovements.destinationEmployeeId, employeeId)
-        )
-      )
+      .where(and(...conditions))
       .orderBy(desc(materialMovements.date));
   }
 

@@ -115,6 +115,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/users", authenticateToken, requireSystemSuperAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log('Creating user with data:', req.body);
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByUsername(req.body.username);
+      if (existingUser) {
+        return res.status(409).json({ message: "Username already exists" });
+      }
+
+      const existingEmail = await storage.getUserByEmail(req.body.email);
+      if (existingEmail) {
+        return res.status(409).json({ message: "Email already exists" });
+      }
+
       const userData = insertUserSchema.parse(req.body);
       const user = await storage.createUser(userData);
       
@@ -129,7 +142,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(user);
     } catch (error) {
-      res.status(400).json({ message: "Failed to create user" });
+      console.error('Error creating user:', error);
+      if (error instanceof Error) {
+        res.status(400).json({ message: error.message });
+      } else {
+        res.status(400).json({ message: "Failed to create user" });
+      }
     }
   });
 

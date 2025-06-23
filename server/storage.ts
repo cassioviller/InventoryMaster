@@ -1228,7 +1228,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAuditLog(log: Omit<AuditLog, 'id' | 'createdAt'>): Promise<void> {
-    await db.insert(auditLog).values(log);
+    try {
+      await db.insert(auditLog).values({
+        ...log,
+        oldValues: log.oldValues || null,
+        newValues: log.newValues || null,
+        recordId: log.recordId || null,
+      });
+    } catch (error) {
+      console.error('Error creating audit log:', error);
+      // Don't throw error to prevent audit log issues from breaking main operations
+    }
   }
 
   // Relatório de Rastreamento de Fornecedores

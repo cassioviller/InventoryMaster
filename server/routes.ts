@@ -349,6 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const employees = await storage.getAllEmployees(ownerId);
       res.json(employees);
     } catch (error) {
+      console.error('Error fetching employees:', error);
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });

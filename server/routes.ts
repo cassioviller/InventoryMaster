@@ -52,24 +52,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
+      console.log('Login attempt:', req.body);
       const { username, password } = loginSchema.parse(req.body);
       
+      console.log('Looking for user:', username);
       const user = await storage.getUserByUsername(username);
+      console.log('User found:', user ? { id: user.id, username: user.username, role: user.role, isActive: user.isActive } : 'null');
+      
       if (!user || !user.isActive) {
+        console.log('User not found or inactive');
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      console.log('Verifying password...');
       const isValidPassword = await storage.verifyPassword(password, user.password);
+      console.log('Password valid:', isValidPassword);
+      
       if (!isValidPassword) {
+        console.log('Invalid password');
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
+      console.log('Generating token...');
       const token = jwt.sign(
         { id: user.id, username: user.username, role: user.role },
         JWT_SECRET,
         { expiresIn: '24h' }
       );
 
+      console.log('Login successful for user:', username);
       res.json({
         token,
         user: {

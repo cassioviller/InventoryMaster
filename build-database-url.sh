@@ -68,10 +68,15 @@ build_database_url() {
         return 0
     fi
 
-    # Fallback para o PostgreSQL padrão do viajey
+    # Fallback para o PostgreSQL local durante desenvolvimento
     if [ -z "$DATABASE_URL" ]; then
-        export DATABASE_URL="postgres://viajey:viajey@viajey_viajey:5432/almoxarifado?sslmode=disable"
-        echo "Usando PostgreSQL padrão do viajey: $DATABASE_URL"
+        if [ "$NODE_ENV" = "development" ]; then
+            export DATABASE_URL="postgres://postgres:postgres@localhost:5432/almoxarifado?sslmode=disable"
+            echo "Usando PostgreSQL local (desenvolvimento): $DATABASE_URL"
+        else
+            export DATABASE_URL="postgres://viajey:viajey@viajey_viajey:5432/almoxarifado?sslmode=disable"
+            echo "Usando PostgreSQL padrão do viajey: $DATABASE_URL"
+        fi
         echo "Banco 'almoxarifado' será criado automaticamente se não existir"
     fi
 }

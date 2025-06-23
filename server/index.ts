@@ -2,6 +2,11 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Configurar DATABASE_URL se não estiver definida
+if (!process.env.DATABASE_URL) {
+  process.env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/almoxarifado?sslmode=disable";
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

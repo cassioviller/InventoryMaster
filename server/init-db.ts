@@ -1,8 +1,4 @@
 import { Pool } from 'pg';
-import { drizzle } from 'drizzle-orm/node-postgres';
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import * as schema from '@shared/schema';
-import { sql } from 'drizzle-orm';
 
 export async function initializeDatabase() {
   if (!process.env.DATABASE_URL) {
@@ -16,7 +12,7 @@ export async function initializeDatabase() {
     const baseUrl = process.env.DATABASE_URL.replace(/\/[^\/]+(\?|$)/, '/postgres$1');
     const basePool = new Pool({ 
       connectionString: baseUrl,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      ssl: { rejectUnauthorized: false }
     });
     
     try {
@@ -37,7 +33,7 @@ export async function initializeDatabase() {
     const almoxUrl = process.env.DATABASE_URL.replace(/\/[^\/]+(\?|$)/, '/almoxarifado$1');
     const pool = new Pool({ 
       connectionString: almoxUrl,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+      ssl: { rejectUnauthorized: false }
     });
 
     // Verificar se as tabelas já existem
@@ -51,8 +47,8 @@ export async function initializeDatabase() {
     if (tablesQuery.rows.length === 0) {
       console.log('🔄 Criando tabelas...');
       
-      // Criar todas as tabelas usando o schema
-      await db.execute(sql`
+      // Criar todas as tabelas usando SQL direto
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "users" (
           "id" serial PRIMARY KEY NOT NULL,
           "username" varchar(50) NOT NULL,
@@ -65,20 +61,20 @@ export async function initializeDatabase() {
           "createdAt" timestamp DEFAULT now() NOT NULL,
           CONSTRAINT "users_username_unique" UNIQUE("username"),
           CONSTRAINT "users_email_unique" UNIQUE("email")
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "categories" (
           "id" serial PRIMARY KEY NOT NULL,
           "name" varchar(255) NOT NULL,
           "description" text,
           "ownerId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "materials" (
           "id" serial PRIMARY KEY NOT NULL,
           "name" varchar(255) NOT NULL,
@@ -90,10 +86,10 @@ export async function initializeDatabase() {
           "unitCost" numeric(10,2) DEFAULT '0' NOT NULL,
           "ownerId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "employees" (
           "id" serial PRIMARY KEY NOT NULL,
           "name" varchar(255) NOT NULL,
@@ -104,10 +100,10 @@ export async function initializeDatabase() {
           "isActive" boolean DEFAULT true NOT NULL,
           "ownerId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "suppliers" (
           "id" serial PRIMARY KEY NOT NULL,
           "name" varchar(255) NOT NULL,
@@ -118,10 +114,10 @@ export async function initializeDatabase() {
           "isActive" boolean DEFAULT true NOT NULL,
           "ownerId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "thirdParties" (
           "id" serial PRIMARY KEY NOT NULL,
           "name" varchar(255) NOT NULL,
@@ -132,10 +128,10 @@ export async function initializeDatabase() {
           "isActive" boolean DEFAULT true NOT NULL,
           "ownerId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "materialMovements" (
           "id" serial PRIMARY KEY NOT NULL,
           "materialId" integer NOT NULL,
@@ -150,10 +146,10 @@ export async function initializeDatabase() {
           "userId" integer NOT NULL,
           "ownerId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
-      await db.execute(sql`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS "auditLogs" (
           "id" serial PRIMARY KEY NOT NULL,
           "tableName" varchar(100) NOT NULL,
@@ -163,14 +159,14 @@ export async function initializeDatabase() {
           "newValues" text,
           "userId" integer NOT NULL,
           "createdAt" timestamp DEFAULT now() NOT NULL
-        );
+        )
       `);
 
       // Criar índices importantes
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS "materials_category_idx" ON "materials" ("categoryId");`);
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS "materials_owner_idx" ON "materials" ("ownerId");`);
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS "movements_material_idx" ON "materialMovements" ("materialId");`);
-      await db.execute(sql`CREATE INDEX IF NOT EXISTS "movements_owner_idx" ON "materialMovements" ("ownerId");`);
+      await pool.query('CREATE INDEX IF NOT EXISTS "materials_category_idx" ON "materials" ("categoryId")');
+      await pool.query('CREATE INDEX IF NOT EXISTS "materials_owner_idx" ON "materials" ("ownerId")');
+      await pool.query('CREATE INDEX IF NOT EXISTS "movements_material_idx" ON "materialMovements" ("materialId")');
+      await pool.query('CREATE INDEX IF NOT EXISTS "movements_owner_idx" ON "materialMovements" ("ownerId")');
 
       console.log('✅ Tabelas criadas com sucesso');
 
@@ -245,10 +241,10 @@ async function createDefaultUsers(pool: Pool) {
     ];
 
     for (const user of users) {
-      await db.execute(sql`
+      await pool.query(`
         INSERT INTO users (username, email, password, name, role, "isActive", "ownerId", "createdAt")
-        VALUES (${user.username}, ${user.email}, ${user.password}, ${user.name}, ${user.role}, ${user.isActive}, ${user.ownerId}, NOW())
-      `);
+        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      `, [user.username, user.email, user.password, user.name, user.role, user.isActive, user.ownerId]);
     }
 
     console.log('✅ Usuários padrão criados');

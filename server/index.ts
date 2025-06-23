@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { ensureTables } from "./db-simple";
+import { ensureCompatibleTables } from "./db-compatibility";
 
 // Log da DATABASE_URL configurada no ambiente
 console.log("🔧 DATABASE_URL:", process.env.DATABASE_URL ? "Configurada" : "Não definida");
@@ -45,7 +45,7 @@ app.use((req, res, next) => {
   
   // Initialize database after routes are set up
   try {
-    await ensureTables();
+    await ensureCompatibleTables();
   } catch (error: any) {
     console.error("Database initialization failed:", error.message);
   }
@@ -67,7 +67,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
+  // Port configuration: 5000 for Replit, 5013 for EasyPanel
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000");

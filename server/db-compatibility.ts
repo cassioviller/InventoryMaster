@@ -75,6 +75,9 @@ export async function ensureCompatibleTables() {
     await pool.query(`UPDATE users SET "createdAt" = now() WHERE "createdAt" IS NULL`);
     await pool.query(`UPDATE users SET name = username WHERE name IS NULL OR name = ''`);
     
+    // Fix column names in all tables
+    await fixAllTableColumns();
+    
     console.log('✅ Schema verificado e atualizado');
     
     // Ensure default users exist
@@ -87,6 +90,104 @@ export async function ensureCompatibleTables() {
       await createCompleteSchema();
     } catch (createError) {
       console.error('❌ Erro ao criar schema:', createError);
+    }
+  }
+}
+
+async function fixAllTableColumns() {
+  console.log('🔧 Corrigindo nomes de colunas em todas as tabelas...');
+  
+  const tablesToFix = [
+    {
+      table: 'employees',
+      columns: [
+        { from: 'is_active', to: 'isActive' },
+        { from: 'owner_id', to: 'ownerId' },
+        { from: 'created_at', to: 'createdAt' }
+      ]
+    },
+    {
+      table: 'suppliers',
+      columns: [
+        { from: 'is_active', to: 'isActive' },
+        { from: 'owner_id', to: 'ownerId' },
+        { from: 'created_at', to: 'createdAt' }
+      ]
+    },
+    {
+      table: 'third_parties',
+      columns: [
+        { from: 'is_active', to: 'isActive' },
+        { from: 'owner_id', to: 'ownerId' },
+        { from: 'created_at', to: 'createdAt' }
+      ]
+    },
+    {
+      table: 'categories',
+      columns: [
+        { from: 'owner_id', to: 'ownerId' },
+        { from: 'created_at', to: 'createdAt' }
+      ]
+    },
+    {
+      table: 'materials',
+      columns: [
+        { from: 'category_id', to: 'categoryId' },
+        { from: 'owner_id', to: 'ownerId' },
+        { from: 'created_at', to: 'createdAt' },
+        { from: 'current_stock', to: 'currentStock' },
+        { from: 'min_stock', to: 'minStock' },
+        { from: 'unit_price', to: 'unitPrice' }
+      ]
+    },
+    {
+      table: 'material_movements',
+      columns: [
+        { from: 'material_id', to: 'materialId' },
+        { from: 'user_id', to: 'userId' },
+        { from: 'owner_id', to: 'ownerId' },
+        { from: 'created_at', to: 'createdAt' },
+        { from: 'movement_type', to: 'movementType' },
+        { from: 'origin_type', to: 'originType' },
+        { from: 'origin_id', to: 'originId' },
+        { from: 'destination_type', to: 'destinationType' },
+        { from: 'destination_id', to: 'destinationId' }
+      ]
+    }
+  ];
+
+  for (const { table, columns } of tablesToFix) {
+    try {
+      // Check if table exists
+      const tableExists = await pool.query(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public' AND table_name = $1
+      `, [table]);
+
+      if (tableExists.rows.length === 0) {
+        console.log(`⚠️ Tabela ${table} não existe, pulando...`);
+        continue;
+      }
+
+      // Get current columns
+      const currentColumns = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = $1 
+        ORDER BY column_name
+      `, [table]);
+
+      const existingColumns = currentColumns.rows.map(row => row.column_name);
+
+      for (const { from, to } of columns) {
+        if (existingColumns.includes(from) && !existingColumns.includes(to)) {
+          console.log(`🔄 Renomeando ${table}.${from} → ${to}`);
+          await pool.query(`ALTER TABLE "${table}" RENAME COLUMN "${from}" TO "${to}"`);
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Erro ao corrigir tabela ${table}:`, error.message);
     }
   }
 }

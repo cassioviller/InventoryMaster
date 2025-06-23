@@ -23,8 +23,8 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Materials inventory
@@ -50,8 +50,8 @@ export const employees = pgTable("employees", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   isActive: boolean("isActive").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Suppliers
@@ -63,9 +63,9 @@ export const suppliers = pgTable("suppliers", {
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   notes: text("notes"), // Materials and services provided
-  isActive: boolean("is_active").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isActive: boolean("isActive").notNull().default(true),
+  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Third parties (external entities)
@@ -77,9 +77,9 @@ export const thirdParties = pgTable("third_parties", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
-  isActive: boolean("is_active").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isActive: boolean("isActive").notNull().default(true),
+  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Movement types

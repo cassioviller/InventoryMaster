@@ -1,33 +1,32 @@
-import { pgTable, text, serial, integer, boolean, timestamp, varchar, decimal, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, varchar, text, integer, boolean, timestamp, decimal, pgEnum } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { createInsertSchema } from "drizzle-zod";
-import { z } from "zod";
 
-// Users table with role-based access
+// User roles
 export const userRoleEnum = pgEnum('user_role', ['super_admin', 'admin', 'user']);
 
+// Users table
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  username: varchar("username", { length: 50 }).notNull().unique(),
-  email: varchar("email", { length: 100 }).notNull().unique(),
-  password: text("password").notNull(),
-  name: varchar("name", { length: 200 }).notNull(),
-  role: text("role").notNull().default('user'),
+  username: varchar("username", { length: 100 }).unique().notNull(),
+  email: varchar("email", { length: 150 }).unique().notNull(),
+  password: varchar("password", { length: 255 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull().default('User'),
+  role: userRoleEnum("role").notNull().default('user'),
   isActive: boolean("isActive").notNull().default(true),
   ownerId: integer("ownerId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Categories for materials
+// Categories
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("ownerId").notNull().default(2),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Materials inventory
+// Materials
 export const materials = pgTable("materials", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
@@ -38,7 +37,7 @@ export const materials = pgTable("materials", {
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).default('0.00'),
   description: text("description"),
   location: varchar("location", { length: 100 }),
-  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("ownerId").notNull().default(2),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -50,7 +49,7 @@ export const employees = pgTable("employees", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   isActive: boolean("isActive").notNull().default(true),
-  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("ownerId").notNull().default(2),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
@@ -62,32 +61,32 @@ export const suppliers = pgTable("suppliers", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
-  notes: text("notes"), // Materials and services provided
+  notes: text("notes"),
   isActive: boolean("isActive").notNull().default(true),
-  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("ownerId").notNull().default(2),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Third parties (external entities)
+// Third parties
 export const thirdParties = pgTable("third_parties", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
   document: varchar("document", { length: 20 }),
-  documentType: varchar("document_type", { length: 10 }).default('CPF'), // CPF or CNPJ
+  documentType: varchar("document_type", { length: 10 }).default('CPF'),
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   isActive: boolean("isActive").notNull().default(true),
-  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("ownerId").notNull().default(2),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Movement types
+// Movement enums
 export const movementTypeEnum = pgEnum('movement_type', ['entry', 'exit']);
 export const originTypeEnum = pgEnum('origin_type', ['supplier', 'employee_return', 'third_party_return']);
 export const destinationTypeEnum = pgEnum('destination_type', ['employee', 'third_party']);
 
-// Material movements (unified for entries and exits)
+// Material movements
 export const materialMovements = pgTable("material_movements", {
   id: serial("id").primaryKey(),
   materialId: integer("materialId").notNull(),
@@ -103,7 +102,7 @@ export const materialMovements = pgTable("material_movements", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Items within movements
+// Movement items
 export const movementItems = pgTable("movement_items", {
   id: serial("id").primaryKey(),
   movementId: integer("movementId").notNull(),
@@ -112,22 +111,22 @@ export const movementItems = pgTable("movement_items", {
   unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).default('0.00'),
 });
 
-// Audit log for tracking changes
+// Audit log
 export const auditLog = pgTable("audit_log", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
+  userId: integer("userId").notNull(),
   action: varchar("action", { length: 50 }).notNull(),
-  tableName: varchar("table_name", { length: 50 }).notNull(),
-  recordId: integer("record_id"),
-  oldValues: text("old_values"),
-  newValues: text("new_values"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  tableName: varchar("tableName", { length: 50 }),
+  recordId: integer("recordId"),
+  oldValues: text("oldValues"),
+  newValues: text("newValues"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
-// Relations
+// Simple relations
 export const userRelations = relations(users, ({ many }) => ({
-  movements: many(materialMovements),
-  auditLogs: many(auditLog),
+  categories: many(categories),
+  materials: many(materials),
 }));
 
 export const categoryRelations = relations(categories, ({ many }) => ({
@@ -139,7 +138,6 @@ export const materialRelations = relations(materials, ({ one, many }) => ({
     fields: [materials.categoryId],
     references: [categories.id],
   }),
-  movementItems: many(movementItems),
 }));
 
 export const employeeRelations = relations(employees, ({ many }) => ({
@@ -154,7 +152,7 @@ export const thirdPartyRelations = relations(thirdParties, ({ many }) => ({
   movements: many(materialMovements),
 }));
 
-export const movementRelations = relations(materialMovements, ({ one, many }) => ({
+export const movementRelations = relations(materialMovements, ({ one }) => ({
   user: one(users, {
     fields: [materialMovements.userId],
     references: [users.id],
@@ -163,7 +161,6 @@ export const movementRelations = relations(materialMovements, ({ one, many }) =>
     fields: [materialMovements.materialId],
     references: [materials.id],
   }),
-  items: many(movementItems),
 }));
 
 export const movementItemRelations = relations(movementItems, ({ one }) => ({
@@ -184,99 +181,13 @@ export const auditLogRelations = relations(auditLog, ({ one }) => ({
   }),
 }));
 
-// Insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertCategorySchema = createInsertSchema(categories).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertMaterialSchema = createInsertSchema(materials).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertEmployeeSchema = createInsertSchema(employees).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertSupplierSchema = createInsertSchema(suppliers).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertThirdPartySchema = createInsertSchema(thirdParties).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertMovementSchema = createInsertSchema(materialMovements).omit({
-  id: true,
-  createdAt: true,
-});
-
-export const insertMovementItemSchema = createInsertSchema(movementItems).omit({
-  id: true,
-});
-
-// Login schema - simplified for compatibility
-export const loginSchema = z.object({
-  username: z.string(),
-  password: z.string(),
-});
-
-// Movement creation schemas
-export const createEntrySchema = z.object({
-  date: z.string(),
-  originType: z.enum(['supplier', 'employee_return', 'third_party_return']),
-  supplierId: z.number().optional(),
-  returnEmployeeId: z.number().optional(),
-  returnThirdPartyId: z.number().optional(),
-  items: z.array(z.object({
-    materialId: z.number(),
-    quantity: z.number().min(1),
-    unitPrice: z.number().optional(),
-  })),
-  notes: z.string().optional(),
-});
-
-export const createExitSchema = z.object({
-  date: z.string(),
-  destinationType: z.enum(['employee', 'third_party']),
-  destinationEmployeeId: z.number().optional(),
-  destinationThirdPartyId: z.number().optional(),
-  items: z.array(z.object({
-    materialId: z.number(),
-    quantity: z.number().min(1),
-    unitPrice: z.number().optional(),
-    purpose: z.string().optional(),
-  })),
-  notes: z.string().optional(),
-});
-
-// Type exports
+// Types
 export type User = typeof users.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Category = typeof categories.$inferSelect;
-export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Material = typeof materials.$inferSelect;
-export type InsertMaterial = z.infer<typeof insertMaterialSchema>;
 export type Employee = typeof employees.$inferSelect;
-export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 export type Supplier = typeof suppliers.$inferSelect;
-export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 export type ThirdParty = typeof thirdParties.$inferSelect;
-export type InsertThirdParty = z.infer<typeof insertThirdPartySchema>;
 export type MaterialMovement = typeof materialMovements.$inferSelect;
-export type InsertMovement = z.infer<typeof insertMovementSchema>;
 export type MovementItem = typeof movementItems.$inferSelect;
-export type InsertMovementItem = z.infer<typeof insertMovementItemSchema>;
 export type AuditLog = typeof auditLog.$inferSelect;
-export type LoginData = z.infer<typeof loginSchema>;
-export type CreateEntryData = z.infer<typeof createEntrySchema>;
-export type CreateExitData = z.infer<typeof createExitSchema>;

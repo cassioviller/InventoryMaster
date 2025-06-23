@@ -154,21 +154,20 @@ export async function ensureTables() {
 
 async function createDefaultUsers() {
   try {
-    // Force user recreation in production if FORCE_DB_INIT is set
-    if (process.env.FORCE_DB_INIT === 'true' || process.env.NODE_ENV === 'production') {
-      console.log('Force DB initialization - recreating users...');
-      
-      // Delete existing users first
-      await pool.query('DELETE FROM users WHERE username IN ($1, $2, $3, $4)', [
-        'cassio', 'axiomtech', 'almox', 'empresa_teste'
-      ]);
-    } else {
-      // Check if users already exist in development
-      const existingUsers = await pool.query('SELECT COUNT(*) as count FROM users');
-      if (existingUsers.rows[0]?.count > 0) {
-        console.log('Default users already exist');
-        return;
-      }
+    // Check which users already exist to preserve data
+    const existingUsers = await pool.query('SELECT username FROM users WHERE username IN ($1, $2, $3, $4)', [
+      'cassio', 'axiomtech', 'almox', 'empresa_teste'
+    ]);
+    
+    const existingUsernames = existingUsers.rows.map(row => row.username);
+    console.log('Existing users found:', existingUsernames.length > 0 ? existingUsernames : 'none');
+    
+    // Only recreate users if FORCE_DB_INIT is true and in production
+    if (process.env.FORCE_DB_INIT === 'true' && process.env.NODE_ENV === 'production') {
+      console.log('Force DB initialization - updating/creating users...');
+    } else if (existingUsernames.length >= 4) {
+      console.log('All default users already exist - preserving data');
+      return;
     }
 
     const bcrypt = await import('bcrypt');

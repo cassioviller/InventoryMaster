@@ -52,8 +52,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req, res) => {
     try {
-      console.log('Login attempt:', req.body);
-      const { username, password } = loginSchema.parse(req.body);
+      console.log('Login attempt:', { username: req.body?.username, password: '***' });
+      
+      // Validate request body exists
+      if (!req.body || typeof req.body !== 'object') {
+        console.log('Invalid request body format');
+        return res.status(400).json({ message: "Invalid request format" });
+      }
+
+      // Validate required fields
+      const { username, password } = req.body;
+      if (!username || !password || typeof username !== 'string' || typeof password !== 'string') {
+        console.log('Missing or invalid username/password fields');
+        return res.status(400).json({ message: "Username and password are required" });
+      }
       
       console.log('Looking for user:', username);
       const user = await storage.getUserByUsername(username);
@@ -91,7 +103,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         },
       });
     } catch (error) {
-      res.status(400).json({ message: "Invalid request data" });
+      console.error('Login error:', error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

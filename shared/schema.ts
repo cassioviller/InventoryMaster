@@ -215,3 +215,29 @@ export const insertThirdPartySchema = createInsertSchema(thirdParties).omit({ id
 export const insertMaterialMovementSchema = createInsertSchema(materialMovements).omit({ id: true, createdAt: true });
 export const insertMovementItemSchema = createInsertSchema(movementItems).omit({ id: true });
 export const insertAuditLogSchema = createInsertSchema(auditLog).omit({ id: true, createdAt: true });
+
+// Login schema
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required")
+});
+
+// Entry and Exit schemas
+export const createEntrySchema = z.object({
+  materialId: z.number(),
+  quantity: z.number().positive(),
+  supplierId: z.number().optional(),
+  notes: z.string().optional()
+});
+
+export const createExitSchema = z.object({
+  materialId: z.number(),
+  quantity: z.number().positive(),
+  employeeId: z.number().optional(),
+  thirdPartyId: z.number().optional(),
+  notes: z.string().optional()
+});
+
+// Movement types
+export type CreateEntryData = z.infer<typeof createEntrySchema>;
+export type CreateExitData = z.infer<typeof createExitSchema>;

@@ -104,24 +104,20 @@ Após o primeiro deploy, use estas credenciais para acessar:
 ### Erro "could not translate host name" 
 **Problema**: `psql: error: could not translate host name "almoxarifado_db" to address`
 
-**Solução Imediata**:
-1. **Adicione variável de ambiente**:
-   ```
-   SKIP_DB_CHECK=true
-   ```
-   Isso permite que a aplicação inicie mesmo sem o banco disponível
+**Configuração Final Simplificada**:
+No EasyPanel, configure apenas:
+```
+NODE_ENV=production
+PORT=5013
+```
 
-2. **Configure DATABASE_URL correta**:
-   - No EasyPanel, vá até seu serviço PostgreSQL  
-   - Use exatamente: `postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable`
-   - Substitua apenas os valores pelos seus dados reais
+O sistema detectará automaticamente seu PostgreSQL existente (`viajey_viajey`) e criará o banco `almoxarifado` separadamente.
 
-**Verificações Necessárias**:
-- ✅ PostgreSQL deve estar "Running" no EasyPanel
-- ✅ Usuário `almox2` existe no banco
-- ✅ Senha `almox3` está correta  
-- ✅ Banco `almox1` foi criado
-- ✅ Hostname `viajey_almox` é o nome do serviço PostgreSQL
+**Verificação Automática**:
+- ✅ Sistema detecta PostgreSQL do viajey automaticamente
+- ✅ Cria banco `almoxarifado` sem afetar dados existentes
+- ✅ Aplicação inicia mesmo se banco não estiver imediatamente disponível
+- ✅ Logs detalhados para diagnóstico de problemas
 
 ### Erro de Conexão com Banco
 - Verifique se a DATABASE_URL usa o hostname interno correto

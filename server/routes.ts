@@ -294,6 +294,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Additional material endpoints
+  app.put("/api/materials/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const materialData = insertMaterialSchema.partial().parse(req.body);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const material = await storage.updateMaterial(id, materialData, ownerId);
+      res.json(material);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update material" });
+    }
+  });
+
+  app.delete("/api/materials/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const material = await storage.getMaterial(id, ownerId);
+      
+      if (!material) {
+        return res.status(404).json({ message: "Material not found" });
+      }
+
+      await storage.deleteMaterial(id, ownerId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete material" });
+    }
+  });
+
+  // Employee routes
+  app.get("/api/employees", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const employees = await storage.getAllEmployees(ownerId);
+      res.json(employees);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch employees" });
+    }
+  });
+
+  app.post("/api/employees", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const employeeData = insertEmployeeSchema.parse(req.body);
+      employeeData.ownerId = req.user!.id;
+      const employee = await storage.createEmployee(employeeData);
+      res.status(201).json(employee);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create employee" });
+    }
+  });
+
+  // Supplier routes
+  app.get("/api/suppliers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const suppliers = await storage.getAllSuppliers(ownerId);
+      res.json(suppliers);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch suppliers" });
+    }
+  });
+
+  app.post("/api/suppliers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const supplierData = insertSupplierSchema.parse(req.body);
+      supplierData.ownerId = req.user!.id;
+      const supplier = await storage.createSupplier(supplierData);
+      res.status(201).json(supplier);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create supplier" });
+    }
+  });
+
+  // Third parties routes
+  app.get("/api/third-parties", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const thirdParties = await storage.getAllThirdParties(ownerId);
+      res.json(thirdParties);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch third parties" });
+    }
+  });
+
+  app.post("/api/third-parties", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const thirdPartyData = insertThirdPartySchema.parse(req.body);
+      thirdPartyData.ownerId = req.user!.id;
+      const thirdParty = await storage.createThirdParty(thirdPartyData);
+      res.status(201).json(thirdParty);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create third party" });
+    }
+  });
+
+  // Movement routes
+  app.get("/api/movements", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const movements = await storage.getAllMovements(ownerId);
+      res.json(movements);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch movements" });
+    }
+  });
+
+  app.post("/api/movements/entry", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const entryData = createEntrySchema.parse(req.body);
+      const movement = await storage.createEntry(req.user!.id, entryData);
+      res.status(201).json(movement);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create entry" });
+    }
+  });
+
+  app.post("/api/movements/exit", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const exitData = createExitSchema.parse(req.body);
+      const movement = await storage.createExit(req.user!.id, exitData);
+      res.status(201).json(movement);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to create exit" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

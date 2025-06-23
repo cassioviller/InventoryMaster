@@ -655,7 +655,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Material Movements
-  async getAllMovements(): Promise<MaterialMovement[]> {
+  async getAllMovements(ownerId?: number): Promise<MaterialMovement[]> {
+    if (ownerId) {
+      return await db
+        .select()
+        .from(materialMovements)
+        .where(eq(materialMovements.userId, ownerId))
+        .orderBy(desc(materialMovements.createdAt));
+    }
+    
     return await db
       .select()
       .from(materialMovements)

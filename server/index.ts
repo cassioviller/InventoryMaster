@@ -2,10 +2,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
-// Configurar DATABASE_URL se não estiver definida
-if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "postgres://postgres:postgres@localhost:5432/almoxarifado?sslmode=disable";
-}
+// Log da DATABASE_URL configurada no ambiente
+console.log("🔧 DATABASE_URL:", process.env.DATABASE_URL ? "Configurada" : "Não definida");
 
 const app = express();
 app.use(express.json());

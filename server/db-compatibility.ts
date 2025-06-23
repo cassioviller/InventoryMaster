@@ -6,6 +6,14 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set");
 }
 
+console.log('🔗 Configurando conexão PostgreSQL...');
+console.log('Database URL configurada:', process.env.DATABASE_URL ? 'Sim' : 'Não');
+
+// Parse the database URL to get individual components
+const dbUrl = new URL(process.env.DATABASE_URL);
+console.log('Database host:', dbUrl.hostname);
+console.log('Database name:', dbUrl.pathname.slice(1));
+
 const sslConfig = process.env.DATABASE_URL.includes('sslmode=disable') 
   ? false 
   : { rejectUnauthorized: false };
@@ -21,42 +29,146 @@ export async function ensureCompatibleTables() {
   try {
     console.log('🔄 Verificando compatibilidade do schema...');
     
-    // Check if createdAt column exists in users table
-    const columnCheck = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'users' AND column_name = 'createdAt'
+    // Check if users table exists
+    const tableCheck = await pool.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public' AND table_name = 'users'
     `);
     
-    const hasCreatedAt = columnCheck.rows.length > 0;
-    
-    if (!hasCreatedAt) {
-      console.log('⚠️ Schema antigo detectado, adicionando colunas necessárias...');
-      
-      // Add missing columns
-      try {
-        await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS "createdAt" timestamp DEFAULT now()');
-        await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS name varchar(255)');
-        await pool.query('ALTER TABLE users ADD COLUMN IF NOT EXISTS "ownerId" integer');
-        
-        // Update existing records
-        await pool.query('UPDATE users SET "createdAt" = now() WHERE "createdAt" IS NULL');
-        await pool.query('UPDATE users SET name = username WHERE name IS NULL OR name = \'\'');
-        
-        console.log('✅ Schema atualizado com sucesso');
-      } catch (error) {
-        console.log('ℹ️ Algumas colunas já existem ou não puderam ser adicionadas');
-      }
-    } else {
-      console.log('✅ Schema já está compatível');
+    if (tableCheck.rows.length === 0) {
+      console.log('⚠️ Tabela users não existe, criando schema completo...');
+      await createCompleteSchema();
+      return;
     }
+    
+    // Check current column structure
+    const columnCheck = await pool.query(`
+      SELECT column_name, data_type 
+      FROM information_schema.columns 
+      WHERE table_name = 'users' 
+      ORDER BY column_name
+    `);
+    
+    const existingColumns = columnCheck.rows.map(row => row.column_name);
+    console.log('Colunas existentes na tabela users:', existingColumns);
+    
+    // Add missing columns if they don't exist
+    const requiredColumns = [
+      { name: 'createdAt', type: 'timestamp', sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS "createdAt" timestamp DEFAULT now()' },
+      { name: 'name', type: 'varchar(255)', sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS name varchar(255)' },
+      { name: 'ownerId', type: 'integer', sql: 'ALTER TABLE users ADD COLUMN IF NOT EXISTS "ownerId" integer' }
+    ];
+    
+    for (const column of requiredColumns) {
+      if (!existingColumns.includes(column.name)) {
+        console.log(`Adicionando coluna ${column.name}...`);
+        try {
+          await pool.query(column.sql);
+        } catch (error) {
+          console.log(`Coluna ${column.name} já existe ou erro ao adicionar:`, error.message);
+        }
+      }
+    }
+    
+    // Update existing records
+    await pool.query(`UPDATE users SET "createdAt" = now() WHERE "createdAt" IS NULL`);
+    await pool.query(`UPDATE users SET name = username WHERE name IS NULL OR name = ''`);
+    
+    console.log('✅ Schema verificado e atualizado');
     
     // Ensure default users exist
     await ensureDefaultUsers();
     
   } catch (error) {
     console.error('❌ Erro na verificação de compatibilidade:', error);
-    // Don't throw - continue with existing schema
+    // Try to create basic schema if nothing exists
+    try {
+      await createCompleteSchema();
+    } catch (createError) {
+      console.error('❌ Erro ao criar schema:', createError);
+    }
+  }
+}
+
+async function createCompleteSchema() {
+  console.log('🔧 Criando schema completo do banco de dados...');
+  
+  try {
+    // Create users table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        username VARCHAR(50) NOT NULL UNIQUE,
+        email VARCHAR(100) NOT NULL UNIQUE,
+        password TEXT NOT NULL,
+        name VARCHAR(200),
+        role TEXT NOT NULL DEFAULT 'user',
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        "ownerId" INTEGER,
+        "createdAt" TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+    
+    // Create other essential tables
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        description TEXT,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS materials (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        category_id INTEGER NOT NULL,
+        current_stock INTEGER NOT NULL DEFAULT 0,
+        minimum_stock INTEGER NOT NULL DEFAULT 0,
+        unit VARCHAR(20) DEFAULT 'unidade',
+        unit_price DECIMAL(10,2) DEFAULT 0.00,
+        description TEXT,
+        last_supplier_id INTEGER,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS employees (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        department VARCHAR(100),
+        email VARCHAR(100),
+        phone VARCHAR(20),
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+    
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS suppliers (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        contact_name VARCHAR(200),
+        email VARCHAR(100),
+        phone VARCHAR(20),
+        address TEXT,
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+    
+    console.log('✅ Schema completo criado com sucesso');
+    
+  } catch (error) {
+    console.error('❌ Erro ao criar schema completo:', error);
+    throw error;
   }
 }
 

@@ -6,7 +6,7 @@
 ```
 NODE_ENV=production
 PORT=5013
-DATABASE_URL=postgres://viajey:viajey@viajey_viajey:5432/viajey?sslmode=require
+DATABASE_URL=postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
 SESSION_SECRET=almoxarifado-secret-key-2024
 ```
 

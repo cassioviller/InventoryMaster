@@ -9,15 +9,15 @@ echo "Verificando configuração do banco de dados..."
 if [ -z "$DATABASE_URL" ]; then
   echo "DATABASE_URL não definida - configurando automaticamente..."
   
-  # Configuração padrão para o PostgreSQL do viajey
-  POSTGRES_USER="${POSTGRES_USER:-viajey}"
-  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-viajey}"
-  POSTGRES_HOST="${POSTGRES_HOST:-viajey_viajey}"
+  # Configuração para o PostgreSQL almox
+  POSTGRES_USER="${POSTGRES_USER:-almox2}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-almox3}"
+  POSTGRES_HOST="${POSTGRES_HOST:-viajey_almox}"
   POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-  POSTGRES_DB="${POSTGRES_DB:-viajey}"
+  POSTGRES_DB="${POSTGRES_DB:-almox1}"
   
   # Construir DATABASE_URL
-  DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=require"
+  DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
   export DATABASE_URL
   
   echo "DATABASE_URL configurada: postgres://$POSTGRES_USER:***@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"

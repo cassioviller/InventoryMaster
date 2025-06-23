@@ -31,15 +31,15 @@ export const categories = pgTable("categories", {
 export const materials = pgTable("materials", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 200 }).notNull(),
-  categoryId: integer("category_id").notNull(),
-  currentStock: integer("current_stock").notNull().default(0),
-  minimumStock: integer("minimum_stock").notNull().default(0),
-  unit: varchar("unit", { length: 20 }).default('unidade'),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
+  categoryId: integer("categoryId").notNull(),
+  currentStock: integer("currentStock").notNull().default(0),
+  minStock: integer("minStock").notNull().default(0),
+  unit: varchar("unit", { length: 20 }).default('UN'),
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).default('0.00'),
   description: text("description"),
-  lastSupplierId: integer("last_supplier_id"),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  location: varchar("location", { length: 100 }),
+  ownerId: integer("ownerId").notNull().default(2), // axiomtech is ID 2
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Employees
@@ -90,33 +90,26 @@ export const destinationTypeEnum = pgEnum('destination_type', ['employee', 'thir
 // Material movements (unified for entries and exits)
 export const materialMovements = pgTable("material_movements", {
   id: serial("id").primaryKey(),
-  type: movementTypeEnum("type").notNull(),
-  date: timestamp("date").notNull(),
-  userId: integer("user_id").notNull(),
-  
-  // For entries
-  originType: originTypeEnum("origin_type"),
-  supplierId: integer("supplier_id"),
-  returnEmployeeId: integer("return_employee_id"),
-  returnThirdPartyId: integer("return_third_party_id"),
-  
-  // For exits
-  destinationType: destinationTypeEnum("destination_type"),
-  destinationEmployeeId: integer("destination_employee_id"),
-  destinationThirdPartyId: integer("destination_third_party_id"),
-  
+  materialId: integer("materialId").notNull(),
+  userId: integer("userId").notNull(),
+  ownerId: integer("ownerId").notNull(),
+  quantity: integer("quantity").notNull(),
+  movementType: movementTypeEnum("movementType").notNull(),
+  originType: originTypeEnum("originType"),
+  originId: integer("originId"),
+  destinationType: destinationTypeEnum("destinationType"),
+  destinationId: integer("destinationId"),
   notes: text("notes"),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Items within movements
 export const movementItems = pgTable("movement_items", {
   id: serial("id").primaryKey(),
-  movementId: integer("movement_id").notNull(),
-  materialId: integer("material_id").notNull(),
+  movementId: integer("movementId").notNull(),
+  materialId: integer("materialId").notNull(),
   quantity: integer("quantity").notNull(),
-  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
-  purpose: text("purpose"), // For exits - what the material will be used for
+  unitPrice: decimal("unitPrice", { precision: 10, scale: 2 }).default('0.00'),
 });
 
 // Audit log for tracking changes
@@ -145,10 +138,6 @@ export const materialRelations = relations(materials, ({ one, many }) => ({
   category: one(categories, {
     fields: [materials.categoryId],
     references: [categories.id],
-  }),
-  lastSupplier: one(suppliers, {
-    fields: [materials.lastSupplierId],
-    references: [suppliers.id],
   }),
   movementItems: many(movementItems),
 }));

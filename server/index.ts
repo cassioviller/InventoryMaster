@@ -49,50 +49,6 @@ app.use((req, res, next) => {
   }
 
   const server = await registerRoutes(app);
-  
-  // Verify all routes are properly registered for production
-  if (process.env.NODE_ENV === 'production') {
-    console.log('🔧 Configuração de produção ativa - verificando rotas...');
-    
-    // List all registered routes for debugging
-    const routes: any[] = [];
-    app._router?.stack?.forEach((middleware: any) => {
-      if (middleware.route) {
-        routes.push({
-          method: Object.keys(middleware.route.methods)[0].toUpperCase(),
-          path: middleware.route.path
-        });
-      } else if (middleware.name === 'router' && middleware.handle?.stack) {
-        middleware.handle.stack.forEach((handler: any) => {
-          if (handler.route) {
-            routes.push({
-              method: Object.keys(handler.route.methods)[0].toUpperCase(),
-              path: handler.route.path
-            });
-          }
-        });
-      }
-    });
-    
-    console.log('📋 Rotas ativas:', routes.length);
-    const criticalRoutes = [
-      'POST /api/auth/login',
-      'GET /api/users',
-      'GET /api/categories',
-      'GET /api/materials',
-      'GET /api/employees',
-      'GET /api/dashboard/stats'
-    ];
-    
-    const registeredPaths = routes.map(r => `${r.method} ${r.path}`);
-    const missing = criticalRoutes.filter(route => !registeredPaths.includes(route));
-    
-    if (missing.length === 0) {
-      console.log('✅ Todas as rotas críticas registradas');
-    } else {
-      console.log('⚠️ Rotas não encontradas:', missing);
-    }
-  }
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

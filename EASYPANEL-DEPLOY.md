@@ -8,6 +8,7 @@ NODE_ENV=production
 PORT=5013
 DATABASE_URL=postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
 SESSION_SECRET=almoxarifado-secret-key-2024
+FORCE_DB_INIT=true
 ```
 
 ### 2. Configurações do Container
@@ -69,15 +70,42 @@ Após o deploy, verifique:
 
 Após deploy bem-sucedido, use estas credenciais para testar:
 
-**Admin Sistema:**
+**Super Admin Sistema (cassio):**
 - Usuário: `cassio`
 - Senha: `1234`
+- Função: Controle total do sistema
 
-**Admin Empresa:**  
+**Admin Empresa (axiomtech):**  
 - Usuário: `axiomtech`
 - Senha: `cassio123`
+- Função: Administrador principal
+
+**Usuário Padrão:**
+- Usuário: `almox`
+- Senha: `1234`
+- Função: Operador de estoque
+
+**Empresa Teste:**
+- Usuário: `empresa_teste`
+- Senha: `teste123`
+- Função: Conta de teste
 
 ## Troubleshooting
+
+### Erro de Login: "Credenciais inválidas" 
+**Sintoma**: Login falha mesmo com credenciais corretas
+
+**Solução**:
+1. Adicione a variável `FORCE_DB_INIT=true` no EasyPanel
+2. Redeploy a aplicação para recriar os usuários
+3. Aguarde 2-3 minutos para inicialização completa
+4. Teste login com: `cassio` / `1234`
+
+**Verificação nos logs**:
+```
+✅ Default users created/updated successfully for EasyPanel
+📊 Total users in database: 4
+```
 
 ### Erro: "database 'almoxarifado' does not exist"
 Normal na primeira execução. O sistema criará o banco automaticamente.
@@ -92,6 +120,12 @@ O script `easypanel-build.sh` resolve isso automaticamente.
 1. Verifique se `easypanel-build.sh` tem permissão de execução
 2. Confirme que o repositório tem todos os arquivos necessários
 3. Verifique logs de build no EasyPanel
+
+### Schema do Banco Incompatível
+Se o login ainda falhar após deploy:
+1. Verifique se a coluna `isActive` existe na tabela `users`
+2. Execute SQL: `ALTER TABLE users RENAME COLUMN is_active TO "isActive";`
+3. Restart da aplicação
 
 ## Configuração do PostgreSQL
 

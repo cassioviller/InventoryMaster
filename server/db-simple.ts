@@ -154,20 +154,34 @@ export async function ensureTables() {
 
 async function createDefaultUsers() {
   try {
-    // Check if users already exist
-    const existingUsers = await pool.query('SELECT COUNT(*) as count FROM users');
-    if (existingUsers.rows[0]?.count > 0) {
-      console.log('Default users already exist');
-      return;
+    // Force user recreation in production if FORCE_DB_INIT is set
+    if (process.env.FORCE_DB_INIT === 'true' || process.env.NODE_ENV === 'production') {
+      console.log('Force DB initialization - recreating users...');
+      
+      // Delete existing users first
+      await pool.query('DELETE FROM users WHERE username IN ($1, $2, $3, $4)', [
+        'cassio', 'axiomtech', 'almox', 'empresa_teste'
+      ]);
+    } else {
+      // Check if users already exist in development
+      const existingUsers = await pool.query('SELECT COUNT(*) as count FROM users');
+      if (existingUsers.rows[0]?.count > 0) {
+        console.log('Default users already exist');
+        return;
+      }
     }
 
     const bcrypt = await import('bcrypt');
-    console.log('Creating default users...');
+    console.log('Creating default users for EasyPanel deployment...');
 
-    // Super Admin do Sistema (cassio)
+    // Super Admin do Sistema (cassio) - ID 1
     await pool.query(`
       INSERT INTO users (username, email, password, name, role, "isActive", "ownerId", "createdAt")
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      ON CONFLICT (username) DO UPDATE SET
+        password = EXCLUDED.password,
+        role = EXCLUDED.role,
+        "isActive" = EXCLUDED."isActive"
     `, [
       'cassio',
       'cassio@almoxarifado.com',
@@ -178,10 +192,14 @@ async function createDefaultUsers() {
       null
     ]);
 
-    // Super Admin Empresa (axiomtech)
+    // Super Admin Empresa (axiomtech) - ID 2
     await pool.query(`
       INSERT INTO users (username, email, password, name, role, "isActive", "ownerId", "createdAt")
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      ON CONFLICT (username) DO UPDATE SET
+        password = EXCLUDED.password,
+        role = EXCLUDED.role,
+        "isActive" = EXCLUDED."isActive"
     `, [
       'axiomtech',
       'axiomtech@almoxarifado.com',
@@ -192,10 +210,14 @@ async function createDefaultUsers() {
       null
     ]);
 
-    // Usuário Padrão (almox)
+    // Usuário Padrão (almox) - ID 3  
     await pool.query(`
       INSERT INTO users (username, email, password, name, role, "isActive", "ownerId", "createdAt")
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      ON CONFLICT (username) DO UPDATE SET
+        password = EXCLUDED.password,
+        role = EXCLUDED.role,
+        "isActive" = EXCLUDED."isActive"
     `, [
       'almox',
       'almox@almoxarifado.com',
@@ -206,10 +228,14 @@ async function createDefaultUsers() {
       2
     ]);
 
-    // Empresa Teste
+    // Empresa Teste - ID 4
     await pool.query(`
       INSERT INTO users (username, email, password, name, role, "isActive", "ownerId", "createdAt")
       VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+      ON CONFLICT (username) DO UPDATE SET
+        password = EXCLUDED.password,
+        role = EXCLUDED.role,
+        "isActive" = EXCLUDED."isActive"
     `, [
       'empresa_teste',
       'empresa@teste.com',
@@ -220,8 +246,14 @@ async function createDefaultUsers() {
       2
     ]);
 
-    console.log('Default users created successfully');
+    console.log('✅ Default users created/updated successfully for EasyPanel');
+    
+    // Verify user creation
+    const userCount = await pool.query('SELECT COUNT(*) as count FROM users');
+    console.log(`📊 Total users in database: ${userCount.rows[0]?.count}`);
+    
   } catch (error) {
-    console.log('Default users creation skipped:', (error as Error).message);
+    console.error('❌ Error creating default users:', (error as Error).message);
+    throw error;
   }
 }

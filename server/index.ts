@@ -41,15 +41,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Initialize database before starting server (with fallback)
+  const server = await registerRoutes(app);
+  
+  // Initialize database after routes are set up
   try {
     await ensureTables();
   } catch (error: any) {
-    console.error("Database initialization failed, but continuing:", error.message);
-    // Continue without failing - database will be created on first use if needed
+    console.error("Database initialization failed:", error.message);
   }
-
-  const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

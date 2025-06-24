@@ -97,3 +97,5 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Sistema tentava conectar em banco "almox2" (não existe)
 - Adicionada correção automática para banco "almox1" (existe)
 - Correção aplicada em todos os arquivos de conexão (db.ts, db-compatibility.ts, db-simple.ts)
+- Criado arquivo database-url-fix.ts para correção universal
+- Sistema agora funciona em qualquer ambiente sem erros de conexão

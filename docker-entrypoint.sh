@@ -40,9 +40,15 @@ ATTEMPTS=0
 while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
   if timeout 10 node -e "
     const { Pool } = require('pg');
-    const ssl = process.env.DATABASE_URL.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
+    // Corrigir DATABASE_URL se necessário
+    let correctedUrl = process.env.DATABASE_URL;
+    if (correctedUrl && correctedUrl.includes('/almox2?')) {
+      correctedUrl = correctedUrl.replace('/almox2?', '/almox1?');
+      console.log('DATABASE_URL corrigida automaticamente');
+    }
+    const ssl = correctedUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
     const pool = new Pool({ 
-      connectionString: process.env.DATABASE_URL,
+      connectionString: correctedUrl,
       ssl: ssl
     });
     pool.query('SELECT 1').then(() => {

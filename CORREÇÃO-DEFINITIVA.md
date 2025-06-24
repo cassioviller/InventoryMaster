@@ -11,6 +11,8 @@ Adicionada correção automática em TODOS os arquivos de conexão:
 - server/db-simple.ts ✅
 - server/init-db.ts ✅
 - server/simple-init.ts ✅
+- server/migrate-schema.ts ✅
+- server/database-url-fix.ts ✅ (correção universal)
 - docker-entrypoint.sh ✅
 
 ## COMO FUNCIONA

@@ -257,7 +257,7 @@ export default function FinancialReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedData.map((item: FinancialStockItem) => (
+              {Array.isArray(filteredAndSortedData) && filteredAndSortedData.map((item: FinancialStockItem) => (
                 <TableRow key={item.id}>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>{item.category}</TableCell>

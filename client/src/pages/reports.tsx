@@ -848,7 +848,7 @@ export default function Reports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reportData.map((item, index) => (
+                  {Array.isArray(reportData) && reportData.map((item, index) => (
                     <TableRow key={index}>
                       {activeReport === 'employee' && (
                         <>

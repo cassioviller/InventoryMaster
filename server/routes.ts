@@ -546,7 +546,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(report);
     } catch (error) {
       console.error('Error generating employee movement report:', error);
-      res.status(500).json({ message: "Failed to generate employee movement report" });
+      res.status(500).json({ 
+        message: "Failed to generate employee movement report",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -641,7 +644,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(report);
     } catch (error) {
       console.error('Error generating financial stock report:', error);
-      res.status(500).json({ message: "Failed to generate financial stock report" });
+      res.status(500).json({ 
+        message: "Failed to generate financial stock report",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -657,7 +663,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(report);
     } catch (error) {
       console.error('Error generating supplier tracking report:', error);
-      res.status(500).json({ message: "Failed to generate supplier tracking report" });
+      res.status(500).json({ 
+        message: "Failed to generate supplier tracking report",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

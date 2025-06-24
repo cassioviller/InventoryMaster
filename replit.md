@@ -24,6 +24,10 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - ✅ Funcionalidades de exclusão implementadas para todas entidades
 - ✅ Endpoints de relatórios implementados e funcionando
 - ✅ Relatório financeiro corrigido com validação JSON
+- ✅ Correções de deploy - TypeError d.map resolvidas
+- ✅ Sistema de autenticação padronizado (token)
+- ✅ Error handling melhorado para compatibilidade de deploy
+- ✅ Validação de arrays em todas as páginas implementada
 
 ## Arquitetura do Projeto
 

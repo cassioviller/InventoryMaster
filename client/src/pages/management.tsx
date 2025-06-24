@@ -627,7 +627,7 @@ export default function Management() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    users?.map((user) => (
+                    Array.isArray(users) && users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.username}</TableCell>
                         <TableCell>{user.email}</TableCell>

@@ -9,7 +9,7 @@ echo "Verificando configuração do banco de dados..."
 if [ -z "$DATABASE_URL" ]; then
   echo "DATABASE_URL não definida - configurando automaticamente..."
   
-  # Configuração para o PostgreSQL almox
+  # Configuração para o PostgreSQL almox - BANCO CORRETO É ALMOX1
   POSTGRES_USER="${POSTGRES_USER:-almox2}"
   POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-almox3}"
   POSTGRES_HOST="${POSTGRES_HOST:-viajey_almox}"

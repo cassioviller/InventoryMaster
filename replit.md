@@ -87,8 +87,13 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Arquivo EASYPANEL-CONFIG.txt criado com configurações corretas
 - Sistema pronto para deploy com todas as funcionalidades operacionais
 
-## Status Atual
+## Status Atual  
 ✅ Sistema completo funcionando em desenvolvimento
-✅ Configurações de deploy corrigidas
+🔧 CORREÇÃO APLICADA: Sistema automaticamente corrige DATABASE_URL de almox2 para almox1
 ✅ Todas as funcionalidades validadas (CRUD, relatórios, exclusões)
-✅ Pronto para produção no EasyPanel
+✅ Pronto para produção no EasyPanel com correção automática de banco
+
+## Problema Identificado e Corrigido
+- Sistema tentava conectar em banco "almox2" (não existe)
+- Adicionada correção automática para banco "almox1" (existe)
+- Correção aplicada em todos os arquivos de conexão (db.ts, db-compatibility.ts, db-simple.ts)

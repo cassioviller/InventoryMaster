@@ -24,10 +24,17 @@ Empresa Teste:
 - Usuário: empresa_teste  
 - Senha: 1234
 
-=== VERIFICAÇÕES ===
+=== VERIFICAÇÕES CRÍTICAS ===
 
-1. Confirme que o banco "almox1" existe no PostgreSQL
-2. Confirme que o usuário "almox2" tem acesso ao banco "almox1"
-3. Use exatamente a DATABASE_URL acima (com almox1, não almox2)
+❌ PROBLEMA IDENTIFICADO: Sistema está tentando conectar em "almox2" (banco inexistente)
+✅ SOLUÇÃO: Usar banco "almox1" (que existe e tem as tabelas)
 
-O sistema iniciará automaticamente e criará todas as tabelas necessárias.
+1. Confirme que o banco "almox1" existe no PostgreSQL ✅
+2. Confirme que o usuário "almox2" tem acesso ao banco "almox1" ✅  
+3. Use exatamente a DATABASE_URL acima (com almox1, não almox2) ✅
+4. REINICIE o deploy após atualizar a variável de ambiente
+
+=== LOGS DEVEM MOSTRAR ===
+- "DATABASE_URL corrigida de almox2 para almox1"
+- Conexão bem-sucedida ao banco almox1
+- Sistema iniciado sem erros 500

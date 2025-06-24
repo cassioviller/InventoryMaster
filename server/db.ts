@@ -8,12 +8,19 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-const sslConfig = process.env.DATABASE_URL.includes('sslmode=disable') 
+// Corrigir DATABASE_URL se estiver apontando para banco errado
+let correctedDatabaseUrl = process.env.DATABASE_URL;
+if (correctedDatabaseUrl && correctedDatabaseUrl.includes('/almox2?')) {
+  correctedDatabaseUrl = correctedDatabaseUrl.replace('/almox2?', '/almox1?');
+  console.log('🔧 DATABASE_URL corrigida de almox2 para almox1');
+}
+
+const sslConfig = correctedDatabaseUrl?.includes('sslmode=disable') 
   ? false 
   : { rejectUnauthorized: false };
 
 export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
+  connectionString: correctedDatabaseUrl,
   ssl: sslConfig
 });
 export const db = drizzle(pool, { schema });

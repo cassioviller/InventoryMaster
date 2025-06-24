@@ -1,38 +1,38 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema
-RUN apk add --no-cache postgresql-client curl
+# Instalar ferramentas necessárias (inclui postgresql-client para scripts de inicialização)
+RUN apt-get update && apt-get install -y postgresql-client wget curl && rm -rf /var/lib/apt/lists/*
 
-# Copiar arquivos de configuração
+# Copiar arquivos de dependências
 COPY package*.json ./
-COPY tsconfig.json ./
-COPY vite.config.ts ./
-COPY tailwind.config.ts ./
-COPY postcss.config.js ./
-COPY components.json ./
 
 # Instalar dependências
 RUN npm ci
 
-# Copiar código fonte
-COPY shared/ ./shared/
-COPY server/ ./server/
-COPY client/ ./client/
+# Copiar o restante dos arquivos do projeto
+COPY . .
 
-# Build da aplicação (set NODE_ENV=build to skip database checks)
-RUN NODE_ENV=build npm run build
+# Tornar o script de entrada executável
+RUN chmod +x docker-entrypoint.sh
 
-# Criar diretório para uploads
-RUN mkdir -p /app/uploads
+# Executar o build da aplicação
+RUN npm run build
 
-# Expor porta
+# Expor a porta utilizada pelo aplicativo
 EXPOSE 5013
 
-# Variáveis de ambiente padrão
-ENV NODE_ENV=production
-ENV PORT=5013
+# Valores padrão para variáveis de ambiente
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV PORT=${PORT:-5013}
 
-# Comando de inicialização
-CMD ["npm", "start"]
+# Script para construir DATABASE_URL automaticamente
+COPY build-database-url.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/build-database-url.sh
+
+# Usar o script de entrada para inicialização
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+# Comando para iniciar a aplicação após o script de entrada
+CMD ["npm", "run", "start"]

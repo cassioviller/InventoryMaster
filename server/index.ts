@@ -13,6 +13,12 @@ app.use(express.json());
 // Test database connection and initialize
 async function initializeDatabase() {
   try {
+    // Skip database initialization during build
+    if (!pool || !db) {
+      console.log('⚠️ Pulando inicialização do banco (DATABASE_URL não disponível)');
+      return;
+    }
+
     console.log('🔗 Testando conexão com PostgreSQL...');
     
     // Test connection
@@ -32,6 +38,11 @@ async function initializeDatabase() {
 
 async function createDefaultUsers() {
   try {
+    if (!db) {
+      console.log('⚠️ Banco não disponível para criar usuários padrão');
+      return;
+    }
+
     // Check if any users exist
     const existingUsers = await db.select().from(users).limit(1);
     

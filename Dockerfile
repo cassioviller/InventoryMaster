@@ -21,8 +21,8 @@ COPY shared/ ./shared/
 COPY server/ ./server/
 COPY client/ ./client/
 
-# Build da aplicação
-RUN npm run build
+# Build da aplicação (set NODE_ENV=build to skip database checks)
+RUN NODE_ENV=build npm run build
 
 # Criar diretório para uploads
 RUN mkdir -p /app/uploads

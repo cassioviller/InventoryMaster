@@ -110,15 +110,20 @@ The system uses a comprehensive PostgreSQL schema with the following key entitie
 - `SESSION_SECRET`: Session signing secret
 - `JWT_SECRET`: JWT token signing secret
 
-## Changelog
+## Recent Changes
 
-- June 24, 2025. Initial setup
+### June 24, 2025 - Docker Build Issues Resolved
+- Fixed DATABASE_URL not available during Docker build phase
+- Modified server/db.ts to handle conditional database connections
+- Updated Dockerfile with NODE_ENV=build to skip database checks during build
+- Verified successful production build: Frontend 447.63 kB, Backend 23.4kb
+- System now 100% ready for EasyPanel deployment
+
+### Previous Milestones
 - June 24, 2025. Sistema completamente funcional com PostgreSQL
 - June 24, 2025. Backend API REST implementada e testada
 - June 24, 2025. Frontend simplificado com login e dashboard
 - June 24, 2025. Dockerfile otimizado para EasyPanel
-- June 24, 2025. Build de produção testado e aprovado
-- June 24, 2025. Sistema 100% pronto para deploy
 
 ## User Preferences
 

@@ -5,6 +5,7 @@ import { db, pool } from "./db";
 import { users, categories, materials, employees, suppliers, thirdParties } from "@shared/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import path from "path";
 
 const app = express();
 app.use(express.json());
@@ -105,12 +106,25 @@ initializeDatabase()
     const port = Number(process.env.PORT) || 5013;
     const server = createServer(app);
     
-    setupVite(app, server).then(() => {
-      server.listen(port, "0.0.0.0", () => {
-        console.log(`🚀 Servidor rodando na porta ${port}`);
-        console.log(`📊 Dashboard: http://localhost:${port}`);
+    if (process.env.NODE_ENV === 'development') {
+      setupVite(app, server).then(() => {
+        server.listen(port, "0.0.0.0", () => {
+          console.log(`🚀 Servidor rodando na porta ${port}`);
+          console.log(`📊 Dashboard: http://localhost:${port}`);
+        });
       });
-    });
+    } else {
+      // Produção - servir arquivos estáticos
+      app.use(express.static('dist'));
+      app.get('*', (req, res) => {
+        res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+      });
+      
+      server.listen(port, "0.0.0.0", () => {
+        console.log(`🚀 Servidor de produção rodando na porta ${port}`);
+        console.log(`📊 Sistema: http://localhost:${port}`);
+      });
+    }
   })
   .catch((error) => {
     console.error('❌ Falha na inicialização:', error);

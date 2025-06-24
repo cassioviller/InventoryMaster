@@ -1,16 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
-import type { User, LoginData } from '@shared/schema';
+import type { User } from '@shared/schema';
+
+interface LoginCredentials {
+  username: string;
+  password: string;
+}
 
 interface AuthResponse {
-  token: string;
   user: User;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (credentials: LoginData) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
   canCreateUsers: boolean;
@@ -20,52 +24,46 @@ interface AuthContextType {
 export function useAuth(): AuthContextType {
   const queryClient = useQueryClient();
 
+  // Simplified auth check - just check if user data exists in localStorage
   const { data: user, isLoading } = useQuery({
-    queryKey: ['/api/auth/verify'],
+    queryKey: ['auth_user'],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return null;
-
-      try {
-        const res = await fetch('/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          localStorage.removeItem('auth_token');
-          return null;
-        }
-
-        const data = await res.json();
-        return data.user;
-      } catch {
-        localStorage.removeItem('auth_token');
-        return null;
-      }
+      const userData = localStorage.getItem('auth_user');
+      return userData ? JSON.parse(userData) : null;
     },
     retry: false,
+    staleTime: Infinity,
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginData): Promise<AuthResponse> => {
-      const res = await apiRequest('/api/auth/login', 'POST', credentials);
+    mutationFn: async (credentials: LoginCredentials): Promise<AuthResponse> => {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      if (!res.ok) {
+        throw new Error('Invalid credentials');
+      }
+
       return res.json();
     },
     onSuccess: (data) => {
-      localStorage.setItem('auth_token', data.token);
-      queryClient.setQueryData(['/api/auth/verify'], data.user);
+      localStorage.setItem('auth_user', JSON.stringify(data.user));
+      queryClient.setQueryData(['auth_user'], data.user);
     },
   });
 
-  const login = async (credentials: LoginData) => {
+  const login = async (credentials: LoginCredentials) => {
     await loginMutation.mutateAsync(credentials);
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
-    queryClient.setQueryData(['/api/auth/verify'], null);
+    localStorage.removeItem('auth_user');
+    queryClient.setQueryData(['auth_user'], null);
     queryClient.invalidateQueries();
   };
 

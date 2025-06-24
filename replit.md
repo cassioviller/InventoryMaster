@@ -113,6 +113,12 @@ The system uses a comprehensive PostgreSQL schema with the following key entitie
 ## Changelog
 
 - June 24, 2025. Initial setup
+- June 24, 2025. Sistema completamente funcional com PostgreSQL
+- June 24, 2025. Backend API REST implementada e testada
+- June 24, 2025. Frontend simplificado com login e dashboard
+- June 24, 2025. Dockerfile otimizado para EasyPanel
+- June 24, 2025. Build de produção testado e aprovado
+- June 24, 2025. Sistema 100% pronto para deploy
 
 ## User Preferences
 

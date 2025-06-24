@@ -205,9 +205,7 @@ export default function Management() {
                       type === 'material' ? 'materials' :
                       type === 'user' ? 'users' : `${type}s`;
       
-      await apiRequest(`/api/${endpoint}/${id}`, {
-        method: 'DELETE'
-      });
+      await apiRequest(`/api/${endpoint}/${id}`, 'DELETE');
       
       // Invalidate relevant queries to refresh data
       if (type === 'employee') {

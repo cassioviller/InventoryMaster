@@ -92,6 +92,15 @@ export default function Reports() {
       if (filters.endDate) params.append('endDate', filters.endDate);
 
       const response = await authenticatedRequest(`/api/reports/employee-movement?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é um JSON válido');
+      }
+      
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('employee');

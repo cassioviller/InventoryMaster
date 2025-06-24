@@ -2,27 +2,32 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-if (!process.env.DATABASE_URL) {
+// Configuração específica para produção
+const PRODUCTION_DATABASE_URL = "postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable";
+
+// Usar DATABASE_URL do ambiente, ou produção como fallback
+const connectionString = process.env.NODE_ENV === 'production' 
+  ? PRODUCTION_DATABASE_URL 
+  : process.env.DATABASE_URL;
+
+if (!connectionString) {
   throw new Error("DATABASE_URL must be set");
 }
 
 console.log('🔗 Configurando conexão PostgreSQL...');
-console.log('Database URL configurada:', process.env.DATABASE_URL ? 'Sim' : 'Não');
+console.log('Ambiente:', process.env.NODE_ENV || 'development');
 
-// Usar DATABASE_URL do ambiente (Neon em desenvolvimento)
-let databaseUrl = process.env.DATABASE_URL;
-
-// Parse the database URL to get individual components
-const dbUrl = new URL(databaseUrl);
+// Parse URL para debug
+const dbUrl = new URL(connectionString);
 console.log('Database host:', dbUrl.hostname);
 console.log('Database name:', dbUrl.pathname.slice(1));
 
-const sslConfig = databaseUrl.includes('sslmode=disable') 
+const sslConfig = connectionString.includes('sslmode=disable') 
   ? false 
   : { rejectUnauthorized: false };
 
 export const pool = new Pool({ 
-  connectionString: databaseUrl,
+  connectionString,
   ssl: sslConfig
 });
 
@@ -68,7 +73,7 @@ export async function ensureCompatibleTables() {
         console.log(`Adicionando coluna ${column.name}...`);
         try {
           await pool.query(column.sql);
-        } catch (error) {
+        } catch (error: any) {
           console.log(`Coluna ${column.name} já existe ou erro ao adicionar:`, error.message);
         }
       }
@@ -83,12 +88,12 @@ export async function ensureCompatibleTables() {
     // Ensure default users exist
     await ensureDefaultUsers();
     
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro na verificação de compatibilidade:', error);
     // Try to create basic schema if nothing exists
     try {
       await createCompleteSchema();
-    } catch (createError) {
+    } catch (createError: any) {
       console.error('❌ Erro ao criar schema:', createError);
     }
   }
@@ -152,12 +157,12 @@ async function createCompleteSchema() {
         created_at TIMESTAMP DEFAULT now() NOT NULL
       )
     `);
-    
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS suppliers (
         id SERIAL PRIMARY KEY,
         name VARCHAR(200) NOT NULL,
-        contact_name VARCHAR(200),
+        contact_person VARCHAR(200),
         email VARCHAR(100),
         phone VARCHAR(20),
         address TEXT,
@@ -166,20 +171,63 @@ async function createCompleteSchema() {
         created_at TIMESTAMP DEFAULT now() NOT NULL
       )
     `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS third_parties (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        contact_person VARCHAR(200),
+        email VARCHAR(100),
+        phone VARCHAR(20),
+        address TEXT,
+        "isActive" BOOLEAN NOT NULL DEFAULT true,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS material_movements (
+        id SERIAL PRIMARY KEY,
+        material_id INTEGER NOT NULL,
+        movement_type VARCHAR(20) NOT NULL,
+        quantity INTEGER NOT NULL,
+        unit_price DECIMAL(10,2),
+        total_price DECIMAL(10,2),
+        employee_id INTEGER,
+        supplier_id INTEGER,
+        third_party_id INTEGER,
+        description TEXT,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS audit_logs (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL,
+        action VARCHAR(100) NOT NULL,
+        table_name VARCHAR(50),
+        record_id INTEGER,
+        old_values JSONB,
+        new_values JSONB,
+        owner_id INTEGER NOT NULL DEFAULT 2,
+        created_at TIMESTAMP DEFAULT now() NOT NULL
+      )
+    `);
     
-    console.log('✅ Schema completo criado com sucesso');
+    console.log('✅ Schema criado com sucesso');
+    await ensureDefaultUsers();
     
-  } catch (error) {
-    console.error('❌ Erro ao criar schema completo:', error);
+  } catch (error: any) {
+    console.error('❌ Erro ao criar schema:', error);
     throw error;
   }
 }
 
 async function ensureDefaultUsers() {
   try {
-    const bcrypt = await import('bcrypt');
-    
-    // Check existing users
     const existingUsers = await pool.query('SELECT username FROM users');
     const usernames = existingUsers.rows.map(row => row.username);
     
@@ -189,41 +237,53 @@ async function ensureDefaultUsers() {
       console.log('All default users already exist - preserving data');
       return;
     }
-    
+
     // Create default users only if none exist
     const defaultUsers = [
       {
         username: 'cassio',
-        email: 'cassio@superadmin.com',
-        password: await bcrypt.hash('1234', 10),
-        name: 'Cassio Super Admin',
+        email: 'cassio@example.com',
+        password: '$2b$10$K8K1K8K1K8K1K8K1K8K1K.K8K1K8K1K8K1K8K1K8K1K8K1K8K1K8K1K8',
+        name: 'Cassio Admin',
         role: 'super_admin',
-        isActive: true,
-        ownerId: null
+        ownerId: 1
       },
       {
         username: 'almox',
-        email: 'cassiovillerlm@gmail.com',
-        password: await bcrypt.hash('almoxa@2024', 10),
-        name: 'Almoxarifado Admin',
+        email: 'almox@example.com', 
+        password: '$2b$10$K8K1K8K1K8K1K8K1K8K1K.K8K1K8K1K8K1K8K1K8K1K8K1K8K1K8K1K8',
+        name: 'Almoxarife',
         role: 'admin',
-        isActive: true,
-        ownerId: null
+        ownerId: 2
+      },
+      {
+        username: 'empresa_teste',
+        email: 'empresa@teste.com',
+        password: '$2b$10$K8K1K8K1K8K1K8K1K8K1K.K8K1K8K1K8K1K8K1K8K1K8K1K8K1K8K1K8',
+        name: 'Empresa Teste',
+        role: 'admin',
+        ownerId: 3
       }
     ];
-    
+
     for (const user of defaultUsers) {
-      await pool.query(`
-        INSERT INTO users (username, email, password, name, role, "isActive", "ownerId")
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (username) DO NOTHING
-      `, [user.username, user.email, user.password, user.name, user.role, user.isActive, user.ownerId]);
+      try {
+        await pool.query(`
+          INSERT INTO users (username, email, password, name, role, "ownerId", "createdAt")
+          VALUES ($1, $2, $3, $4, $5, $6, now())
+        `, [user.username, user.email, user.password, user.name, user.role, user.ownerId]);
+        
+        console.log(`✅ Usuário ${user.username} criado`);
+      } catch (error: any) {
+        if (error.code === '23505') {
+          console.log(`ℹ️ Usuário ${user.username} já existe`);
+        } else {
+          console.error(`❌ Erro ao criar usuário ${user.username}:`, error.message);
+        }
+      }
     }
     
-    console.log('✅ Default users created successfully');
-    
-  } catch (error) {
-    console.error('❌ Error creating default users:', error);
-    // Don't throw - continue without default users
+  } catch (error: any) {
+    console.error('❌ Erro ao criar usuários padrão:', error);
   }
 }

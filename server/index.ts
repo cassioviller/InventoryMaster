@@ -1,9 +1,9 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { ensureCompatibleTables } from "./db-compatibility";
-// Log da DATABASE_URL configurada no ambiente
-console.log("🔧 DATABASE_URL:", process.env.DATABASE_URL ? "Configurada" : "Não definida");
+import { ensureCompatibleTables } from "./db-production";
+
+console.log("🔧 Sistema de Almoxarifado - Iniciando...");
 
 const app = express();
 app.use(express.json());

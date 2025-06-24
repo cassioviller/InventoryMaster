@@ -58,6 +58,7 @@ export default function Management() {
   const [userModalOpen, setUserModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   
+  const { toast } = useToast();
   const tabItems = getTabItems(canCreateUsers);
 
   const { data: materials, isLoading: materialsLoading } = useQuery({

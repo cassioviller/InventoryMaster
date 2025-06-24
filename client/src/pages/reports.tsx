@@ -121,6 +121,15 @@ export default function Reports() {
       }
 
       const response = await authenticatedRequest(`/api/reports/stock?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é um JSON válido');
+      }
+      
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('stock');
@@ -144,6 +153,15 @@ export default function Reports() {
       }
 
       const response = await authenticatedRequest(`/api/reports/supplier-tracking?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é um JSON válido');
+      }
+      
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('supplier-tracking');
@@ -166,6 +184,15 @@ export default function Reports() {
       }
 
       const response = await authenticatedRequest(`/api/reports/general-movements?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é um JSON válido');
+      }
+      
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('movements');
@@ -188,6 +215,15 @@ export default function Reports() {
       }
 
       const response = await authenticatedRequest(`/api/reports/material-consumption?${params}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Resposta não é um JSON válido');
+      }
+      
       const data = await response.json();
       setReportData(Array.isArray(data) ? data : []);
       setActiveReport('consumption');

@@ -1,0 +1,33 @@
+CONFIGURAÇÃO PARA EASYPANEL - Sistema de Almoxarifado
+
+=== VARIÁVEIS DE AMBIENTE (copiar exatamente) ===
+
+DATABASE_URL=postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
+NODE_ENV=production
+PORT=5013
+SESSION_SECRET=almoxarifado-2024-secret
+
+=== CONFIGURAÇÕES DO SERVIÇO ===
+
+- Nome: viajey-almoxa  
+- Porta Externa: 5013
+- Porta Interna: 5013
+- Hostname: viajey-almoxa.yt2vsr.easypanel.host
+
+=== CREDENCIAIS DE ACESSO APÓS DEPLOY ===
+
+Super Admin:
+- Usuário: cassio
+- Senha: 1234
+
+Empresa Teste:
+- Usuário: empresa_teste  
+- Senha: 1234
+
+=== VERIFICAÇÕES ===
+
+1. Confirme que o banco "almox1" existe no PostgreSQL
+2. Confirme que o usuário "almox2" tem acesso ao banco "almox1"
+3. Use exatamente a DATABASE_URL acima (com almox1, não almox2)
+
+O sistema iniciará automaticamente e criará todas as tabelas necessárias.

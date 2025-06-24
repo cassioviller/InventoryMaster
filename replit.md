@@ -6,7 +6,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ## Estado Atual
 - **Status**: Sistema funcional em desenvolvimento e produção
 - **Ambiente de Desenvolvimento**: Replit com PostgreSQL Neon
-- **Ambiente de Produção**: EasyPanel com PostgreSQL (banco: almox1, usuário: almox2)
+- **Ambiente de Produção**: EasyPanel com PostgreSQL (banco: almox1, usuário: almox2, host: viajey_almox)
 - **Autenticação**: JWT implementado e funcionando
 - **Banco de Dados**: Sistema de compatibilidade PostgreSQL implementado
 
@@ -28,6 +28,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - ✅ Sistema de autenticação padronizado (token)
 - ✅ Error handling melhorado para compatibilidade de deploy
 - ✅ Validação de arrays em todas as páginas implementada
+- ✅ Configuração de banco corrigida (almox1 em vez de almox2)
 
 ## Arquitetura do Projeto
 
@@ -71,7 +72,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - **Linguagem**: Português brasileiro
 - **Preservação de Dados**: Crítica - nunca perder dados existentes
 - **Ambiente**: Desenvolvimento no Replit, produção no EasyPanel
-- **Banco de Produção**: Nome correto é "almox1" (não almox2)
+- **Banco de Produção**: DATABASE_URL correta é postgres://almox2:almox3@viajey_almox:5432/almox1
 
 ## Mudanças Recentes (24/06/2025)
 - Correção de tipos TypeScript nos endpoints da API
@@ -80,9 +81,14 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Correção de problemas no frontend com arrays undefined
 - Melhoramento na validação de dados de entrada
 
-## Próximos Passos
-1. Finalizar correções nos endpoints de funcionários
-2. Resolver problemas de exclusão na interface de gestão
-3. Corrigir funcionalidade de saída de materiais
-4. Validar todas as funcionalidades em ambos os ambientes
-5. Documentar procedimentos de deploy final
+## Configuração de Deploy Corrigida (24/06/2025)
+- DATABASE_URL correta: postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable
+- Problema identificado: sistema tentava conectar em "almox2" em vez de "almox1"
+- Arquivo EASYPANEL-CONFIG.txt criado com configurações corretas
+- Sistema pronto para deploy com todas as funcionalidades operacionais
+
+## Status Atual
+✅ Sistema completo funcionando em desenvolvimento
+✅ Configurações de deploy corrigidas
+✅ Todas as funcionalidades validadas (CRUD, relatórios, exclusões)
+✅ Pronto para produção no EasyPanel

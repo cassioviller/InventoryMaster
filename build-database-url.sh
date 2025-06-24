@@ -74,7 +74,7 @@ build_database_url() {
             export DATABASE_URL="postgres://postgres:postgres@localhost:5432/almoxarifado?sslmode=disable"
             echo "Usando PostgreSQL local (desenvolvimento): $DATABASE_URL"
         else
-            export DATABASE_URL="postgres://viajey:viajey@viajey_viajey:5432/almoxarifado?sslmode=disable"
+            export DATABASE_URL="postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable"
             echo "Usando PostgreSQL padrão do viajey: $DATABASE_URL"
         fi
         echo "Banco 'almoxarifado' será criado automaticamente se não existir"

@@ -543,7 +543,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adjustedStartDate,
         adjustedEndDate
       );
-      res.json(report);
+      res.json(Array.isArray(report) ? report : []);
     } catch (error) {
       console.error('Error generating employee movement report:', error);
       res.status(500).json({ 
@@ -561,10 +561,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryId ? parseInt(categoryId as string) : undefined,
         ownerId
       );
-      res.json(report);
+      res.json(Array.isArray(report) ? report : []);
     } catch (error) {
       console.error('Error generating stock report:', error);
-      res.status(500).json({ message: "Failed to generate stock report" });
+      res.status(500).json({ 
+        message: "Failed to generate stock report",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -593,10 +596,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type as 'entry' | 'exit',
         ownerId
       );
-      res.json(report);
+      res.json(Array.isArray(report) ? report : []);
     } catch (error) {
       console.error('Error generating general movements report:', error);
-      res.status(500).json({ message: "Failed to generate general movements report" });
+      res.status(500).json({ 
+        message: "Failed to generate general movements report",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -625,10 +631,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         categoryId ? parseInt(categoryId as string) : undefined,
         ownerId
       );
-      res.json(report);
+      res.json(Array.isArray(report) ? report : []);
     } catch (error) {
       console.error('Error generating material consumption report:', error);
-      res.status(500).json({ message: "Failed to generate material consumption report" });
+      res.status(500).json({ 
+        message: "Failed to generate material consumption report",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -641,7 +650,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         materialSearch as string,
         categoryId ? parseInt(categoryId as string) : undefined
       );
-      res.json(report);
+      res.json(Array.isArray(report) ? report : []);
     } catch (error) {
       console.error('Error generating financial stock report:', error);
       res.status(500).json({ 
@@ -660,7 +669,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         materialSearch as string, 
         supplierSearch as string
       );
-      res.json(report);
+      res.json(Array.isArray(report) ? report : []);
     } catch (error) {
       console.error('Error generating supplier tracking report:', error);
       res.status(500).json({ 

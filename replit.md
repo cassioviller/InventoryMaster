@@ -95,8 +95,11 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ✅ Pronto para deploy no EasyPanel
 
 ## Sistema Finalizado (24/06/2025)
-- ✅ Arquivo db-final.ts criado com conexão limpa
-- ✅ Eliminadas todas as referências ao banco "almox2"
-- ✅ Frontend protegido contra falhas de API
-- ✅ Schema automático compatível com desenvolvimento/produção
-- ✅ Sistema robusto e mantível
+- ✅ Conexão PostgreSQL funcionando perfeitamente
+- ✅ Login testado e aprovado (curl 200 OK)
+- ✅ Desenvolvimento: banco Neon / Produção: viajey_cassio/almoxarifado
+- ✅ Credenciais: cassio/1234 e empresa_teste/1234
+- ✅ Pronto para deploy no EasyPanel
+
+## Deploy EasyPanel
+DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable

@@ -41,9 +41,9 @@ function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFuncti
   next();
 }
 
-// Middleware to verify super admin (only axiomtech can create users)
+// Middleware to verify super admin 
 function requireSuperAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (req.user?.username !== 'axiomtech') {
+  if (req.user?.role !== 'super_admin') {
     return res.status(403).json({ message: 'Super admin access required' });
   }
   next();

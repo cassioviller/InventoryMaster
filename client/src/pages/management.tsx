@@ -374,6 +374,7 @@ export default function Management() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleDelete(employee.id, 'employee')}
                             className="text-red-500 hover:text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -381,7 +382,13 @@ export default function Management() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        Nenhum funcionário encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -423,7 +430,7 @@ export default function Management() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {suppliers?.map((supplier) => (
+                  {Array.isArray(suppliers) && suppliers.length > 0 ? suppliers.map((supplier) => (
                     <TableRow 
                       key={supplier.id}
                       className="cursor-pointer hover:bg-muted/50"
@@ -446,6 +453,7 @@ export default function Management() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleDelete(supplier.id, 'supplier')}
                             className="text-red-500 hover:text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -453,7 +461,13 @@ export default function Management() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                        Nenhum fornecedor encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -496,7 +510,7 @@ export default function Management() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {thirdParties?.map((thirdParty) => (
+                  {Array.isArray(thirdParties) && thirdParties.length > 0 ? thirdParties.map((thirdParty) => (
                     <TableRow key={thirdParty.id}>
                       <TableCell className="font-medium">{thirdParty.name}</TableCell>
                       <TableCell>{thirdParty.document}</TableCell>
@@ -516,6 +530,7 @@ export default function Management() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleDelete(thirdParty.id, 'third-party')}
                             className="text-red-500 hover:text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />
@@ -523,7 +538,13 @@ export default function Management() {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                  )) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                        Nenhum terceiro encontrado
+                      </TableCell>
+                    </TableRow>
+                  )}
                 </TableBody>
               </Table>
             </div>

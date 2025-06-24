@@ -45,7 +45,7 @@ export const materials = pgTable("materials", {
 // Employees
 export const employees = pgTable("employees", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 200 }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
   department: varchar("department", { length: 100 }),
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),

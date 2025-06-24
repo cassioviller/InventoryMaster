@@ -36,18 +36,37 @@ export default function MaterialEntry() {
     },
   });
 
-  const { data: materials } = useQuery({
+  const { data: materialsData } = useQuery({
     queryKey: ['/api/materials'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/materials');
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const { data: suppliers } = useQuery({
+  const { data: suppliersData } = useQuery({
     queryKey: ['/api/suppliers?active=true'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/suppliers?active=true');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const { data: employeesData } = useQuery({
+    queryKey: ['/api/employees'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/employees');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
+  const { data: thirdPartiesData } = useQuery({
+    queryKey: ['/api/third-parties'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/third-parties');
       return res.json();
     },
   });

@@ -27,13 +27,16 @@ export default function Dashboard() {
     },
   });
 
-  const { data: lowStockMaterials, isLoading: lowStockLoading } = useQuery({
+  const { data: lowStockData, isLoading: lowStockLoading } = useQuery({
     queryKey: ['/api/dashboard/low-stock'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/dashboard/low-stock');
-      return res.json() as Promise<(Material & { category: Category })[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
+
+  const lowStockMaterials = lowStockData || [];
 
   if (statsLoading || lowStockLoading) {
     return (

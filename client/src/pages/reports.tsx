@@ -36,13 +36,26 @@ export default function Reports() {
     supplierSearch: ''
   });
 
-  const { data: employees = [] } = useQuery({
+  const { data: employeesData } = useQuery({
     queryKey: ['/api/employees'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/employees');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
   });
 
-  const { data: categories = [] } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryKey: ['/api/categories'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/categories');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
   });
+
+  const employees = employeesData || [];
+  const categories = categoriesData || [];
 
   // Efeito para atualizar automaticamente os relatórios quando os filtros mudarem
   useEffect(() => {

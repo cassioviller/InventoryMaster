@@ -113,7 +113,6 @@ async function createCompleteSchema() {
       email VARCHAR(100),
       phone VARCHAR(20),
       address TEXT,
-      notes TEXT,
       "isActive" BOOLEAN NOT NULL DEFAULT true,
       owner_id INTEGER NOT NULL DEFAULT 1,
       created_at TIMESTAMP DEFAULT now() NOT NULL
@@ -129,7 +128,6 @@ async function createCompleteSchema() {
       email VARCHAR(100),
       phone VARCHAR(20),
       address TEXT,
-      notes TEXT,
       "isActive" BOOLEAN NOT NULL DEFAULT true,
       owner_id INTEGER NOT NULL DEFAULT 1,
       created_at TIMESTAMP DEFAULT now() NOT NULL

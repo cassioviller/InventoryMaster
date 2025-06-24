@@ -70,14 +70,9 @@ build_database_url() {
 
     # Fallback para o PostgreSQL local durante desenvolvimento
     if [ -z "$DATABASE_URL" ]; then
-        if [ "$NODE_ENV" = "development" ]; then
-            export DATABASE_URL="postgres://postgres:postgres@localhost:5432/almoxarifado?sslmode=disable"
-            echo "Usando PostgreSQL local (desenvolvimento): $DATABASE_URL"
-        else
-            export DATABASE_URL="postgres://postgres:postgres@localhost:5432/almoxarifado?sslmode=disable"
-            echo "Usando PostgreSQL padrão do viajey: $DATABASE_URL"
-        fi
-        echo "Banco 'almox1' será usado como configurado"
+        export DATABASE_URL="postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable"
+        echo "Usando PostgreSQL viajey_cassio: $DATABASE_URL"
+        echo "Banco 'almoxarifado' será usado como configurado"
     fi
 }
 

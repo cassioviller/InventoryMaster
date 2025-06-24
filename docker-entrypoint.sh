@@ -10,11 +10,11 @@ if [ -z "$DATABASE_URL" ]; then
   echo "DATABASE_URL não definida - configurando automaticamente..."
   
   # Configuração padrão para PostgreSQL
-  POSTGRES_USER="${POSTGRES_USER:-postgres}"
-  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-postgres}"
-  POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
+  POSTGRES_USER="${POSTGRES_USER:-axiom}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-estruturas}"
+  POSTGRES_HOST="${POSTGRES_HOST:-viajey_cassio}"
   POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-  POSTGRES_DB="${POSTGRES_DB:-almox1}"
+  POSTGRES_DB="${POSTGRES_DB:-almoxarifado}"
   
   # Construir DATABASE_URL
   DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"

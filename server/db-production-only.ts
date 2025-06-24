@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
 // CONEXÃO EXCLUSIVA PARA PRODUÇÃO - SEM FALLBACKS
-const connectionString = process.env.DATABASE_URL || "postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable";
+const connectionString = process.env.DATABASE_URL || "postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable";
 
 console.log('🔗 Conectando diretamente ao PostgreSQL...');
 console.log('Ambiente:', process.env.NODE_ENV || 'development');

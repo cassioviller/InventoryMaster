@@ -190,6 +190,38 @@ export default function Management() {
     setEmployeeModalOpen(false);
     setSupplierModalOpen(false);
     setThirdPartyModalOpen(false);
+    setUserModalOpen(false);
+  };
+
+  const handleDelete = async (id: number, type: string) => {
+    if (!confirm(`Tem certeza que deseja excluir este ${type}?`)) return;
+    
+    try {
+      const endpoint = type === 'third-party' ? 'third-parties' : `${type}s`;
+      await apiRequest(`/api/${endpoint}/${id}`, {
+        method: 'DELETE'
+      });
+      
+      // Invalidate relevant queries to refresh data
+      if (type === 'employee') {
+        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
+      } else if (type === 'supplier') {
+        queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
+      } else if (type === 'third-party') {
+        queryClient.invalidateQueries({ queryKey: ['/api/third-parties'] });
+      }
+      
+      toast({
+        title: "Sucesso",
+        description: `${type} excluído com sucesso`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: `Erro ao excluir ${type}`,
+        variant: "destructive",
+      });
+    }
   };
 
   const renderContent = () => {

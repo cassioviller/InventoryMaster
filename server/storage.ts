@@ -7,7 +7,7 @@ import {
   type MaterialMovement, type InsertMovement, type MovementItem, type InsertMovementItem,
   type AuditLog, type CreateEntryData, type CreateExitData
 } from "@shared/schema";
-import { db } from "./db-final";
+import { db } from "./db-production-only";
 import { eq, and, desc, asc, sql, gte, lte, ilike, or } from "drizzle-orm";
 import bcrypt from "bcrypt";
 

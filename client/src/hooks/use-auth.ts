@@ -23,7 +23,7 @@ export function useAuth(): AuthContextType {
   const { data: user, isLoading } = useQuery({
     queryKey: ['/api/auth/verify'],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('token');
       if (!token) return null;
 
       try {
@@ -34,14 +34,14 @@ export function useAuth(): AuthContextType {
         });
 
         if (!res.ok) {
-          localStorage.removeItem('auth_token');
+          localStorage.removeItem('token');
           return null;
         }
 
         const data = await res.json();
         return data.user;
       } catch {
-        localStorage.removeItem('auth_token');
+        localStorage.removeItem('token');
         return null;
       }
     },
@@ -54,7 +54,7 @@ export function useAuth(): AuthContextType {
       return res.json();
     },
     onSuccess: (data) => {
-      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('token', data.token);
       queryClient.setQueryData(['/api/auth/verify'], data.user);
     },
   });
@@ -64,7 +64,7 @@ export function useAuth(): AuthContextType {
   };
 
   const logout = () => {
-    localStorage.removeItem('auth_token');
+    localStorage.removeItem('token');
     queryClient.setQueryData(['/api/auth/verify'], null);
     queryClient.invalidateQueries();
   };

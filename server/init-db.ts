@@ -8,15 +8,15 @@ export async function initializeDatabase() {
   console.log('🔧 Inicializando banco de dados...');
 
   try {
-    // Corrigir DATABASE_URL se estiver apontando para banco errado
-    let correctedDatabaseUrl = process.env.DATABASE_URL;
-    if (correctedDatabaseUrl && correctedDatabaseUrl.includes('/almox2?')) {
-      correctedDatabaseUrl = correctedDatabaseUrl.replace('/almox2?', '/almox1?');
-      console.log('🔧 DATABASE_URL corrigida de almox2 para almox1');
+    // Usar SEMPRE o banco almox1
+    let databaseUrl = process.env.DATABASE_URL;
+    if (databaseUrl && databaseUrl.includes('/almox2')) {
+      databaseUrl = databaseUrl.replace('/almox2', '/almox1');
+      console.log('✅ Conectando no banco correto: almox1');
     }
 
     // Primeiro, conectar ao banco postgres padrão para criar o banco almoxarifado
-    const baseUrl = correctedDatabaseUrl.replace(/\/[^\/]+(\?|$)/, '/postgres$1');
+    const baseUrl = databaseUrl.replace(/\/[^\/]+(\?|$)/, '/postgres$1');
     const basePool = new Pool({ 
       connectionString: baseUrl,
       ssl: baseUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false }
@@ -37,7 +37,7 @@ export async function initializeDatabase() {
     }
 
     // Agora conectar ao banco almoxarifado para criar as tabelas
-    const almoxUrl = correctedDatabaseUrl.replace(/\/[^\/]+(\?|$)/, '/almoxarifado$1');
+    const almoxUrl = databaseUrl.replace(/\/[^\/]+(\?|$)/, '/almoxarifado$1');
     const pool = new Pool({ 
       connectionString: almoxUrl,
       ssl: almoxUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false }

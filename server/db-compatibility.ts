@@ -9,24 +9,24 @@ if (!process.env.DATABASE_URL) {
 console.log('🔗 Configurando conexão PostgreSQL...');
 console.log('Database URL configurada:', process.env.DATABASE_URL ? 'Sim' : 'Não');
 
-// Corrigir DATABASE_URL se estiver apontando para banco errado
-let correctedDatabaseUrl = process.env.DATABASE_URL;
-if (correctedDatabaseUrl && correctedDatabaseUrl.includes('/almox2?')) {
-  correctedDatabaseUrl = correctedDatabaseUrl.replace('/almox2?', '/almox1?');
-  console.log('🔧 DATABASE_URL corrigida de almox2 para almox1');
+// Usar SEMPRE o banco almox1
+let databaseUrl = process.env.DATABASE_URL;
+if (databaseUrl && databaseUrl.includes('/almox2')) {
+  databaseUrl = databaseUrl.replace('/almox2', '/almox1');
+  console.log('✅ Conectando no banco correto: almox1');
 }
 
 // Parse the database URL to get individual components
-const dbUrl = new URL(correctedDatabaseUrl);
+const dbUrl = new URL(databaseUrl);
 console.log('Database host:', dbUrl.hostname);
 console.log('Database name:', dbUrl.pathname.slice(1));
 
-const sslConfig = correctedDatabaseUrl.includes('sslmode=disable') 
+const sslConfig = databaseUrl.includes('sslmode=disable') 
   ? false 
   : { rejectUnauthorized: false };
 
 export const pool = new Pool({ 
-  connectionString: correctedDatabaseUrl,
+  connectionString: databaseUrl,
   ssl: sslConfig
 });
 

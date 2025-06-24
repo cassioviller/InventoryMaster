@@ -9,17 +9,17 @@ export async function simpleInitDatabase() {
   console.log('🔧 Inicializando banco de dados...');
 
   try {
-    // Corrigir DATABASE_URL se estiver apontando para banco errado
-    let correctedDatabaseUrl = process.env.DATABASE_URL;
-    if (correctedDatabaseUrl && correctedDatabaseUrl.includes('/almox2?')) {
-      correctedDatabaseUrl = correctedDatabaseUrl.replace('/almox2?', '/almox1?');
-      console.log('🔧 DATABASE_URL corrigida de almox2 para almox1');
+    // Usar SEMPRE o banco almox1
+    let databaseUrl = process.env.DATABASE_URL;
+    if (databaseUrl && databaseUrl.includes('/almox2')) {
+      databaseUrl = databaseUrl.replace('/almox2', '/almox1');
+      console.log('✅ Conectando no banco correto: almox1');
     }
 
     // Connect directly to the existing database
-    const ssl = correctedDatabaseUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
+    const ssl = databaseUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
     const pool = new Pool({ 
-      connectionString: correctedDatabaseUrl,
+      connectionString: databaseUrl,
       ssl: ssl
     });
 

@@ -6,20 +6,20 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set");
 }
 
-// Corrigir DATABASE_URL se estiver apontando para banco errado
-let correctedDatabaseUrl = process.env.DATABASE_URL;
-if (correctedDatabaseUrl && correctedDatabaseUrl.includes('/almox2?')) {
-  correctedDatabaseUrl = correctedDatabaseUrl.replace('/almox2?', '/almox1?');
-  console.log('🔧 DATABASE_URL corrigida de almox2 para almox1');
+// Usar SEMPRE o banco almox1
+let databaseUrl = process.env.DATABASE_URL;
+if (databaseUrl && databaseUrl.includes('/almox2')) {
+  databaseUrl = databaseUrl.replace('/almox2', '/almox1');
+  console.log('✅ Conectando no banco correto: almox1');
 }
 
 // Simple SSL configuration based on connection string
-const sslConfig = correctedDatabaseUrl.includes('sslmode=disable') 
+const sslConfig = databaseUrl.includes('sslmode=disable') 
   ? false 
   : { rejectUnauthorized: false };
 
 export const pool = new Pool({ 
-  connectionString: correctedDatabaseUrl,
+  connectionString: databaseUrl,
   ssl: sslConfig
 });
 

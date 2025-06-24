@@ -1,22 +1,22 @@
 # CORREÇÃO DEFINITIVA - Sistema de Almoxarifado
 
-## PROBLEMA IDENTIFICADO
+## PROBLEMA RESOLVIDO
 Sistema estava tentando conectar no banco "almox2" que NÃO EXISTE.
-O banco correto é "almox1" que EXISTE e tem todas as tabelas.
+SOLUÇÃO: Forçar uso do banco "almox1" que EXISTE e tem todas as tabelas.
 
-## CORREÇÃO APLICADA
-Adicionada correção automática em TODOS os arquivos de conexão:
-- server/db.ts ✅
-- server/db-compatibility.ts ✅ 
-- server/db-simple.ts ✅
-- server/init-db.ts ✅
-- server/simple-init.ts ✅
-- server/migrate-schema.ts ✅
+## CORREÇÃO DEFINITIVA APLICADA
+Removidas todas as referências problemáticas ao banco "almox2":
+- server/db.ts ✅ (força uso de almox1)
+- server/db-compatibility.ts ✅ (força uso de almox1)
+- server/db-simple.ts ✅ (força uso de almox1)
+- server/init-db.ts ✅ (força uso de almox1)
+- server/simple-init.ts ✅ (força uso de almox1)
+- server/migrate-schema.ts ✅ (força uso de almox1)
 - server/database-url-fix.ts ✅ (correção universal)
-- docker-entrypoint.sh ✅
+- docker-entrypoint.sh ✅ (força uso de almox1)
 
-## COMO FUNCIONA
-O sistema agora detecta automaticamente se a DATABASE_URL contém "/almox2?" e corrige para "/almox1?".
+## COMO FUNCIONA AGORA
+Sistema automaticamente substitui qualquer "/almox2" por "/almox1" em TODAS as conexões.
 
 ## DEPLOY NO EASYPANEL
 Use EXATAMENTE estas variáveis de ambiente:

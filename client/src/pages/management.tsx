@@ -200,7 +200,11 @@ export default function Management() {
     if (!confirm(`Tem certeza que deseja excluir este ${type}?`)) return;
     
     try {
-      const endpoint = type === 'third-party' ? 'third-parties' : `${type}s`;
+      const endpoint = type === 'third-party' ? 'third-parties' : 
+                      type === 'category' ? 'categories' :
+                      type === 'material' ? 'materials' :
+                      type === 'user' ? 'users' : `${type}s`;
+      
       await apiRequest(`/api/${endpoint}/${id}`, {
         method: 'DELETE'
       });
@@ -212,6 +216,12 @@ export default function Management() {
         queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
       } else if (type === 'third-party') {
         queryClient.invalidateQueries({ queryKey: ['/api/third-parties'] });
+      } else if (type === 'category') {
+        queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
+      } else if (type === 'material') {
+        queryClient.invalidateQueries({ queryKey: ['/api/materials'] });
+      } else if (type === 'user') {
+        queryClient.invalidateQueries({ queryKey: ['/api/users'] });
       }
       
       toast({
@@ -343,6 +353,7 @@ export default function Management() {
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={() => handleDelete(category.id, 'category')}
                         className="text-red-500 hover:text-red-600"
                       >
                         <Trash2 className="h-3 w-3" />
@@ -647,6 +658,7 @@ export default function Management() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={() => handleDelete(user.id, 'user')}
                               className="text-red-500 hover:text-red-600"
                             >
                               <Trash2 className="h-4 w-4" />

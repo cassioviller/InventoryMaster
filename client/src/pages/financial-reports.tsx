@@ -31,27 +31,6 @@ export default function FinancialReports() {
 
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: ['/api/reports/financial-stock'],
-    queryFn: async () => {
-      const response = await fetch('/api/reports/financial-stock', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error('Resposta não é um JSON válido');
-      }
-      
-      return response.json();
-    },
-    retry: 3,
-    retryDelay: 1000
   });
 
   // Filter and sort data locally to avoid excessive API calls

@@ -314,6 +314,7 @@ export default function Management() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleDelete(material.id, 'material')}
                             className="text-red-500 hover:text-red-600"
                           >
                             <Trash2 className="h-4 w-4" />

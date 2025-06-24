@@ -355,7 +355,7 @@ export default function Management() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(employees) && employees.map((employee) => (
+                  {Array.isArray(employees) && employees.length > 0 ? employees.map((employee) => (
                     <TableRow key={employee.id}>
                       <TableCell className="font-medium">{employee.name}</TableCell>
                       <TableCell>{employee.department}</TableCell>

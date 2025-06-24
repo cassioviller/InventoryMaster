@@ -346,12 +346,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Employee routes
   app.get("/api/employees", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log('Fetching employees for user:', req.user);
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const employees = await storage.getAllEmployees(ownerId);
-      res.json(employees || []);
+      console.log('Using ownerId:', ownerId);
+      
+      const employeesList = await storage.getAllEmployees(ownerId);
+      console.log('Storage result:', employeesList);
+      res.json(employeesList || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
-      res.status(500).json({ message: "Failed to fetch employees" });
+      res.status(500).json({ message: "Failed to fetch employees", error: error.message });
     }
   });
 

@@ -46,10 +46,11 @@ export default function MaterialExit() {
   });
 
   const { data: employees } = useQuery({
-    queryKey: ['/api/employees?active=true'],
+    queryKey: ['/api/employees'],
     queryFn: async () => {
-      const res = await authenticatedRequest('/api/employees?active=true');
-      return res.json();
+      const res = await authenticatedRequest('/api/employees');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 

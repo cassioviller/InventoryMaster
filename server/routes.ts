@@ -228,6 +228,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const category = await storage.updateCategory(id, categoryData, ownerId);
       res.json(category);
     } catch (error) {
+      console.error('Error updating category:', error);
       res.status(400).json({ message: "Failed to update category" });
     }
   });
@@ -347,8 +348,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const employees = await storage.getAllEmployees(ownerId);
-      res.json(employees);
+      res.json(employees || []);
     } catch (error) {
+      console.error('Error fetching employees:', error);
       res.status(500).json({ message: "Failed to fetch employees" });
     }
   });
@@ -360,7 +362,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const employee = await storage.createEmployee(employeeData);
       res.status(201).json(employee);
     } catch (error) {
+      console.error('Error creating employee:', error);
       res.status(400).json({ message: "Failed to create employee" });
+    }
+  });
+
+  app.put("/api/employees/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const employeeData = insertEmployeeSchema.partial().parse(req.body);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const employee = await storage.updateEmployee(id, employeeData, ownerId);
+      res.json(employee);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update employee" });
+    }
+  });
+
+  app.delete("/api/employees/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      await storage.deleteEmployee(id, ownerId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete employee" });
     }
   });
 
@@ -386,6 +412,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put("/api/suppliers/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const supplierData = insertSupplierSchema.partial().parse(req.body);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const supplier = await storage.updateSupplier(id, supplierData, ownerId);
+      res.json(supplier);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update supplier" });
+    }
+  });
+
+  app.delete("/api/suppliers/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      await storage.deleteSupplier(id, ownerId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete supplier" });
+    }
+  });
+
   // Third parties routes
   app.get("/api/third-parties", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -405,6 +454,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(thirdParty);
     } catch (error) {
       res.status(400).json({ message: "Failed to create third party" });
+    }
+  });
+
+  app.put("/api/third-parties/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const thirdPartyData = insertThirdPartySchema.partial().parse(req.body);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const thirdParty = await storage.updateThirdParty(id, thirdPartyData, ownerId);
+      res.json(thirdParty);
+    } catch (error) {
+      res.status(400).json({ message: "Failed to update third party" });
+    }
+  });
+
+  app.delete("/api/third-parties/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      await storage.deleteThirdParty(id, ownerId);
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete third party" });
     }
   });
 

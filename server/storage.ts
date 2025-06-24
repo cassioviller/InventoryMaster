@@ -356,15 +356,20 @@ export class DatabaseStorage implements IStorage {
 
   // Employees
   async getAllEmployees(ownerId?: number): Promise<Employee[]> {
-    if (ownerId) {
-      return await db
-        .select()
-        .from(employees)
-        .where(eq(employees.ownerId, ownerId))
-        .orderBy(asc(employees.name));
+    try {
+      if (ownerId) {
+        return await db
+          .select()
+          .from(employees)
+          .where(eq(employees.ownerId, ownerId))
+          .orderBy(asc(employees.name));
+      }
+      
+      return await db.select().from(employees).orderBy(asc(employees.name));
+    } catch (error) {
+      console.error('Error in getAllEmployees:', error);
+      return [];
     }
-    
-    return await db.select().from(employees).orderBy(asc(employees.name));
   }
 
   async getEmployee(id: number, ownerId?: number): Promise<Employee | undefined> {

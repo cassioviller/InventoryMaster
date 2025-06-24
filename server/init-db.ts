@@ -8,12 +8,8 @@ export async function initializeDatabase() {
   console.log('🔧 Inicializando banco de dados...');
 
   try {
-    // Usar SEMPRE o banco almox1
+    // Usar DATABASE_URL do ambiente
     let databaseUrl = process.env.DATABASE_URL;
-    if (databaseUrl && databaseUrl.includes('/almox2')) {
-      databaseUrl = databaseUrl.replace('/almox2', '/almox1');
-      console.log('✅ Conectando no banco correto: almox1');
-    }
 
     // Primeiro, conectar ao banco postgres padrão para criar o banco almoxarifado
     const baseUrl = databaseUrl.replace(/\/[^\/]+(\?|$)/, '/postgres$1');

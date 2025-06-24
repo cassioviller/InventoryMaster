@@ -9,12 +9,8 @@ if (!process.env.DATABASE_URL) {
 console.log('🔗 Configurando conexão PostgreSQL...');
 console.log('Database URL configurada:', process.env.DATABASE_URL ? 'Sim' : 'Não');
 
-// Usar SEMPRE o banco almox1
+// Usar DATABASE_URL do ambiente (Neon em desenvolvimento)
 let databaseUrl = process.env.DATABASE_URL;
-if (databaseUrl && databaseUrl.includes('/almox2')) {
-  databaseUrl = databaseUrl.replace('/almox2', '/almox1');
-  console.log('✅ Conectando no banco correto: almox1');
-}
 
 // Parse the database URL to get individual components
 const dbUrl = new URL(databaseUrl);

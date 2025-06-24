@@ -6,12 +6,8 @@ if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set");
 }
 
-// Usar SEMPRE o banco almox1
+// Usar DATABASE_URL do ambiente
 let databaseUrl = process.env.DATABASE_URL;
-if (databaseUrl && databaseUrl.includes('/almox2')) {
-  databaseUrl = databaseUrl.replace('/almox2', '/almox1');
-  console.log('✅ Conectando no banco correto: almox1');
-}
 
 // Simple SSL configuration based on connection string
 const sslConfig = databaseUrl.includes('sslmode=disable') 

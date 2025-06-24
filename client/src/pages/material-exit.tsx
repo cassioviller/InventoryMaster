@@ -37,15 +37,16 @@ export default function MaterialExit() {
     },
   });
 
-  const { data: materials } = useQuery({
+  const { data: materialsData } = useQuery({
     queryKey: ['/api/materials'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/materials');
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const { data: employees } = useQuery({
+  const { data: employeesData } = useQuery({
     queryKey: ['/api/employees'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/employees');
@@ -54,13 +55,18 @@ export default function MaterialExit() {
     },
   });
 
-  const { data: thirdParties } = useQuery({
+  const { data: thirdPartiesData } = useQuery({
     queryKey: ['/api/third-parties?active=true'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/third-parties?active=true');
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
+
+  const materials = materialsData || [];
+  const employees = employeesData || [];
+  const thirdParties = thirdPartiesData || [];
 
   const createExitMutation = useMutation({
     mutationFn: async (data: CreateExitData) => {

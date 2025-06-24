@@ -61,7 +61,7 @@ export default function Management() {
   const { toast } = useToast();
   const tabItems = getTabItems(canCreateUsers);
 
-  const { data: materials, isLoading: materialsLoading } = useQuery({
+  const { data: materialsData, isLoading: materialsLoading } = useQuery({
     queryKey: ['/api/materials', searchQuery, selectedCategory],
     queryFn: async () => {
       let url = '/api/materials';
@@ -71,62 +71,76 @@ export default function Management() {
       if (params.toString()) url += '?' + params.toString();
       
       const res = await authenticatedRequest(url);
-      return res.json() as Promise<(Material & { category: Category })[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const { data: categories } = useQuery({
+  const { data: categoriesData } = useQuery({
     queryKey: ['/api/categories'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/categories');
-      return res.json() as Promise<Category[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const { data: employees, isLoading: employeesLoading } = useQuery({
+  const materials = materialsData || [];
+  const categories = categoriesData || [];
+
+  const { data: employeesData, isLoading: employeesLoading } = useQuery({
     queryKey: ['/api/employees', searchQuery],
     queryFn: async () => {
       let url = '/api/employees';
       if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
       
       const res = await authenticatedRequest(url);
-      return res.json() as Promise<Employee[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: activeTab === 'employees',
   });
 
-  const { data: suppliers, isLoading: suppliersLoading } = useQuery({
+  const { data: suppliersData, isLoading: suppliersLoading } = useQuery({
     queryKey: ['/api/suppliers', searchQuery],
     queryFn: async () => {
       let url = '/api/suppliers';
       if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
       
       const res = await authenticatedRequest(url);
-      return res.json() as Promise<Supplier[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: activeTab === 'suppliers',
   });
 
-  const { data: thirdParties, isLoading: thirdPartiesLoading } = useQuery({
+  const { data: thirdPartiesData, isLoading: thirdPartiesLoading } = useQuery({
     queryKey: ['/api/third-parties', searchQuery],
     queryFn: async () => {
       let url = '/api/third-parties';
       if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
       
       const res = await authenticatedRequest(url);
-      return res.json() as Promise<ThirdParty[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: activeTab === 'third-parties',
   });
 
-  const { data: users, isLoading: usersLoading } = useQuery({
+  const { data: usersData, isLoading: usersLoading } = useQuery({
     queryKey: ['/api/users'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/users');
-      return res.json() as Promise<User[]>;
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
     enabled: activeTab === 'users' && canCreateUsers,
   });
+
+  const employees = employeesData || [];
+  const suppliers = suppliersData || [];
+  const thirdParties = thirdPartiesData || [];
+  const users = usersData || [];
 
   const getStatusBadge = (currentStock: number, minimumStock: number) => {
     if (currentStock === 0) {
@@ -267,7 +281,7 @@ export default function Management() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {Array.isArray(categories) && categories.map((category) => (
+                    {(categories || []).map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
                       </SelectItem>

@@ -67,25 +67,15 @@ export default function MaterialEntry() {
     queryKey: ['/api/third-parties'],
     queryFn: async () => {
       const res = await authenticatedRequest('/api/third-parties');
-      return res.json();
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
     },
   });
 
-  const { data: employees } = useQuery({
-    queryKey: ['/api/employees?active=true'],
-    queryFn: async () => {
-      const res = await authenticatedRequest('/api/employees?active=true');
-      return res.json();
-    },
-  });
-
-  const { data: thirdParties } = useQuery({
-    queryKey: ['/api/third-parties?active=true'],
-    queryFn: async () => {
-      const res = await authenticatedRequest('/api/third-parties?active=true');
-      return res.json();
-    },
-  });
+  const materials = materialsData || [];
+  const suppliers = suppliersData || [];
+  const employees = employeesData || [];
+  const thirdParties = thirdPartiesData || [];
 
   const createEntryMutation = useMutation({
     mutationFn: async (data: CreateEntryData) => {

@@ -80,57 +80,16 @@ async function createDefaultUsers() {
   }
 }
 
-// Simple API routes for testing
+// Import and use simplified routes
+import apiRoutes from "./routes-simple";
+
+// Test endpoint
 app.get("/api/test", (req: Request, res: Response) => {
   res.json({ message: "API funcionando!", timestamp: new Date().toISOString() });
 });
 
-app.get("/api/users", async (req: Request, res: Response) => {
-  try {
-    const allUsers = await db.select({
-      id: users.id,
-      username: users.username,
-      email: users.email,
-      name: users.name,
-      role: users.role,
-      isActive: users.isActive
-    }).from(users);
-    res.json(allUsers);
-  } catch (error) {
-    console.error('Erro ao buscar usuários:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-app.get("/api/categories", async (req: Request, res: Response) => {
-  try {
-    const allCategories = await db.select().from(categories);
-    res.json(allCategories);
-  } catch (error) {
-    console.error('Erro ao buscar categorias:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-app.get("/api/materials", async (req: Request, res: Response) => {
-  try {
-    const allMaterials = await db.select().from(materials);
-    res.json(allMaterials);
-  } catch (error) {
-    console.error('Erro ao buscar materiais:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
-
-app.get("/api/employees", async (req: Request, res: Response) => {
-  try {
-    const allEmployees = await db.select().from(employees);
-    res.json(allEmployees);
-  } catch (error) {
-    console.error('Erro ao buscar funcionários:', error);
-    res.status(500).json({ error: 'Erro interno do servidor' });
-  }
-});
+// Use API routes
+app.use("/api", apiRoutes);
 
 // Error handling
 app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

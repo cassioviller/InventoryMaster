@@ -2,8 +2,11 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// CONEXÃO EXCLUSIVA PARA PRODUÇÃO - SEM FALLBACKS
-const connectionString = process.env.DATABASE_URL || "postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable";
+// CONEXÃO INTELIGENTE - DEV USA NEON, PROD USA VIAJEY_CASSIO
+const isDevelopment = process.env.NODE_ENV === 'development';
+const connectionString = isDevelopment 
+  ? process.env.DATABASE_URL
+  : "postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable";
 
 console.log('🔗 Conectando diretamente ao PostgreSQL...');
 console.log('Ambiente:', process.env.NODE_ENV || 'development');

@@ -267,7 +267,7 @@ export default function Management() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {categories?.map((category) => (
+                    {Array.isArray(categories) && categories.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
                       </SelectItem>
@@ -290,7 +290,7 @@ export default function Management() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {materials?.map((material) => (
+                  {Array.isArray(materials) && materials.map((material) => (
                     <TableRow key={material.id}>
                       <TableCell className="font-medium">{material.name}</TableCell>
                       <TableCell>{material.category.name}</TableCell>

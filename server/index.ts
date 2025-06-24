@@ -1,7 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
-import { ensureCompatibleTables } from "./db-production";
+import { ensureCompatibleTables } from "./db-final";
 
 console.log("🔧 Sistema de Almoxarifado - Iniciando...");
 

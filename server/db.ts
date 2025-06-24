@@ -1,2 +1,2 @@
-// Redirecionamento para a conexão de produção
-export * from './db-production';
+// Redirecionamento para a conexão final
+export * from './db-final';

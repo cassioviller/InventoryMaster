@@ -10,20 +10,30 @@ const connectionString = isDevelopment
 
 console.log('🔗 Conectando diretamente ao PostgreSQL...');
 console.log('Ambiente:', process.env.NODE_ENV || 'development');
+console.log('String de conexão:', connectionString ? 'Configurada' : 'Não definida');
 
 // Parse URL para debug
-try {
-  const dbUrl = new URL(connectionString);
-  console.log('Database host:', dbUrl.hostname);
-  console.log('Database name:', dbUrl.pathname.slice(1));
-  console.log('Database user:', dbUrl.username);
-} catch (error) {
-  console.log('Usando DATABASE_URL configurada');
+if (connectionString) {
+  try {
+    const dbUrl = new URL(connectionString);
+    console.log('Database host:', dbUrl.hostname);
+    console.log('Database name:', dbUrl.pathname.slice(1));
+    console.log('Database user:', dbUrl.username);
+    console.log('Database port:', dbUrl.port || '5432');
+  } catch (error) {
+    console.log('Erro ao fazer parse da URL:', error);
+  }
+} else {
+  console.log('❌ CONNECTION STRING NÃO DEFINIDA');
+}
+
+if (!connectionString) {
+  throw new Error('❌ DATABASE_URL não está definida!');
 }
 
 export const pool = new Pool({ 
   connectionString,
-  ssl: false  // Força SSL desabilitado
+  ssl: false
 });
 
 export const db = drizzle(pool, { schema });

@@ -2,13 +2,8 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// Configuração específica para produção
-const PRODUCTION_DATABASE_URL = "postgres://almox2:almox3@viajey_almox:5432/almox1?sslmode=disable";
-
-// Usar DATABASE_URL do ambiente, ou produção como fallback
-const connectionString = process.env.NODE_ENV === 'production' 
-  ? PRODUCTION_DATABASE_URL 
-  : process.env.DATABASE_URL;
+// Usar sempre a DATABASE_URL do ambiente
+const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error("DATABASE_URL must be set");

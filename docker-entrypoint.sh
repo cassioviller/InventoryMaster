@@ -9,12 +9,12 @@ echo "Verificando configuração do banco de dados..."
 if [ -z "$DATABASE_URL" ]; then
   echo "DATABASE_URL não definida - configurando automaticamente..."
   
-  # Configuração para o PostgreSQL - USAR SEMPRE BANCO ALMOX1
-  POSTGRES_USER="${POSTGRES_USER:-almox2}"
-  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-almox3}"
-  POSTGRES_HOST="${POSTGRES_HOST:-viajey_almox}"
+  # Configuração padrão para PostgreSQL
+  POSTGRES_USER="${POSTGRES_USER:-postgres}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-postgres}"
+  POSTGRES_HOST="${POSTGRES_HOST:-localhost}"
   POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-  POSTGRES_DB="${POSTGRES_DB:-almox1}"
+  POSTGRES_DB="${POSTGRES_DB:-almoxarifado}"
   
   # Construir DATABASE_URL
   DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
@@ -40,12 +40,8 @@ ATTEMPTS=0
 while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
   if timeout 10 node -e "
     const { Pool } = require('pg');
-    // Garantir que usa banco almox1
+    // Usar DATABASE_URL do ambiente
     let dbUrl = process.env.DATABASE_URL;
-    if (dbUrl && dbUrl.includes('/almox2')) {
-      dbUrl = dbUrl.replace('/almox2', '/almox1');
-      console.log('Usando banco correto: almox1');
-    }
     const ssl = dbUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
     const pool = new Pool({ 
       connectionString: dbUrl,

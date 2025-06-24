@@ -18,11 +18,12 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - ✅ Correção de tipos TypeScript nos endpoints
 - ✅ Implementação completa de CRUD para todas entidades
 
-## Problemas em Resolução (24/06/2025)
-- 🔧 Endpoint de funcionários retornando erro 500
-- 🔧 Frontend com erro "employees?.map is not a function"
-- 🔧 Funcionalidades de exclusão na gestão não funcionando
-- 🔧 Saída de material apresentando erros
+## Problemas Resolvidos (24/06/2025)
+- ✅ Endpoint de funcionários corrigido e funcionando
+- ✅ Frontend corrigido - erro "employees?.map" resolvido
+- ✅ Funcionalidades de exclusão implementadas para todas entidades
+- ✅ Endpoints de relatórios implementados e funcionando
+- ✅ Relatório financeiro corrigido com validação JSON
 
 ## Arquitetura do Projeto
 

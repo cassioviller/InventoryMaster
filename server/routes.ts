@@ -515,6 +515,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reports routes
+  app.get("/api/reports/employee-movement", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { employeeId, month, year, startDate, endDate } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      let adjustedStartDate: Date | undefined;
+      let adjustedEndDate: Date | undefined;
+      
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(0, 0, 0, 0);
+      }
+      
+      const report = await storage.getEmployeeMovementReport(
+        employeeId ? parseInt(employeeId as string) : undefined,
+        month ? parseInt(month as string) : undefined,
+        year ? parseInt(year as string) : undefined,
+        ownerId,
+        adjustedStartDate,
+        adjustedEndDate
+      );
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating employee movement report:', error);
+      res.status(500).json({ message: "Failed to generate employee movement report" });
+    }
+  });
+
+  app.get("/api/reports/stock", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { categoryId } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const report = await storage.getStockReport(
+        categoryId ? parseInt(categoryId as string) : undefined,
+        ownerId
+      );
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating stock report:', error);
+      res.status(500).json({ message: "Failed to generate stock report" });
+    }
+  });
+
+  app.get("/api/reports/general-movements", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { startDate, endDate, type } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      let adjustedStartDate: Date | undefined;
+      let adjustedEndDate: Date | undefined;
+      
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(0, 0, 0, 0);
+      }
+      
+      const report = await storage.getGeneralMovementsReport(
+        adjustedStartDate,
+        adjustedEndDate,
+        type as 'entry' | 'exit',
+        ownerId
+      );
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating general movements report:', error);
+      res.status(500).json({ message: "Failed to generate general movements report" });
+    }
+  });
+
+  app.get("/api/reports/material-consumption", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const { startDate, endDate, categoryId } = req.query;
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      let adjustedStartDate: Date | undefined;
+      let adjustedEndDate: Date | undefined;
+      
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+        adjustedEndDate.setHours(0, 0, 0, 0);
+      }
+      
+      const report = await storage.getMaterialConsumptionReport(
+        adjustedStartDate,
+        adjustedEndDate,
+        categoryId ? parseInt(categoryId as string) : undefined,
+        ownerId
+      );
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating material consumption report:', error);
+      res.status(500).json({ message: "Failed to generate material consumption report" });
+    }
+  });
+
+  app.get("/api/reports/financial-stock", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const { materialSearch, categoryId } = req.query;
+      const report = await storage.getFinancialStockReport(
+        ownerId,
+        materialSearch as string,
+        categoryId ? parseInt(categoryId as string) : undefined
+      );
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating financial stock report:', error);
+      res.status(500).json({ message: "Failed to generate financial stock report" });
+    }
+  });
+
+  app.get("/api/reports/supplier-tracking", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const { materialSearch, supplierSearch } = req.query;
+      const report = await storage.getSupplierTrackingReport(
+        ownerId, 
+        materialSearch as string, 
+        supplierSearch as string
+      );
+      res.json(report);
+    } catch (error) {
+      console.error('Error generating supplier tracking report:', error);
+      res.status(500).json({ message: "Failed to generate supplier tracking report" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

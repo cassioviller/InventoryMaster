@@ -1,0 +1,36 @@
+## Instruções para o Replit: Preparação para Deploy em Produção (EasyPanel)
+
+**Contexto:** Meu ambiente de desenvolvimento aqui no Replit está funcionando corretamente, mas o deploy em produção no EasyPanel está falhando com o erro `FATAL: database "axiom" does not exist`. Sei que o nome correto do banco de dados é `almoxarifado`. Acredito que a string `axiom` ainda esteja sendo referenciada incorretamente em algum lugar que afeta o ambiente de produção.
+
+**Objetivo:** Preciso que você, Replit, me ajude a preparar o código-fonte e as configurações neste projeto para que, quando eu fizer o próximo deploy para o EasyPanel, a conexão com o banco de dados `almoxarifado` seja estabelecida corretamente, eliminando qualquer referência a `axiom`.
+
+**Ações que você deve realizar:**
+
+1.  **Varredura Abrangente de Código:**
+    *   Realize uma varredura recursiva em todos os arquivos do projeto, a partir do diretório raiz (`.`).
+    *   **Exclua os seguintes diretórios** da varredura para evitar resultados irrelevantes e otimizar o processo: `node_modules`, `dist`, `.git`, `.upm`, `attached_assets`.
+    *   Procure por todas as ocorrências da string "axiom" (ignorando maiúsculas e minúsculas).
+    *   **Liste todos os arquivos** onde a string "axiom" foi encontrada.
+
+2.  **Análise e Sugestão de Correções no Código-Fonte:**
+    *   Para cada arquivo listado na varredura, analise o contexto em que "axiom" aparece.
+    *   **Foco principal:** Identifique ocorrências de "axiom" que estejam relacionadas a strings de conexão de banco de dados, nomes de banco de dados, usuários de banco de dados ou qualquer configuração de ambiente que afira a conexão com o PostgreSQL.
+    *   **Priorize o arquivo `server/db-production-only.ts`:** Embora eu já tenha verificado que a string hardcoded lá aponta para `almoxarifado`, confirme se não há outras lógicas ou variáveis que possam estar sobrescrevendo isso ou introduzindo "axiom".
+    *   **Sugira modificações:** Para cada ocorrência relevante de "axiom" que deveria ser "almoxarifado" (especialmente em URLs de conexão ou nomes de banco), proponha a alteração para "almoxarifado". Se possível, aplique essas alterações diretamente no código, ou forneça as linhas exatas a serem modificadas.
+
+3.  **Verificação de Variáveis de Ambiente (Secrets) no Replit:**
+    *   Acesse a seção de Secrets (variáveis de ambiente) deste projeto.
+    *   Verifique se existe uma variável chamada `DATABASE_URL`.
+    *   Confirme se o valor de `DATABASE_URL` é exatamente `postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable`.
+    *   Se o valor estiver incorreto (por exemplo, `.../axiom?sslmode=disable`), **atualize-o para o valor correto**. Se a variável não existir, crie-a com este valor.
+    *   Verifique também se não há outras variáveis de ambiente com nomes semelhantes (ex: `DB_NAME`, `POSTGRES_DB`) que possam estar definindo "axiom" e causando conflito. Se encontrar, sugira a correção ou remoção.
+
+4.  **Análise de Scripts de Deploy/Entrypoint:**
+    *   Inspecione arquivos como `docker-entrypoint.sh`, `build-database-url.sh` ou quaisquer outros scripts que sejam executados durante o processo de build ou inicialização do contêiner (conforme definido no `Dockerfile`).
+    *   Procure por qualquer lógica nesses scripts que possa estar construindo a `DATABASE_URL` ou definindo o nome do banco de dados, e verifique se "axiom" está sendo usado incorretamente.
+    *   Sugira as alterações necessárias nesses scripts para garantir que `almoxarifado` seja sempre o nome do banco de dados utilizado.
+
+**Resultado Esperado:** Ao final destas ações, forneça um resumo das alterações realizadas ou sugeridas, e confirme que o projeto está preparado para um deploy bem-sucedido no EasyPanel, onde a aplicação se conectará corretamente ao banco de dados `almoxarifado`.
+
+**Lembre-se:** As alterações que você fizer aqui no Replit precisarão ser *implantadas* no EasyPanel para que o problema seja resolvido em produção. Meu objetivo é que o código que eu envio para o EasyPanel já esteja corrigido.
+

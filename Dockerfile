@@ -35,5 +35,5 @@ RUN chmod +x /usr/local/bin/build-database-url.sh
 # Usar o script de entrada para inicialização
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
-# Comando para iniciar a aplicação após o script de entrada
-CMD ["npm", "start"]
+# O comando start está integrado no entrypoint
+CMD []

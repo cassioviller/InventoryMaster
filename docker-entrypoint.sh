@@ -24,8 +24,8 @@ if [ -z "$DATABASE_URL" ]; then
 fi
 
 # Verificar outras variáveis essenciais
-: "${NODE_ENV:=production}"
-: "${PORT:=5013}"
+export NODE_ENV="${NODE_ENV:-production}"
+export PORT="${PORT:-5013}"
 
 echo "Configuração:"
 echo "- NODE_ENV: $NODE_ENV"
@@ -79,4 +79,10 @@ fi
 
 # A aplicação Node.js fará toda a inicialização automática do banco de dados
 # incluindo criação do banco 'almoxarifado', tabelas e usuários padrão
+
+# Iniciar a aplicação Node.js
+echo "Executando: npm start"
+npm start
+
+# Fallback para argumentos adicionais do Docker
 exec "$@"

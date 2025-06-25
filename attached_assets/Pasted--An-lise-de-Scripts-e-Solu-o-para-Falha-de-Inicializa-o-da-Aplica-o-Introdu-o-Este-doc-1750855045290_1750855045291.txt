@@ -1,0 +1,220 @@
+# Análise de Scripts e Solução para Falha de Inicialização da Aplicação
+
+## Introdução
+
+Este documento detalha a análise dos scripts `docker-entrypoint.sh` e `build-database-url.sh` fornecidos, identificando a causa das advertências `UndefinedVar` e, mais criticamente, o motivo pelo qual sua aplicação está falhando após a inicialização bem-sucedida no EasyPanel. Ao final, será proposta uma solução para corrigir o problema de inicialização.
+
+## 1. Análise do `docker-entrypoint.sh`
+
+O script `docker-entrypoint.sh` é o ponto de entrada principal do seu contêiner Docker. Ele é responsável por configurar o ambiente e iniciar a aplicação. Analisando o conteúdo fornecido:
+
+```bash
+#!/bin/bash
+set -e
+
+echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
+
+# Verificar e configurar DATABASE_URL automaticamente
+echo "Verificando configuração do banco de dados..."
+
+if [ -z "$DATABASE_URL" ]; then
+  echo "DATABASE_URL não definida - configurando automaticamente..."
+  
+  # Configuração padrão para PostgreSQL
+  POSTGRES_USER="${POSTGRES_USER:-axiom}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-estruturas}"
+  POSTGRES_HOST="${POSTGRES_HOST:-viajey_cassio}"
+  POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+  POSTGRES_DB="${POSTGRES_DB:-almoxarifado}"
+  
+  # Construir DATABASE_URL
+  DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
+  export DATABASE_URL
+  
+  echo "DATABASE_URL configurada: postgres://$POSTGRES_USER:***@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
+fi
+
+# Verificar outras variáveis essenciais
+: "${NODE_ENV:=production}"
+: "${PORT:=5013}"
+
+echo "Configuração:"
+echo "- NODE_ENV: $NODE_ENV"
+echo "- PORT: $PORT"
+echo "- DATABASE_URL: ${DATABASE_URL//:*@/:***@}"
+
+# Aguardar PostgreSQL estar pronto com timeout mais robusto
+echo "Aguardando inicialização do PostgreSQL..."
+MAX_ATTEMPTS=60
+ATTEMPTS=0
+
+while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
+  if timeout 10 node -e "
+    const { Pool } = require(\'pg\');
+    // Usar DATABASE_URL do ambiente
+    let dbUrl = process.env.DATABASE_URL;
+    const ssl = dbUrl.includes(\'sslmode=disable\') ? false : { rejectUnauthorized: false };
+    const pool = new Pool({ 
+      connectionString: dbUrl,
+      ssl: ssl
+    });
+    pool.query(\'SELECT 1\').then(() => {
+      console.log(\'PostgreSQL conectado com sucesso\');
+      process.exit(0);
+    }).catch((err) => {
+      console.log(\'Erro de conexão:\', err.message);
+      process.exit(1);
+    });
+  " 2>/dev/null; then
+    echo "PostgreSQL está pronto!"
+    break
+  fi
+  ATTEMPTS=$((ATTEMPTS+1))
+  echo "PostgreSQL não está pronto - tentativa $ATTEMPTS de $MAX_ATTEMPTS - aguardando..."
+  sleep 3
+done
+
+if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
+  echo "AVISO: Não foi possível verificar PostgreSQL após $MAX_ATTEMPTS tentativas."
+  echo "Iniciando aplicação - a inicialização automática do banco será feita pela aplicação."
+fi
+
+echo ">>> Sistema configurado com sucesso! <<<"
+echo "Iniciando aplicação na porta $PORT..."
+
+# Verificar se é ambiente de produção e fazer build se necessário
+if [ "$NODE_ENV" = "production" ] && [ ! -f "dist/index.js" ]; then
+  echo "Build não encontrado, executando build de produção..."
+  npm run build 2>/dev/null || echo "Build falhou, tentando iniciar mesmo assim..."
+fi
+
+# A aplicação Node.js fará toda a inicialização automática do banco de dados
+# incluindo criação do banco \'almoxarifado\', tabelas e usuários padrão
+exec "$@"
+```
+
+### 1.1. Causa das Advertências `UndefinedVar`
+
+As advertências `UndefinedVar: Usage of undefined variable 	erase $NODE_ENV` e `UndefinedVar: Usage of undefined variable 	erase $PORT` (mencionadas no log de build do Docker) são geradas pelas linhas:
+
+```bash
+: "${NODE_ENV:=production}"
+: "${PORT:=5013}"
+```
+
+Esta sintaxe (`: ${VAR:=DEFAULT_VALUE}`) é uma expansão de parâmetro Bash que atribui um valor padrão a uma variável *se ela não estiver definida ou for nula*. Embora seja uma sintaxe válida e funcional no Bash, o ambiente de build do Docker (ou o shell específico usado para avaliar o Dockerfile) pode estar interpretando isso de uma forma que gera uma advertência. Isso pode acontecer se as variáveis não estiverem explicitamente definidas no ambiente de build antes que essas linhas sejam processadas. **É importante notar que estas são advertências, não erros fatais, e geralmente não impedem a execução do script.** O problema principal da sua aplicação não está aqui.
+
+### 1.2. Lógica de `DATABASE_URL`
+
+O script tenta configurar a `DATABASE_URL` se ela não estiver definida. As variáveis padrão utilizadas para construir a URL são:
+
+*   `POSTGRES_USER="${POSTGRES_USER:-axiom}"`
+*   `POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-estruturas}"`
+*   `POSTGRES_HOST="${POSTGRES_HOST:-viajey_cassio}"`
+*   `POSTGRES_PORT="${POSTGRES_PORT:-5432}"`
+*   `POSTGRES_DB="${POSTGRES_DB:-almoxarifado}"`
+
+Esta configuração é consistente com o que você deseja: o usuário padrão é `axiom` e o nome do banco de dados padrão é `almoxarifado`. Isso explica por que os logs da sua aplicação mostram `Database name: almoxarifado` e `Database user: axiom`.
+
+### 1.3. Verificação de Conexão com PostgreSQL
+
+O script inclui uma lógica para aguardar e verificar a conexão com o PostgreSQL antes de iniciar a aplicação principal. Isso é uma boa prática para garantir que o banco de dados esteja acessível.
+
+### 1.4. O Problema Principal: Falha na Inicialização da Aplicação
+
+A causa mais provável para o `npm error` e o `SIGTERM` que fazem sua aplicação falhar *após* se conectar e inicializar o esquema é a linha final do script:
+
+```bash
+exec "$@"
+```
+
+Esta linha significa que o `docker-entrypoint.sh` espera que o comando principal da sua aplicação (por exemplo, `npm start` ou `node dist/index.js`) seja passado como argumento para o contêiner Docker. Se o EasyPanel (ou a configuração do seu Dockerfile) não estiver passando o comando correto para o `ENTRYPOINT`, então o `exec "$@"` não terá nada válido para executar, ou executará um comando vazio/incorreto, levando à terminação inesperada da aplicação.
+
+## 2. Análise do `build-database-url.sh`
+
+O script `build-database-url.sh` é uma função (`build_database_url`) que tenta detectar variáveis de ambiente específicas do EasyPanel para construir a `DATABASE_URL`. Ele também possui uma lógica de fallback para `postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable`.
+
+```bash
+#!/bin/bash
+
+# Script para construir DATABASE_URL automaticamente no EasyPanel
+# Detecta variáveis de ambiente padrão e constrói a URL de conexão
+
+build_database_url() {
+    # ... (lógica de detecção de variáveis EasyPanel)
+
+    # Fallback para o PostgreSQL local durante desenvolvimento
+    if [ -z "$DATABASE_URL" ]; then
+        export DATABASE_URL="postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable"
+        echo "Usando PostgreSQL viajey_cassio: $DATABASE_URL"
+        echo "Banco \'almoxarifado\' será usado como configurado"
+    fi
+}
+
+# Executar a função
+build_database_url
+```
+
+### 2.1. Problema de Chamada
+
+O problema é que o `docker-entrypoint.sh` *não está chamando* o `build-database-url.sh`. Portanto, a lógica de detecção de variáveis do EasyPanel dentro do `build-database-url.sh` não está sendo utilizada. A `DATABASE_URL` está sendo definida apenas pela lógica de fallback dentro do `docker-entrypoint.sh` ou pelas variáveis de ambiente que você define diretamente no EasyPanel.
+
+## 3. Conclusão e Solução Proposta
+
+Sua aplicação está se conectando ao banco de dados `almoxarifado` e inicializando o esquema, o que é um grande avanço. O erro `FATAL: database "axiom" does not exist` nos logs do PostgreSQL pode ser um ruído de outro processo ou uma configuração mais profunda no EasyPanel/PostgreSQL que espera um banco `axiom` para o usuário `axiom`, mas não está impedindo a sua aplicação de se conectar ao `almoxarifado`.
+
+O problema imediato que causa o `npm error` e o `SIGTERM` é que o comando principal da sua aplicação Node.js não está sendo executado após a configuração do ambiente pelo `docker-entrypoint.sh`.
+
+**Solução:**
+
+Você precisa adicionar o comando que inicia sua aplicação Node.js diretamente no `docker-entrypoint.sh`.
+
+**Passos para Implementar a Solução:**
+
+1.  **Identifique o Comando de Inicialização da sua Aplicação:**
+    *   Verifique seu arquivo `package.json` para o script `start` (ex: `
+
+
+`"start": "node dist/index.js"`).
+    *   Ou, se você inicia diretamente com `node`, qual é o caminho para o arquivo principal (ex: `node dist/index.js`).
+
+2.  **Edite o Arquivo `docker-entrypoint.sh`:**
+    *   Abra o arquivo `docker-entrypoint.sh` no seu projeto.
+    *   Localize a linha `exec "$@"` no final do script.
+    *   **Antes** dessa linha, adicione o comando que inicia sua aplicação. Se o comando for `npm start`, adicione `npm start`. Se for `node dist/index.js`, adicione `node dist/index.js`.
+
+    **Exemplo de `docker-entrypoint.sh` Modificado:**
+
+    ```bash
+    #!/bin/bash
+    set -e
+
+    echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
+
+    # ... (restante do seu script, incluindo a lógica de DATABASE_URL e verificação do PostgreSQL)
+
+    echo ">>> Sistema configurado com sucesso! <<<"
+    echo "Iniciando aplicação na porta $PORT..."
+
+    # Verificar se é ambiente de produção e fazer build se necessário
+    if [ "$NODE_ENV" = "production" ] && [ ! -f "dist/index.js" ]; then
+      echo "Build não encontrado, executando build de produção..."
+      npm run build 2>/dev/null || echo "Build falhou, tentando iniciar mesmo assim..."
+    fi
+
+    # ADICIONE AQUI O COMANDO PARA INICIAR SUA APLICAÇÃO
+    npm start # OU: node dist/index.js
+
+    # O 'exec "$@"' é usado para passar argumentos adicionais do Dockerfile/comando run
+    # Se o comando acima for o comando final, você pode remover o 'exec "$@"' ou deixá-lo para flexibilidade
+    exec "$@"
+    ```
+
+3.  **Commit e Deploy:**
+    *   Salve as alterações no `docker-entrypoint.sh`.
+    *   Faça um commit das alterações no seu repositório Git.
+    *   Realize um novo deploy da sua aplicação no EasyPanel.
+
+Ao fazer isso, o `docker-entrypoint.sh` irá configurar o ambiente, aguardar o PostgreSQL e, finalmente, iniciar sua aplicação Node.js, o que deve resolver os erros de `npm error` e `SIGTERM`.
+
+

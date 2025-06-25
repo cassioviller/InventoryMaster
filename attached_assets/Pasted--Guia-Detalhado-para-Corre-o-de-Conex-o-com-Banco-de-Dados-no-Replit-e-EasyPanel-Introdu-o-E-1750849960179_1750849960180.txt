@@ -1,0 +1,268 @@
+# Guia Detalhado para Correção de Conexão com Banco de Dados no Replit e EasyPanel
+
+## Introdução
+
+Este documento visa fornecer um guia abrangente e detalhado para solucionar o erro fatal de conexão com o banco de dados PostgreSQL, especificamente a mensagem `database "axiom" does not exist`, que tem sido observada em seu ambiente de desenvolvimento no Replit e, potencialmente, em seu ambiente de produção no EasyPanel. A análise aprofundada das informações fornecidas – incluindo trechos de código, logs de erro, capturas de tela das configurações do Replit e do EasyPanel, e a estrutura do banco de dados – nos permitirá identificar a raiz do problema e propor soluções precisas e duradouras. O objetivo é garantir que sua aplicação Node.js se conecte corretamente ao banco de dados `almoxarifado`, eliminando qualquer referência incorreta a `axiom`.
+
+Este guia abordará:
+
+1.  **Análise Detalhada do Problema:** Compreensão da origem do erro `database "axiom" does not exist`.
+2.  **Correções no Ambiente Replit:** Ajustes necessários nas variáveis de ambiente (Secrets) para o desenvolvimento.
+3.  **Correções no Ambiente EasyPanel:** Configurações de variáveis de ambiente para o deploy em produção.
+4.  **Análise do Código-Fonte:** Verificação da lógica de conexão em `db-production-only.ts` e o papel dos scripts de build.
+5.  **Análise do Dockerfile e Scripts de Entrada:** Como o ambiente de contêiner é construído e como as variáveis são passadas.
+6.  **Passos de Verificação e Teste:** Como confirmar que as correções foram aplicadas com sucesso.
+
+Nosso objetivo é fornecer uma solução robusta que não apenas resolva o problema imediato, mas também reforce as boas práticas de configuração de ambiente e deploy.
+
+## 1. Análise Detalhada do Problema: O Erro `database "axiom" does not exist`
+
+O erro `FATAL: database "axiom" does not exist` é uma indicação clara de que o cliente PostgreSQL (sua aplicação Node.js) está tentando se conectar a um banco de dados chamado `axiom`, mas este banco não existe no servidor PostgreSQL ao qual a aplicação está se conectando. Com base nas informações e imagens fornecidas, o nome correto do banco de dados é `almoxarifado`.
+
+Observamos que a URL de conexão interna exibida na configuração do Replit para o serviço `viajey_cassio` (que é o seu banco de dados PostgreSQL) já mostra o nome correto do banco: `postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable` [1]. Isso sugere que a configuração do banco de dados em si no Replit está correta.
+
+No entanto, os logs de erro (`2025-06-24 14:56:13.471 UTC [588] FATAL: database 
+
+
+"axiom" does not exist`) indicam que, em algum ponto do processo de inicialização da aplicação, a string de conexão utilizada para estabelecer a conexão com o banco de dados ainda continha a referência incorreta a `axiom` como nome do banco. Isso pode ocorrer por algumas razões:
+
+*   **Variáveis de Ambiente Desatualizadas:** O ambiente de execução (seja no Replit ou no EasyPanel) pode estar carregando uma versão antiga da variável de ambiente `DATABASE_URL` que ainda contém o nome `axiom`.
+*   **Cache de Configuração:** Em alguns ambientes, as configurações podem ser cacheadas e não são atualizadas imediatamente após uma alteração, exigindo um reinício completo do serviço ou da máquina.
+*   **Hardcoding em Outro Local:** Embora o trecho de código `db-production-only.ts` fornecido já mostre `almoxarifado`, pode haver outra parte do código ou um script de inicialização que esteja construindo a URL de conexão de forma incorreta ou usando uma variável diferente.
+
+A imagem dos logs do EasyPanel (`image.png` - logs do `viajey / almoxa APP`) também mostra a linha `Database name: almoxarifado`, o que é um bom sinal, indicando que a aplicação *está lendo* o nome correto do banco em algum momento. No entanto, o erro `FATAL: database 
+
+
+"axiom" does not exist` ainda aparece nos logs do serviço `viajey / cassio POSTGRES`, o que sugere que a conexão inicial ou alguma parte do sistema ainda está usando a string antiga. É crucial garantir que todas as instâncias da `DATABASE_URL` sejam atualizadas e que o ambiente seja reiniciado para que as mudanças sejam efetivadas.
+
+## 2. Correções no Ambiente Replit: Garantindo a Conexão Correta em Desenvolvimento
+
+No ambiente Replit, a forma mais comum e recomendada de gerenciar variáveis de ambiente sensíveis, como a `DATABASE_URL`, é através da funcionalidade de **Secrets**. Isso garante que suas credenciais não sejam expostas diretamente no código-fonte e que o Replit as injete no ambiente de execução do seu projeto. Com base nas informações fornecidas, a `DATABASE_URL` para o ambiente de desenvolvimento deve apontar para o banco de dados `almoxarifado`.
+
+Para corrigir e verificar a configuração no Replit, siga os passos abaixo:
+
+1.  **Acessar a Seção de Secrets (Variáveis de Ambiente):**
+    *   Abra seu projeto no Replit.
+    *   No painel lateral esquerdo do editor, localize e clique no ícone de cadeado (Secrets). Este é o local onde todas as variáveis de ambiente do seu projeto são gerenciadas.
+
+2.  **Verificar e Atualizar a Variável `DATABASE_URL`:**
+    *   Dentro da seção de Secrets, procure por uma variável chamada `DATABASE_URL`. É fundamental que esta variável exista e contenha o valor correto.
+    *   **Valor Esperado:** O valor da `DATABASE_URL` deve ser:
+        ```
+        postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+        ```
+        *   **Observação:** A imagem de suas credenciais do Replit [1] já mostra esta URL de conexão interna. O problema é que, apesar de estar correta na interface, o ambiente de execução pode estar lendo uma versão antiga ou uma variável com nome diferente.
+
+    *   **Ação Necessária:**
+        *   **Se a variável `DATABASE_URL` existir, mas o valor estiver incorreto** (por exemplo, ainda contendo `axiom` no nome do banco de dados ou qualquer outra discrepância), **edite-a** para o valor exato fornecido acima.
+        *   **Se a variável `DATABASE_URL` não existir**, clique em 
+
+
+"Add new secret", insira `DATABASE_URL` como nome e o valor `postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable`.
+        *   **Verifique também se não há outras variáveis de ambiente com nomes semelhantes** (ex: `DB_CONNECTION_STRING`, `POSTGRES_URL`) que possam estar sendo usadas inadvertidamente e que ainda contenham a referência a `axiom`. Se encontrar, atualize-as ou remova-as, garantindo que apenas a `DATABASE_URL` correta seja utilizada.
+
+3.  **Salvar e Aplicar as Alterações:**
+    *   Após realizar as edições ou adições, certifique-se de que as alterações foram salvas na interface do Replit. O Replit geralmente salva automaticamente ou possui um botão de 
+
+
+`Save` ou `Update`.
+    *   Para que as novas variáveis de ambiente sejam efetivamente carregadas pelo seu projeto, é **crucial reiniciar o Replit**. Você pode fazer isso parando a execução do seu projeto (se estiver rodando) e iniciando-o novamente. Isso força o Replit a recarregar o ambiente com as variáveis atualizadas.
+
+## 3. Correções no Ambiente EasyPanel: Configurações para o Deploy em Produção
+
+O EasyPanel, como ambiente de produção, também depende fortemente de variáveis de ambiente para configurar a conexão com o banco de dados. É fundamental que a `DATABASE_URL` configurada no EasyPanel reflita o nome correto do banco (`almoxarifado`).
+
+Para ajustar as configurações no EasyPanel, siga estes passos:
+
+1.  **Acessar o Painel do Serviço no EasyPanel:**
+    *   Faça login no seu painel do EasyPanel.
+    *   Navegue até o serviço correspondente à sua aplicação Node.js (provavelmente `viajey / almoxa APP`, conforme as imagens fornecidas).
+
+2.  **Configurar Variáveis de Ambiente (Environment):**
+    *   Dentro das configurações do seu serviço, localize a aba ou seção de **Environment Variables** (ou apenas **Environment**).
+    *   Nesta seção, você precisará adicionar ou editar as variáveis de ambiente que sua aplicação utiliza. As mais importantes para a conexão com o banco de dados são:
+        *   `NODE_ENV`: Defina como `production`.
+        *   `PORT`: Defina como `5013` (conforme seu código `index.ts` e logs).
+        *   `DATABASE_URL`: Esta é a variável mais crítica. O valor deve ser exatamente:
+            ```
+            postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+            ```
+            *   **Importante:** Verifique se não há espaços em branco extras ou caracteres ocultos. Certifique-se de que o nome do banco de dados (`almoxarifado`) está correto e não `axiom`.
+
+    *   **Como Inserir no EasyPanel:** O EasyPanel geralmente oferece campos separados para `Key` (chave) e `Value` (valor) para cada variável. Insira cada par (`NODE_ENV`, `production`), (`PORT`, `5013`), (`DATABASE_URL`, `postgres://...almoxarifado?sslmode=disable`) separadamente.
+
+3.  **Salvar e Re-implantar a Aplicação:**
+    *   Após adicionar/editar as variáveis de ambiente, clique em **Save** ou **Apply Changes** para que as configurações sejam salvas.
+    *   Em seguida, você precisará **re-implantar (re-deploy)** sua aplicação. No EasyPanel, geralmente há um botão de `Deploy` ou `Rebuild` na aba principal do serviço. Clicar nele forçará o EasyPanel a reconstruir e reiniciar seu contêiner com as novas variáveis de ambiente.
+
+## 4. Análise do Código-Fonte: `db-production-only.ts` e a Lógica de Conexão
+
+O trecho de código de `db-production-only.ts` que você forneceu é fundamental para entender como a aplicação estabelece a conexão com o banco de dados. Vamos analisar as linhas relevantes:
+
+```typescript
+// CONEXÃO INTELIGENTE - DEV USA NEON, PROD USA VIAJEY_CASSIO
+const isDevelopment = process.env.NODE_ENV === 'development';
+const connectionString = isDevelopment 
+  ? process.env.DATABASE_URL
+  : "postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable";
+
+console.log('🔗 Conectando diretamente ao PostgreSQL...');
+console.log('Ambiente:', process.env.NODE_ENV || 'development');
+console.log('String de conexão:', connectionString ? 'Configurada' : 'Não definida');
+
+// Parse URL para debug
+if (connectionString) {
+  try {
+    const dbUrl = new URL(connectionString);
+    console.log('Database host:', dbUrl.hostname);
+    console.log('Database name:', dbUrl.pathname.slice(1));
+    console.log('Database user:', dbUrl.username);
+    console.log('Database port:', dbUrl.port || '5432');
+  } catch (error) {
+    console.log('Erro ao fazer parse da URL:', error);
+  }
+} else {
+  console.log('❌ CONNECTION STRING NÃO DEFINIDA');
+}
+
+if (!connectionString) {
+  throw new Error('❌ DATABASE_URL não está definida!');
+}
+
+export const pool = new Pool({ 
+  connectionString,
+  ssl: false
+});
+```
+
+**Pontos Chave da Análise:**
+
+*   **Lógica Condicional:** A variável `connectionString` é definida com base no `NODE_ENV`. Se `NODE_ENV` for `development`, a aplicação tenta usar `process.env.DATABASE_URL`. Caso contrário (ou seja, em produção), ela usa uma string de conexão *hardcoded*.
+*   **String Hardcoded Correta:** A string hardcoded `"postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable"` **já está correta** e aponta para `almoxarifado`. Isso é um bom sinal, pois significa que o código-fonte em si não é a causa do erro `axiom` em produção, *assumindo que esta versão do código está de fato em execução no EasyPanel*.
+*   **Logs de Debug:** As linhas `console.log` para `Database host`, `Database name`, `Database user` e `Database port` são extremamente úteis. Os logs que você forneceu do EasyPanel (`image.png` - logs do `viajey / almoxa APP`) mostram:
+    ```
+    Database host: viajey_cassio
+    Database name: almoxarifado
+    Database user: axiom
+    Database port: 5432
+    ```
+    Isso confirma que, no momento em que esses logs foram gerados, a aplicação estava lendo a `connectionString` e extraindo o nome `almoxarifado` dela. Portanto, o erro `FATAL: database "axiom" does exist` que aparece nos logs do serviço `viajey / cassio POSTGRES` (o banco de dados em si) deve ser de uma tentativa de conexão anterior ou de um processo diferente que ainda está usando a string antiga.
+
+**Recomendação:** Embora a string hardcoded esteja correta, a **melhor prática** é sempre usar variáveis de ambiente para `DATABASE_URL` em *todos* os ambientes (desenvolvimento e produção). Isso evita a necessidade de recompilar o código para mudar a string de conexão e garante maior flexibilidade e segurança. Você poderia simplificar a definição da `connectionString` para:
+
+```typescript
+const connectionString = process.env.DATABASE_URL;
+```
+
+E então garantir que a variável `DATABASE_URL` esteja sempre definida corretamente nos Secrets do Replit (para dev) e nas Environment Variables do EasyPanel (para prod). Se você optar por essa abordagem, lembre-se de que precisará de uma biblioteca como `dotenv` em desenvolvimento para carregar as variáveis de um arquivo `.env` local.
+
+## 5. Análise do Dockerfile e Scripts de Entrada (`docker-entrypoint.sh`)
+
+O Dockerfile e os scripts de entrada são cruciais para como sua aplicação é construída e executada dentro do contêiner no EasyPanel. Vamos analisar o Dockerfile e o papel de um possível `docker-entrypoint.sh`.
+
+**Dockerfile (exemplo baseado nas informações):**
+
+```dockerfile
+FROM node:20-slim
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm ci
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 5013
+
+# Assume que há um docker-entrypoint.sh na raiz do projeto
+ENTRYPOINT ["./docker-entrypoint.sh"]
+```
+
+**Análise:**
+
+*   **`FROM node:20-slim`**: Baseia a imagem em uma versão leve do Node.js 20, o que é bom para otimização de tamanho.
+*   **`WORKDIR /app`**: Define o diretório de trabalho dentro do contêiner.
+*   **`COPY package*.json ./` e `RUN npm ci`**: Copia os arquivos de dependência e instala-as. `npm ci` é preferível a `npm install` em ambientes de CI/CD para garantir builds reprodutíveis.
+*   **`COPY . .`**: Copia o restante do código-fonte para o contêiner.
+*   **`RUN npm run build`**: Executa o script de build do seu projeto (provavelmente TypeScript para JavaScript, etc.).
+*   **`EXPOSE 5013`**: Informa que o contêiner expõe a porta 5013, que é a porta em que sua aplicação Express está configurada para rodar (`const port = parseInt(process.env.PORT || "5000"); server.listen(port, "0.0.0.0", ...)`).
+*   **`ENTRYPOINT ["./docker-entrypoint.sh"]`**: Esta linha é muito importante. Ela define o comando que será executado quando o contêiner for iniciado. Se você tem um script `docker-entrypoint.sh`, ele é responsável por qualquer configuração de ambiente final ou inicialização de serviços antes que a aplicação principal seja iniciada.
+
+**O Papel do `docker-entrypoint.sh` e `build-database-url.sh`:**
+
+Você mencionou um script `build-database-url.sh` no relatório de investigação. Se este script for chamado dentro do `docker-entrypoint.sh`, ele pode ser responsável por construir a `DATABASE_URL` dinamicamente a partir de variáveis de ambiente mais granulares (como `DB_USER`, `DB_PASS`, `DB_HOST`, `DB_NAME`).
+
+**Exemplo de `docker-entrypoint.sh` (hipotético, se você tiver um):**
+
+```bash
+#!/bin/bash
+
+# Se você tiver um script para construir a DATABASE_URL
+# ./build-database-url.sh
+
+# Ou se você quiser garantir que DATABASE_URL esteja definida
+# antes de iniciar a aplicação
+if [ -z "$DATABASE_URL" ]; then
+  echo "Erro: DATABASE_URL não está definida no ambiente do contêiner!"
+  exit 1
+fi
+
+# Executa o comando principal da sua aplicação
+exec npm start # ou node dist/index.js, dependendo do seu package.json
+```
+
+**Verificação:**
+
+*   **Confirme a existência e o conteúdo do `docker-entrypoint.sh`** na raiz do seu projeto. Se ele existe, verifique se ele está configurando a `DATABASE_URL` corretamente ou se está apenas passando as variáveis de ambiente diretamente para a aplicação Node.js.
+*   **Se não houver um `docker-entrypoint.sh`**, o `ENTRYPOINT` no Dockerfile pode estar chamando diretamente `npm start` ou `node dist/index.js`. Nesse caso, a aplicação dependerá exclusivamente das variáveis de ambiente definidas no EasyPanel.
+
+Em resumo, o Dockerfile parece bem estruturado. O ponto crucial é garantir que as variáveis de ambiente, especialmente a `DATABASE_URL`, sejam passadas corretamente para o contêiner e que qualquer script de entrada (`docker-entrypoint.sh`) não esteja sobrescrevendo-as com valores incorretos ou antigos.
+
+## 6. Passos de Verificação e Teste
+
+Após aplicar as correções no Replit e no EasyPanel, é fundamental verificar se o problema foi resolvido. Siga estes passos:
+
+1.  **Verificação no Replit (Ambiente de Desenvolvimento):**
+    *   Após reiniciar o Replit, observe os logs de inicialização da sua aplicação. Você deve ver as mensagens de debug do `db-production-only.ts` (mesmo em dev, se a lógica de `console.log` estiver ativa) indicando:
+        ```
+        Database host: viajey_cassio
+        Database name: almoxarifado
+        Database user: axiom
+        Database port: 5432
+        ```
+        E, mais importante, **não deve aparecer o erro `FATAL: database "axiom" does not exist`** nos logs do seu serviço de aplicação (o que aparece na imagem `viajey / almoxa APP`).
+    *   Tente realizar operações que exigem conexão com o banco de dados (por exemplo, login, listagem de usuários, etc.). Se tudo funcionar, a conexão está estabelecida corretamente.
+
+2.  **Verificação no EasyPanel (Ambiente de Produção):**
+    *   Após o re-deploy no EasyPanel, acesse a seção de **Logs** do seu serviço (`viajey / almoxa APP`).
+    *   Procure pelas mensagens de inicialização da sua aplicação. Você deve ver os mesmos logs de debug que viu no Replit, confirmando que a `DATABASE_URL` com `almoxarifado` está sendo utilizada.
+    *   **Crucial:** Verifique se não há mais erros `FATAL: database "axiom" does not exist` nos logs do serviço de banco de dados (`viajey / cassio POSTGRES`). Se ainda aparecer, pode ser um processo antigo ou um cache persistente. Tente reiniciar o serviço de banco de dados também, se possível, ou entre em contato com o suporte do EasyPanel se o problema persistir apenas no lado do banco de dados.
+    *   Acesse a URL pública da sua aplicação implantada no EasyPanel. Tente realizar um login e outras operações para confirmar que a aplicação está funcionando corretamente em produção.
+
+## Conclusão
+
+O erro `FATAL: database "axiom" does not exist` é um problema de configuração da string de conexão do banco de dados. Embora seu código-fonte já aponte para `almoxarifado`, a persistência do erro indica que variáveis de ambiente desatualizadas ou caches de configuração estão em jogo. Ao seguir este guia detalhado, você deverá ser capaz de:
+
+*   Garantir que a `DATABASE_URL` correta (`postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable`) esteja configurada nos Secrets do Replit e nas Environment Variables do EasyPanel.
+*   Reiniciar ambos os ambientes para que as novas configurações sejam aplicadas.
+*   Verificar os logs de inicialização da aplicação para confirmar que a conexão está sendo feita com o banco de dados `almoxarifado`.
+
+Lembre-se da importância de manter a consistência entre os ambientes de desenvolvimento e produção, e de sempre utilizar variáveis de ambiente para dados sensíveis. Com estas correções, sua aplicação deverá se conectar ao banco de dados sem problemas, permitindo que você continue desenvolvendo e implantando com sucesso.
+
+**Referências:**
+
+[1] Captura de tela das credenciais do Replit para o serviço `viajey / cassio POSTGRES` (fornecida pelo usuário).
+
+[2] Logs de erro do serviço `viajey / cassio POSTGRES` no Replit (fornecidos pelo usuário).
+
+[3] Logs da aplicação `viajey / almoxa APP` no EasyPanel (fornecidos pelo usuário).
+
+[4] Trecho de código `db-production-only.ts` (fornecido pelo usuário).
+
+[5] Captura de tela da interface de login e erro 401 (fornecida pelo usuário).
+
+[6] Captura de tela da estrutura do banco de dados `almoxarifado` (fornecida pelo usuário).
+
+

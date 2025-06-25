@@ -30,6 +30,16 @@ if (!connectionString) {
   process.exit(1);
 }
 
+// Debug: mostrar parse da URL
+console.log('Conectando ao banco:', connectionString.replace(/:\/\/[^:]+:[^@]+@/, '://***:***@'));
+const urlMatch = connectionString.match(/postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/([^?]+)/);
+if (urlMatch) {
+  console.log('- Usuário:', urlMatch[1]);
+  console.log('- Host:', urlMatch[3]);  
+  console.log('- Porta:', urlMatch[4]);
+  console.log('- Banco:', urlMatch[5]);
+}
+
 export const pool = new Pool({ 
   connectionString,
   ssl: false

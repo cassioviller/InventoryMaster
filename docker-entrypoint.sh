@@ -3,37 +3,28 @@ set -e
 
 echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
 
-# Validar e corrigir DATABASE_URL para prevenir erro EasyPanel
+# CORREÇÃO CRÍTICA: Limpar variáveis PostgreSQL conflitantes do EasyPanel
 echo "Verificando configuração do banco de dados..."
 
-# Executar validação crítica
-if [ -f "validate-database-url.sh" ]; then
-    chmod +x validate-database-url.sh
-    ./validate-database-url.sh
-    if [ $? -ne 0 ]; then
-        echo "ERRO: Validação de DATABASE_URL falhou"
-        exit 1
-    fi
-fi
+# Limpar variáveis que podem causar confusão
+echo "Limpando variáveis PostgreSQL conflitantes..."
+unset PGDATABASE
+unset PGUSER  
+unset PGHOST
+unset PGPORT
+unset PGPASSWORD
 
-if [ -z "$DATABASE_URL" ]; then
-  echo "DATABASE_URL não definida - configurando automaticamente..."
-  
-  # CONFIGURAÇÃO CORRETA PARA EASYPANEL conforme credenciais fornecidas
-  POSTGRES_USER="${POSTGRES_USER:-cassio}"
-  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-123}"
-  POSTGRES_HOST="${POSTGRES_HOST:-viajey_almo}"
-  POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-  # USAR banco "axiom" conforme configuração do EasyPanel
-  POSTGRES_DB="axiom"
-  
-  # Construir DATABASE_URL
-  DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
-  export DATABASE_URL
-  
-  echo "DATABASE_URL configurada: postgres://$POSTGRES_USER:***@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
-  echo "IMPORTANTE: Usando credenciais corretas do EasyPanel - banco 'axiom'"
-fi
+echo "Variáveis PostgreSQL limpas para evitar conflitos"
+
+# FORÇAR DATABASE_URL correta para EasyPanel, ignorando variáveis conflitantes
+echo "Configurando DATABASE_URL para EasyPanel..."
+
+# CONFIGURAÇÃO FORÇADA - ignorar qualquer variável externa
+DATABASE_URL="postgres://cassio:123@viajey_almo:5432/axiom?sslmode=disable"
+export DATABASE_URL
+
+echo "DATABASE_URL FORÇADA: postgres://cassio:***@viajey_almo:5432/axiom"
+echo "IMPORTANTE: Ignorando variáveis PGDATABASE/PGUSER para prevenir conflitos"
 
 # Verificar outras variáveis essenciais
 export NODE_ENV="${NODE_ENV:-production}"

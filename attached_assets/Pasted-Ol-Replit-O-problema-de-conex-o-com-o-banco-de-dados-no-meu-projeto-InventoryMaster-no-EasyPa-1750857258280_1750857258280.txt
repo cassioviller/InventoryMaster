@@ -1,0 +1,64 @@
+Olá Replit,
+
+O problema de conexão com o banco de dados no meu projeto `InventoryMaster` no EasyPanel persiste, mas o erro mudou. Agora, estou recebendo `FATAL: database "cassio" does not exist`.
+
+**Análise do Novo Cenário:**
+
+1.  **Erro Atual:** `FATAL: database "cassio" does not exist`.
+
+2.  **Configuração do EasyPanel (Nova Imagem):**
+    *   A imagem do EasyPanel para o serviço PostgreSQL (`viajey / almo POSTGRES`) mostra:
+        *   **Usuário:** `cassio`
+        *   **Nome do Banco de Dados:** `axiom`
+        *   **URL de Conexão Interna:** `postgres://cassio:123@viajey_almo:5432/axiom?sslmode=disable`
+    *   **Inconsistência Crítica:** A URL de Conexão Interna aponta para o banco de dados `axiom`, mas o erro nos logs da aplicação (`viajey / almo APP`) é `FATAL: database "cassio" does not exist`. Isso é extremamente confuso e sugere que, em algum ponto, o nome do usuário (`cassio`) está sendo interpretado como o nome do banco de dados.
+
+3.  **Código-Fonte (`server/db-production-only.ts`):**
+    *   Continua lendo `process.env.DATABASE_URL`.
+
+4.  **Variáveis de Ambiente (`.env.example`):**
+    *   Ainda contém `DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable`.
+
+5.  **Script de Entrada do Docker (`docker-entrypoint.sh`):**
+    *   Se `DATABASE_URL` não estiver definida, ele tenta construí-la usando `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_HOST`, `POSTGRES_PORT` e `POSTGRES_DB` (que por padrão é `almoxarifado`).
+    *   A parte crucial é:
+        ```bash
+        POSTGRES_USER="${POSTGRES_USER:-axiom}"
+        POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-estruturas}"
+        POSTGRES_HOST="${POSTGRES_HOST:-viajey_cassio}"
+        POSTGRES_PORT="${POSTGRES_PORT:-5432}"
+        POSTGRES_DB="${POSTGRES_DB:-almoxarifado}"
+        ```
+    *   **Problema:** Se o EasyPanel está definindo `POSTGRES_USER=cassio` e `POSTGRES_DB=axiom`, e a aplicação está tentando se conectar a `cassio` como banco de dados, isso indica que o `docker-entrypoint.sh` ou alguma outra parte do ambiente está usando o `POSTGRES_USER` como nome do banco de dados, ou há uma confusão na forma como as variáveis são passadas para a aplicação.
+
+**Hipótese Principal:**
+
+O EasyPanel está injetando variáveis de ambiente de forma que o nome do usuário (`cassio`) está sendo erroneamente interpretado como o nome do banco de dados pela aplicação, ou há uma sobreposição de variáveis que causa essa confusão. A URL de conexão interna do EasyPanel (`.../axiom?sslmode=disable`) é contraditória com o erro (`database "cassio" does not exist`).
+
+**Solicitação ao Replit (Ainda Mais Detalhada e Focada):**
+
+Com base nesta nova evidência, peço que você investigue e corrija o problema com urgência, focando nos seguintes pontos:
+
+1.  **Prioridade Máxima: Inspeção das Variáveis de Ambiente *Reais* na Aplicação em Tempo de Execução:**
+    *   No EasyPanel, acesse o console do serviço da aplicação (`viajey / almo APP`).
+    *   Execute um comando para listar todas as variáveis de ambiente que a aplicação está *realmente* vendo. Por exemplo, `env` ou `printenv`.
+    *   **Identifique o valor exato de `DATABASE_URL` e `POSTGRES_DB` (e qualquer outra variável relacionada a DB, como `PGDATABASE`) que a aplicação está utilizando.** Isso é crucial para entender a raiz do problema.
+    *   Compare esses valores com o que está configurado na interface do EasyPanel e no `docker-entrypoint.sh`.
+
+2.  **Correção da Configuração do EasyPanel:**
+    *   Na interface do EasyPanel para o serviço PostgreSQL (`viajey / almo POSTGRES`), o "Nome do Banco de Dados" está como `axiom`. **Mude-o para `almoxarifado`** para que corresponda ao nome do banco de dados esperado pela aplicação e pelo `docker-entrypoint.sh`.
+    *   Verifique se há alguma configuração no serviço da *aplicação* (`viajey / almo APP`) que possa estar definindo `POSTGRES_DB` ou `DATABASE_URL` de forma incorreta. Se sim, corrija para `almoxarifado` ou remova a variável se ela estiver causando conflito.
+
+3.  **Re-deploy Completo e Limpeza de Cache:**
+    *   Após qualquer alteração nas variáveis de ambiente, execute um **re-deploy completo** da aplicação e do serviço PostgreSQL no EasyPanel. Certifique-se de que qualquer cache seja limpo.
+
+4.  **Monitoramento de Logs:**
+    *   Após o re-deploy, monitore os logs de inicialização da aplicação. O objetivo é ver `Database name: almoxarifado` e nenhuma menção a `cassio` como nome de banco de dados.
+
+5.  **Revisão do `docker-entrypoint.sh` (se necessário):**
+    *   Se o problema persistir após as etapas acima, revise o `docker-entrypoint.sh` para garantir que não haja lógica que possa estar pegando o `POSTGRES_USER` e usando-o como `POSTGRES_DB` em algum cenário inesperado. Uma solução temporária pode ser forçar `POSTGRES_DB=almoxarifado` explicitamente no início do script, antes de qualquer lógica condicional.
+
+O objetivo é eliminar a confusão sobre o nome do banco de dados e garantir que a aplicação se conecte consistentemente ao `almoxarifado`.
+
+Obrigado pela sua paciência e ajuda contínua!
+

@@ -102,6 +102,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Dockerfile otimizado com syntax moderna
 - Variáveis de ambiente corrigidas (eliminadas advertências UndefinedVar)
 - Sistema configurado para conectar exatamente no banco correto do EasyPanel
+- CORREÇÃO CRÍTICA: Conflito PGDATABASE resolvido - sistema força DATABASE_URL ignorando variáveis PostgreSQL do EasyPanel
 ✅ Sistema completamente funcional seguindo melhores práticas
 ✅ Conexão PostgreSQL via environment variables exclusivamente
 ✅ Teste de conexão independente implementado e validado

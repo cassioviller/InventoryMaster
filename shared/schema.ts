@@ -23,7 +23,7 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("owner_id").notNull().default(1), // sistema padrão
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -38,7 +38,7 @@ export const materials = pgTable("materials", {
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
   description: text("description"),
   lastSupplierId: integer("last_supplier_id"),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("owner_id").notNull().default(1), // sistema padrão
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -64,7 +64,7 @@ export const suppliers = pgTable("suppliers", {
   address: text("address"),
   notes: text("notes"), // Materials and services provided
   isActive: boolean("is_active").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("owner_id").notNull().default(1), // sistema padrão
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -78,7 +78,7 @@ export const thirdParties = pgTable("third_parties", {
   phone: varchar("phone", { length: 20 }),
   address: text("address"),
   isActive: boolean("is_active").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("owner_id").notNull().default(1), // sistema padrão
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

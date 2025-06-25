@@ -121,3 +121,5 @@ SESSION_SECRET=almoxarifado-secret-2024
 - ✅ Error handling robusto para variáveis não definidas
 - ✅ Script de verificação de conexão implementado
 - ✅ Solução definitiva para erro "axiom does not exist"
+- ✅ Varredura completa realizada - todas as referências incorretas removidas
+- ✅ Schema padronizado (ownerId = 1) e limpo

@@ -1,0 +1,66 @@
+Estou enfrentando um problema persistente com a conexão ao banco de dados em meu projeto InventoryMaster quando implantado no EasyPanel, resultando no erro fatal: FATAL: database "axiom" does not exist. Curiosamente, o projeto funciona perfeitamente no ambiente de desenvolvimento do Replit.
+
+Análise Detalhada do Problema:
+
+1.
+Inconsistência do Nome do Banco de Dados: O erro indica que a aplicação está tentando se conectar a um banco de dados chamado "axiom", mas o banco de dados correto e funcional é "almoxarifado".
+
+2.
+Código-Fonte (server/db-production-only.ts):
+
+•
+Observação: Este arquivo foi atualizado para ler a DATABASE_URL diretamente de process.env.DATABASE_URL. Isso é uma melhor prática, mas significa que a variável precisa ser definida corretamente no ambiente de execução.
+
+
+
+3.
+Variáveis de Ambiente (.env.example):
+
+•
+Observação: O arquivo .env.example (que serve como template) já contém a DATABASE_URL com o nome do banco de dados almoxarifado. Isso sugere que a intenção é usar o banco de dados correto.
+
+
+
+4.
+Script de Entrada do Docker (docker-entrypoint.sh):
+
+•
+Observação: Este script tenta configurar a DATABASE_URL automaticamente se ela não estiver definida. A linha POSTGRES_DB="${POSTGRES_DB:-almoxarifado}" define o nome do banco de dados como almoxarifado por padrão. No entanto, se a variável POSTGRES_DB for definida externamente com o valor "axiom" (por exemplo, no EasyPanel), ela sobrescreverá este padrão.
+
+
+
+Hipótese Principal:
+
+Apesar das configurações corretas no código e no .env.example, a DATABASE_URL ou uma de suas variáveis componentes (POSTGRES_DB) está sendo definida incorretamente como "axiom" no ambiente de produção do EasyPanel, possivelmente através de uma configuração de ambiente antiga ou um cache persistente que não está sendo atualizado corretamente durante o deploy.
+
+Solicitação ao Replit:
+
+Com base nesta análise, peço que você investigue e corrija o problema, focando nos seguintes pontos:
+
+1.
+Verificação de Variáveis de Ambiente no EasyPanel:
+
+•
+Acesse as configurações de ambiente do serviço viajey / almoxa APP no EasyPanel.
+
+•
+Verifique o valor exato da variável DATABASE_URL. Ela deve ser postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable.
+
+•
+Procure por quaisquer outras variáveis relacionadas ao banco de dados (ex: POSTGRES_DB, DB_NAME) que possam estar definidas como "axiom" e sobrescrevendo a configuração correta. Se encontrar, corrija-as para "almoxarifado" ou remova-as se forem redundantes.
+
+
+
+2.
+Forçar Re-deploy Completo: Após qualquer alteração nas variáveis de ambiente do EasyPanel, execute um re-deploy completo da aplicação para garantir que as novas configurações sejam aplicadas e que qualquer cache seja limpo.
+
+3.
+Monitoramento de Logs de Inicialização: Após o re-deploy, monitore os logs de inicialização da aplicação no EasyPanel. As mensagens de console.log do db-production-only.ts devem mostrar Database name: almoxarifado.
+
+4.
+Verificação de Scripts de Build/Entrada (se necessário): Se as etapas acima não resolverem, inspecione novamente o docker-entrypoint.sh e qualquer script chamado por ele (como build-database-url.sh, se houver) para garantir que não haja lógica que force o nome do banco de dados para "axiom" em algum cenário específico.
+
+O objetivo final é que a aplicação se conecte com sucesso ao banco de dados almoxarifado no ambiente de produção do EasyPanel, eliminando o erro FATAL: database "axiom" does not exist e permitindo o funcionamento completo do sistema de inventário.
+
+Obrigado pela sua atenção e ajuda!
+

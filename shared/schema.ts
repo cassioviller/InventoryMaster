@@ -50,7 +50,7 @@ export const employees = pgTable("employees", {
   email: varchar("email", { length: 100 }),
   phone: varchar("phone", { length: 20 }),
   isActive: boolean("is_active").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(2), // axiomtech is ID 2
+  ownerId: integer("owner_id").notNull().default(1), // sistema padrão
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

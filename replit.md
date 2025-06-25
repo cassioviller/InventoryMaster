@@ -88,6 +88,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Código limpo e estável para desenvolvimento e produção
 
 ## Status Atual (25/06/2025)
+**PROBLEMA EASYPANEL DIAGNOSTICADO**: Erro "axiom does not exist" causado por variáveis de ambiente incorretas no EasyPanel
 ✅ Sistema completamente funcional seguindo melhores práticas
 ✅ Conexão PostgreSQL via environment variables exclusivamente
 ✅ Teste de conexão independente implementado e validado

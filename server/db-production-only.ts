@@ -2,15 +2,12 @@ import { Pool } from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import * as schema from "@shared/schema";
 
-// CONEXÃO INTELIGENTE - DEV USA NEON, PROD USA VIAJEY_CASSIO
-const isDevelopment = process.env.NODE_ENV === 'development';
-const connectionString = isDevelopment 
-  ? process.env.DATABASE_URL
-  : "postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable";
+// CONEXÃO VIA ENVIRONMENT VARIABLES (MELHORES PRÁTICAS)
+const connectionString = process.env.DATABASE_URL;
 
-console.log('🔗 Conectando diretamente ao PostgreSQL...');
+console.log('🔗 Conectando ao PostgreSQL...');
 console.log('Ambiente:', process.env.NODE_ENV || 'development');
-console.log('String de conexão:', connectionString ? 'Configurada' : 'Não definida');
+console.log('DATABASE_URL:', connectionString ? 'Configurada' : '❌ NÃO DEFINIDA');
 
 // Parse URL para debug
 if (connectionString) {
@@ -28,7 +25,9 @@ if (connectionString) {
 }
 
 if (!connectionString) {
-  throw new Error('❌ DATABASE_URL não está definida!');
+  console.error('❌ ERRO CRÍTICO: DATABASE_URL não está definida!');
+  console.error('Configure a variável DATABASE_URL no ambiente de execução.');
+  process.exit(1);
 }
 
 export const pool = new Pool({ 

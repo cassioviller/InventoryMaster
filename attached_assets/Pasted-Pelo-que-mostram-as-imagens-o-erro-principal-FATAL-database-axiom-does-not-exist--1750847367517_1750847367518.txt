@@ -1,0 +1,84 @@
+Pelo que mostram as imagens, o erro principal é:
+
+```
+FATAL: database "axiom" does not exist
+```
+
+Esse erro ocorre porque o sistema no Replit está tentando se conectar a um banco chamado `axiom`, **mas esse banco não existe**. O banco correto, conforme sua configuração no EasyPanel (terceira imagem), é:
+
+* **Nome do banco de dados:** `almoxarifado`
+
+---
+
+### ✅ **Caminhos para resolver isso**
+
+#### 1. **Corrigir a URL de conexão no seu código Replit**
+
+No seu Replit, procure onde você está configurando a conexão com o banco. O erro indica que a conexão está sendo feita com:
+
+```
+postgres://axiom:estruturas@viajey_cassio:5432/axiom
+```
+
+Mas o correto é:
+
+```
+postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado
+```
+
+**Verifique nos seguintes lugares**:
+
+* Arquivo `.env`
+* Arquivo `config.js` ou `database.js`
+* Alguma variável de ambiente no painel do Replit
+
+Altere para refletir a URL correta.
+
+---
+
+#### 2. **Verifique se não tem variável de ambiente sobrescrevendo**
+
+No Replit, vá em:
+
+> 🔧 **Tools (Ferramentas) > Secrets** ou **Environment Variables**
+
+Veja se há alguma variável como:
+
+```env
+DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/axiom
+```
+
+Se tiver, **edite o valor** para:
+
+```env
+DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado
+```
+
+---
+
+#### 3. **Dica de segurança**
+
+Evite expor `usuário` e `senha` diretamente no código. Prefira usar variáveis de ambiente (`process.env.DATABASE_URL`).
+
+---
+
+### 🧪 Para testar a conexão (Node.js)
+
+Você pode fazer um teste rápido com um script como:
+
+```js
+import pg from 'pg'
+const { Client } = pg;
+
+const client = new Client({
+  connectionString: "postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado"
+});
+
+client.connect()
+  .then(() => console.log("Conectado com sucesso!"))
+  .catch(err => console.error("Erro de conexão:", err));
+```
+
+---
+
+Se quiser, posso te ajudar a localizar esse trecho no seu código se você colar aqui o arquivo onde configura a conexão ao banco.

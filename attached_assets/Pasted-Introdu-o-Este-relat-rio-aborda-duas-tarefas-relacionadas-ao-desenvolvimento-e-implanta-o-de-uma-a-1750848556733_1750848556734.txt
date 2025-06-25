@@ -1,0 +1,75 @@
+Introdução
+Este relatório aborda duas tarefas relacionadas ao desenvolvimento e implantação de uma aplicação Node.js: (1) como criar e utilizar um prompt de entrada no ambiente Replit (especialmente para obter entrada do usuário em um projeto Node) e (2) como realizar o deploy dessa aplicação usando um Dockerfile no EasyPanel, incluindo ajustes necessários na configuração (por exemplo, variáveis de ambiente para conexão com banco de dados). Seguindo as melhores práticas, vamos investigar possíveis problemas e soluções, fornecendo etapas claras para corrigir configurações e garantir que o aplicativo seja executado corretamente tanto no Replit quanto em produção via EasyPanel. As seções a seguir detalham cada parte com explicações e instruções passo a passo.
+1. Prompt de Entrada no Replit (Node.js)
+No ambiente Node.js (como em um projeto Replit), funções como alert() e prompt() não existem nativamente, pois são exclusivas de ambientes de navegador web (JavaScript no cliente) e não do Node.js no servidor
+stackoverflow.com
+. Tentar usá-las em um código Node (por exemplo, em um Replit Node.js) resultará em erros dizendo que essas funções não estão definidas. Para contornar isso e obter entrada do usuário no console do Node, você pode usar abordagens específicas do Node.js:
+Biblioteca prompt-sync: Uma solução simples é incluir uma biblioteca de prompt síncrono. Por exemplo, instale e importe o pacote prompt-sync. No início do seu código, escreva: const prompt = require('prompt-sync')();. Depois disso, você pode usar prompt("Sua pergunta: ") para ler uma entrada do usuário via console
+stackoverflow.com
+. Essa biblioteca simula o comportamento de prompt() de forma síncrona no terminal.
+Módulo nativo readline: Alternativamente, para uma solução nativa, o Node.js oferece o módulo readline que permite ler entradas linha a linha de forma assíncrona. Embora um pouco mais complexo, pode ser usado para criar prompts interativos sem bibliotecas externas.
+Importante: No Replit, se quiser usar variáveis de ambiente (por exemplo, para armazenar credenciais ou URLs), utilize o recurso de Secrets/Environment Variables fornecido na interface. No painel à esquerda do editor Replit, há uma seção de Secrets (ícone de cadeado) onde você pode definir pares chave-valor. Qualquer variável definida ali ficará disponível no código via process.env.NOME_VARIAVEL
+forum.freecodecamp.org
+ (lembre-se de clicar em "Add new secret" e fornecer nome e valor, e o Replit carregará isso em tempo de execução). Assim, você mantém dados sensíveis fora do código-fonte e consegue configurá-los tanto no desenvolvimento (Replit) quanto em produção de forma consistente. Em resumo, para implementar um prompt de entrada no Replit/Node.js, use prompt-sync (ou outra técnica de leitura pelo console) em vez de prompt() do navegador. E para configurar variáveis de ambiente no Replit, use o gerenciador de Secrets do próprio Replit, acessando-as com process.env, o que será útil, por exemplo, para a URL de conexão com banco de dados no seu projeto.
+2. Deploy com Dockerfile via EasyPanel
+O EasyPanel é um painel de hospedagem que simplifica o gerenciamento de containers Docker e serviços web. Implantar sua aplicação Node.js (por exemplo, um servidor Express) com Docker no EasyPanel envolve alguns passos principais:
+Preparar o Repositório e Dockerfile: Certifique-se de que seu projeto tenha um Dockerfile funcional (como o fornecido). No seu caso, o Dockerfile baseia-se em node:20-slim, instala dependências com npm ci, compila o projeto (npm run build), expõe a porta 5013 e define o entrypoint com um script (docker-entrypoint.sh). Esse Dockerfile parece adequado, pois instala as ferramentas necessárias (incluindo cliente do PostgreSQL, caso precise executar scripts de init) e prepara tudo para rodar a aplicação.
+Criar um Projeto e Serviço no EasyPanel: No painel EasyPanel, crie um novo projeto e adicione um serviço do tipo "App" para sua aplicação Node
+easypanel.io
+easypanel.io
+. Ao configurar o serviço, selecione a opção de usar seu repositório Git (se aplicável) e, em seguida, escolha o método de build. Você pode optar por Dockerfile como método de build (você também pode ver opções como Nixpacks, mas como você já possui um Dockerfile configurado, use-o)
+easypanel.io
+. Informe o caminho para o Dockerfile (por exemplo, se o Dockerfile está na raiz do repo, apenas coloque Dockerfile). Salve essa configuração.
+Definir Variáveis de Ambiente no EasyPanel: Antes de implantar, configure as variáveis de ambiente necessárias através da aba "Environment" do serviço no EasyPanel. É crucial definir aqui valores como NODE_ENV, PORT e especialmente a string de conexão do banco de dados (DATABASE_URL) que sua aplicação usará em produção
+easypanel.io
+. Por exemplo, no seu caso:
+NODE_ENV=production
+PORT=5013
+DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+Certifique-se de salvar essas variáveis. A figura abaixo mostra a tela de configuração de variáveis no EasyPanel, onde você pode inserir cada par chave=valor (no exemplo da imagem, está sendo definido apenas PORT, mas você adicionará as demais variáveis necessárias): 
+
+Figura: Tela de configuração de variáveis de ambiente no EasyPanel (aba Environment de um serviço), onde podem ser definidas PORT, DATABASE_URL etc., cada uma em uma nova linha.
+Implantar a Aplicação: Depois de salvar as variáveis, volte à aba de Deploy/Build e clique em Deploy. O EasyPanel irá construir a imagem Docker usando seu Dockerfile, baixar dependências e levantar o container. Certifique-se de que no log de deploy tudo finalize sem erros.
+Acessar e Testar: Uma vez implantado, o EasyPanel fornecerá uma URL pública (ou você configurará um domínio) para acessar o serviço
+easypanel.io
+. Tente acessar seu aplicativo (por exemplo, endpoints da API ou página web, conforme o caso) para verificar se está funcionando. Se configurou tudo corretamente, seu app Express deverá responder na porta e URL configuradas.
+3. Ajustando Configurações de Banco de Dados (DATABASE_URL)
+Durante a implantação, um ponto crítico é garantir que a aplicação esteja apontando para o banco de dados correto. Pelo contexto, vimos que houve uma dúvida sobre a mensagem de erro "database "axiom" does not exist". Isso indica que em algum momento a URL de conexão estava incorreta (apontando para um banco com nome errado). Após análise do código e arquivos:
+No ambiente de desenvolvimento (Replit): A aplicação utiliza process.env.DATABASE_URL quando em modo desenvolvimento (isDevelopment), o que provavelmente aponta para o banco Neon utilizado no Replit.
+No ambiente de produção: O código havia sido escrito para usar uma string de conexão fixa quando NODE_ENV=production. Atualmente, essa string hardcoded no arquivo server/db-production-only.ts já aponta para o banco correto almoxarifado (e não mais para "axiom"). Vimos que tanto no .env.example quanto no script build-database-url.sh, a URL já está correta, usando .../almoxarifado【ver código do usuário】. Portanto, o erro observado deve ter sido de uma versão anterior, antes de corrigir o nome do banco.
+A melhor prática é evitar strings de conexão hardcoded no código e usar sempre variáveis de ambiente para esses valores sensíveis e dependentes do ambiente de execução
+easypanel.io
+. No seu setup, você incluiu um script entrypoint (docker-entrypoint.sh) possivelmente para construir ou exportar a DATABASE_URL dinamicamente (por exemplo, combinando variáveis de host, usuário, senha, nome do banco). Certifique-se de que esse script está sendo executado na inicialização do container. No Dockerfile fornecido, o ENTRYPOINT ["./docker-entrypoint.sh"] deve chamar o build-database-url.sh internamente para ajustar a URL antes de iniciar a aplicação Node. Isso significa que, se você configurou variáveis como DB_USER, DB_PASS, DB_NAME separadamente, o script montará a DATABASE_URL. Caso contrário, se você já estiver definindo DATABASE_URL completa no EasyPanel (como sugerido acima), o próprio código usará essa variável (pelo menos em desenvolvimento; podemos refatorar para que em produção ele também leia do ambiente em vez de usar string fixa). Resumo da configuração do banco: No estado atual, todas as referências ao banco almoxarifado estão consistentes. Para garantir que tudo funcione: use no EasyPanel exatamente a URL de conexão completa do banco de produção. No seu caso:
+bash
+Copiar
+Editar
+DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+Essa URL incorpora usuário (axiom), senha (estruturas), host (viajey_cassio), porta (5432) e nome do banco (almoxarifado). Verifique se esses dados estão corretos e correspondem ao banco PostgreSQL criado no servidor de produção. Se o banco almoxarifado já existe e está acessível, a aplicação deverá conseguir se conectar usando essas credenciais. Lembre-se também de que, se o PostgreSQL estiver em um container ou host separado, o nome do host viajey_cassio deve resolver a partir do container da aplicação (às vezes, pode ser necessário usar o nome de serviço Docker ou IP do host do banco). Ajuste essa string caso o host ou porta sejam diferentes no ambiente real.
+4. Comando e Passos Finais para Correção e Deploy
+Diante do exposto, segue um guia de ações finais para arrumar o que for necessário e finalizar o deploy corretamente:
+No Replit (Dev):
+Certifique-se de que o projeto funciona localmente usando o Neon (ou outro) como banco. Como aparentemente tudo está funcionando no Replit (retornando 200 OK em login e outras APIs), não há ajustes pendentes no código para desenvolvimento. Apenas use prompt-sync ou similar se precisar interagir via console, e utilize o Secrets do Replit para quaisquer variáveis sensíveis.
+No Código (geral):
+(Opcional mas recomendado) Altere a lógica de seleção da conexão do banco para usar process.env.DATABASE_URL também em produção. Ou seja, você pode eliminar o hardcode e deixar algo como: const connectionString = process.env.DATABASE_URL; para que tanto dev quanto prod leiam da variável de ambiente. Isso evitaria discrepâncias. Lembre-se de carregar variáveis de um arquivo .env em dev, por exemplo, usando dotenv. Caso mantenha a distinção, tenha certeza que a string fixa está correta (e está, apontando para almoxarifado).
+No EasyPanel (Prod):
+Abra o painel do seu serviço e vá na aba Environment. Insira as seguintes variáveis e valores:
+NODE_ENV=production
+PORT=5013
+DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+(Se o EasyPanel tiver campos separados, preencha chave e valor; se for um campo único de texto, coloque cada par em uma linha, como no exemplo da figura acima.)
+Clique em Save/Salvar para gravar as variáveis. Em seguida, reimplante o serviço clicando em Deploy. Aguarde o processo finalizar.
+Verificação:
+Monitore os logs do container no EasyPanel durante o start. Deve aparecer algo como conexão bem-sucedida ao PostgreSQL. Caso veja novamente erro de banco inexistente, reveja a URL de conexão fornecida.
+Teste as funcionalidades da aplicação no ambiente de produção (acesse a URL pública ou IP configurado). Verifique se consegue fazer login e acessar as APIs como fazia no Replit. Se tudo estiver correto, a resposta deverá ser semelhante (códigos 200, etc.), indicando sucesso.
+Em suma, nenhuma mudança drástica foi necessária no Dockerfile ou no código para o deploy em si, além da correta configuração das variáveis de ambiente no painel. O Dockerfile já estava bem montado e o sistema de build/entrypoint cuida de preparar a aplicação. O erro relatado provavelmente era devido a configuração incorreta do DATABASE_URL, problema que foi sanado alterando "axiom" para "almoxarifado" no nome do banco. Agora, com as variáveis devidamente configuradas no EasyPanel e o código atualizado, o sistema está pronto para produção.
+Conclusão
+Realizamos uma investigação detalhada para garantir que tanto o ambiente de desenvolvimento (Replit) quanto o de produção (EasyPanel com Docker) estejam configurados corretamente. Identificamos a causa de um erro de conexão ao banco de dados e confirmamos que as referências foram corrigidas para apontar ao banco correto (almoxarifado). Também explicamos como implementar interatividade no console do Node (já que funções de prompt do navegador não funcionam no Replit/Node por padrão) usando ferramentas adequadas. Seguindo os passos acima — usar prompt-sync no Replit para entradas de usuário e ajustar as variáveis de ambiente no EasyPanel — você deverá conseguir rodar e implantar sua aplicação Node.js sem contratempos. Lembre-se sempre de manter as configurações de ambiente consistentes entre desenvolvimento e produção, utilizando variáveis de ambiente para credenciais e URLs sensíveis
+easypanel.io
+, conforme preconizado pelas boas práticas de desenvolvimento web. Com tudo isso em ordem, você pode clicar em Deploy no EasyPanel e desfrutar do seu aplicativo rodando corretamente em produção. Boa sorte e bons deploys! Fontes Consultadas:
+Stack Overflow – Alert and prompt in Replit Node.js (explicação e solução)
+stackoverflow.com
+stackoverflow.com
+Fórum freeCodeCamp – Uso de variáveis de ambiente (.env) no Replit
+forum.freecodecamp.org
+Documentação EasyPanel – Guia de Deploy de aplicação Express.js no EasyPanel
+easypanel.io

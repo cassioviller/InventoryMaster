@@ -101,5 +101,18 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - ✅ Credenciais: cassio/1234 e empresa_teste/1234
 - ✅ Pronto para deploy no EasyPanel
 
-## Deploy EasyPanel
+## Deploy EasyPanel - Configuração Final
+### Variáveis de Ambiente:
+```
+NODE_ENV=production
+PORT=5013
 DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+SESSION_SECRET=almoxarifado-secret-2024
+```
+
+### Melhorias Implementadas (25/06/2025):
+- ✅ Removido hardcode da URL - agora usa apenas process.env.DATABASE_URL
+- ✅ Seguindo melhores práticas de segurança
+- ✅ Sistema totalmente baseado em variáveis de ambiente
+- ✅ Logs melhorados para diagnóstico
+- ✅ Error handling robusto para variáveis não definidas

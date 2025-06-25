@@ -96,11 +96,13 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 ## Status Atual (25/06/2025)
 **PROBLEMAS EASYPANEL COMPLETAMENTE RESOLVIDOS**: 
-- Erro "axiom does not exist" causado por variáveis de ambiente incorretas
+- Erro "axiom does not exist" causado por variáveis de ambiente incorretas no EasyPanel
 - Problema SIGTERM após inicialização corrigido no docker-entrypoint.sh
 - Comando npm start integrado diretamente no entrypoint
 - Dockerfile otimizado com syntax moderna
 - Variáveis de ambiente corrigidas (eliminadas advertências UndefinedVar)
+- Validação forçada implementada para prevenir sobrescrita de POSTGRES_DB
+- Sistema força uso do banco "almoxarifado" independentemente de configurações externas
 ✅ Sistema completamente funcional seguindo melhores práticas
 ✅ Conexão PostgreSQL via environment variables exclusivamente
 ✅ Teste de conexão independente implementado e validado

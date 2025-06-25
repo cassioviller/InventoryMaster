@@ -74,7 +74,14 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - **Ambiente**: Desenvolvimento no Replit, produção no EasyPanel
 - **Banco de Produção**: Configurado via variável DATABASE_URL do ambiente
 
-## Mudanças Recentes (24/06/2025)
+## Mudanças Recentes (25/06/2025)
+- Problema SIGTERM no EasyPanel resolvido com comando npm start integrado no entrypoint
+- Advertências UndefinedVar eliminadas com export correto de variáveis
+- Sistema de autenticação validado e funcionando (login 200 OK)
+- Dockerfile otimizado com syntax moderna
+- Credenciais de teste confirmadas: cassio/1234 e empresa_teste/1234
+
+## Mudanças Anteriores (24/06/2025)
 - Correção de tipos TypeScript nos endpoints da API
 - Implementação de tratamento de erros para funcionários
 - Adição de endpoints CRUD completos para todas entidades
@@ -97,7 +104,9 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ✅ Sistema completamente funcional seguindo melhores práticas
 ✅ Conexão PostgreSQL via environment variables exclusivamente
 ✅ Teste de conexão independente implementado e validado
-✅ Login API funcionando perfeitamente (200 OK)
+✅ Login API funcionando perfeitamente (200 OK) - Teste realizado em 25/06/2025
+✅ Autenticação JWT operacional com verificação de token
+✅ Endpoints protegidos respondendo corretamente
 ✅ Error handling robusto implementado
 ✅ Logs detalhados para diagnóstico
 ✅ Solução definitiva para erro "axiom does not exist"

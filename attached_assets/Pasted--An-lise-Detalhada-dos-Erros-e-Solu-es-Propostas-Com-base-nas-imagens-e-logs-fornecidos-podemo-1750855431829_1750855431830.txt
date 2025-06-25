@@ -1,0 +1,129 @@
+# Análise Detalhada dos Erros e Soluções Propostas
+
+Com base nas imagens e logs fornecidos, podemos observar um progresso significativo na configuração do banco de dados, mas novos desafios surgiram na inicialização e autenticação da aplicação. Abaixo, uma análise detalhada dos problemas e as soluções recomendadas.
+
+## 1. Análise dos Logs da Aplicação (Imagem 1)
+
+Esta imagem mostra os logs de execução da sua aplicação no EasyPanel, e revela um cenário misto:
+
+*   **Progresso na Conexão com o Banco de Dados:** É um avanço notável! A aplicação agora está lendo corretamente o `Database name: almoxarifado` e o `Database user: axiom` da string de conexão. A mensagem `Sistema de Almoxarifado - Iniciando...`, `Schema de produção criado` e `Sistema inicializado para produção` indicam que a aplicação está conseguindo se conectar ao banco de dados `almoxarifado` com o usuário `axiom` e até mesmo inicializar o esquema e o servidor (`serving on port 5013`). Isso confirma que a configuração da `DATABASE_URL` (seja via variáveis de ambiente do EasyPanel ou fallback do `docker-entrypoint.sh`) está, de fato, apontando para o banco de dados correto e a conexão inicial está sendo estabelecida.
+
+*   **Novo Problema Crítico: Falha na Inicialização (`npm error` e `SIGTERM`):** Após a inicialização bem-sucedida do servidor, a aplicação falha com `npm error path /app`, `npm error command failed` e `npm error signal SIGTERM`. Isso significa que a aplicação está sendo encerrada *após* se conectar e inicializar, o que é um problema diferente da conexão inicial. O `SIGTERM` é um sinal de terminação que indica que o processo foi encerrado externamente ou por uma falha interna não tratada.
+
+*   **Erro de Credenciais Inválidas (`Invalid credentials`):** Logo após a falha do `npm`, aparecem logs como `[express] POST /api/auth/login 401 in 88ms :: {
+
+
+"message":"Invalid credentials"}`. Este erro indica que uma tentativa de login falhou devido a credenciais incorretas. Embora a aplicação tenha iniciado, a funcionalidade de autenticação está com problemas. Isso pode estar relacionado a:
+    *   **Usuários Incorretos:** As credenciais usadas para o login (usuário/senha) não correspondem a nenhum registro no banco de dados.
+    *   **Configuração de Autenticação:** Pode haver um problema na forma como a aplicação está validando as credenciais ou na forma como os usuários são armazenados/recuperados do banco de dados.
+
+## 2. Análise dos Logs do PostgreSQL (Imagem 2)
+
+Esta imagem mostra os logs do serviço PostgreSQL (`viajey / cassio POSTGRES`):
+
+*   **Persistência do Erro `database "axiom" does not exist`:** O erro `FATAL: database "axiom" does not exist` ainda persiste nos logs do serviço PostgreSQL. Isso é intrigante, pois a aplicação parece estar se conectando ao `almoxarifado` (conforme Imagem 1). Este erro pode ser de outro processo tentando se conectar ao banco de dados `axiom` (que não existe), ou uma configuração mais profunda no EasyPanel/PostgreSQL que espera um banco `axiom` para o usuário `axiom`, mesmo quando `almoxarifado` é especificado. No entanto, como a aplicação está conseguindo inicializar o esquema no `almoxarifado`, este erro do PostgreSQL pode ser um "ruído" ou um problema secundário no momento, não sendo a causa direta da falha da sua aplicação.
+
+## 3. Análise da Interface do Banco de Dados (Imagem 3)
+
+Esta imagem mostra a interface de gerenciamento do banco de dados, confirmando:
+
+*   **Conexão com `almoxarifado`:** A interface está conectada ao banco de dados `almoxarifado` no host `viajey/cassio`.
+*   **Tabela `users`:** A tabela `users` existe e contém registros, incluindo `cassio` com `role: super_admin`. Isso indica que o banco de dados está populado e a tabela de usuários está presente.
+
+## 4. Análise do DevTools (Imagem 4)
+
+Esta imagem mostra a aba "Network" do DevTools de um navegador, revelando:
+
+*   **Erro 401 (Unauthorized) no Login:** A requisição `POST https://viajey-almoxa.yt2vsr.easypanel.host/api/auth/login` retornou um status `401 Unauthorized`. Isso confirma o erro de `Invalid credentials` visto nos logs da aplicação. A tentativa de login falhou porque as credenciais fornecidas não foram aceitas pelo servidor.
+
+## 5. Análise do Log de Debug (pasted_content.txt)
+
+O log de debug fornecido é um log de *build* do Docker, não um log de *execução* da aplicação. Ele confirma que a imagem Docker foi construída com sucesso, mas apresenta duas advertências importantes:
+
+*   `UndefinedVar: Usage of undefined variable 	erase $NODE_ENV` (line 28)
+*   `UndefinedVar: Usage of undefined variable 	erase $PORT` (line 29)
+
+Essas advertências ocorrem porque as variáveis `$NODE_ENV` e `$PORT` não estão sendo definidas explicitamente antes de serem usadas com a sintaxe `${VAR:=DEFAULT_VALUE}` em algum script (provavelmente no `docker-entrypoint.sh`). Embora sejam apenas advertências e não erros fatais de build, elas podem indicar que essas variáveis não estão sendo passadas corretamente para o ambiente de execução do contêiner, o que pode impactar o comportamento da aplicação.
+
+## 6. Soluções Propostas
+
+Com base na análise, as soluções devem focar em três áreas principais:
+
+### 6.1. Corrigir a Falha de Inicialização da Aplicação (`npm error` e `SIGTERM`)
+
+O problema mais crítico é que sua aplicação está sendo encerrada logo após a inicialização. Isso ocorre porque o comando principal da sua aplicação Node.js não está sendo executado corretamente pelo `docker-entrypoint.sh`.
+
+**Ação:** Modifique o `docker-entrypoint.sh` para garantir que sua aplicação seja iniciada.
+
+1.  **Identifique o Comando de Inicialização da sua Aplicação:**
+    *   Verifique seu arquivo `package.json` para o script `start` (ex: `"start": "node dist/index.js"`).
+    *   Ou, se você inicia diretamente com `node`, qual é o caminho para o arquivo principal (ex: `node dist/index.js`).
+
+2.  **Edite o Arquivo `docker-entrypoint.sh`:**
+    *   Abra o arquivo `docker-entrypoint.sh` no seu projeto.
+    *   Localize a linha `exec "$@"` no final do script.
+    *   **Antes** dessa linha, adicione o comando que inicia sua aplicação. Se o comando for `npm start`, adicione `npm start`. Se for `node dist/index.js`, adicione `node dist/index.js`.
+
+    **Exemplo de `docker-entrypoint.sh` Modificado:**
+
+    ```bash
+    #!/bin/bash
+    set -e
+
+    echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
+
+    # ... (restante do seu script, incluindo a lógica de DATABASE_URL e verificação do PostgreSQL)
+
+    echo ">>> Sistema configurado com sucesso! <<<"
+    echo "Iniciando aplicação na porta $PORT..."
+
+    # Verificar se é ambiente de produção e fazer build se necessário
+    if [ "$NODE_ENV" = "production" ] && [ ! -f "dist/index.js" ]; then
+      echo "Build não encontrado, executando build de produção..."
+      npm run build 2>/dev/null || echo "Build falhou, tentando iniciar mesmo assim..."
+    fi
+
+    # ADICIONE AQUI O COMANDO PARA INICIAR SUA APLICAÇÃO
+    npm start # OU: node dist/index.js
+
+    # O \`exec "$@"\` é usado para passar argumentos adicionais do Dockerfile/comando run
+    # Se o comando acima for o comando final, você pode remover o \`exec "$@"\` ou deixá-lo para flexibilidade
+    exec "$@"
+    ```
+
+3.  **Commit e Deploy:**
+    *   Salve as alterações no `docker-entrypoint.sh`.
+    *   Faça um commit das alterações no seu repositório Git.
+    *   Realize um novo deploy da sua aplicação no EasyPanel.
+
+### 6.2. Resolver o Erro de Credenciais Inválidas (`Invalid credentials`)
+
+Este erro ocorre na tentativa de login. Mesmo que a aplicação esteja se conectando ao banco de dados, as credenciais de login para a API de autenticação estão incorretas.
+
+**Ações:**
+
+1.  **Verifique as Credenciais de Login:**
+    *   Confirme o nome de usuário e a senha que você está usando para tentar fazer login na interface da aplicação. Certifique-se de que não há erros de digitação.
+    *   **Importante:** Se você está usando variáveis de ambiente para as credenciais de login da aplicação (não as do banco de dados), verifique se elas estão configuradas corretamente no EasyPanel e se a aplicação as está lendo adequadamente.
+
+2.  **Verifique a Tabela `users` no Banco de Dados:**
+    *   A Imagem 3 mostra que a tabela `users` existe e tem um usuário `cassio` com `role: super_admin`. Confirme se a senha para este usuário está correta. Se a senha for um hash, certifique-se de que o algoritmo de hashing usado pela aplicação para validar a senha está correto e que a senha que você está digitando corresponde ao hash armazenado.
+    *   Se você tiver acesso a um console do banco de dados, pode tentar inserir um novo usuário com uma senha conhecida para testar.
+
+3.  **Depure a Lógica de Autenticação:**
+    *   Se as credenciais estiverem corretas e o problema persistir, pode haver um erro na lógica de autenticação da sua aplicação (no código que lida com `/api/auth/login`). Você precisaria depurar essa parte do código para entender por que as credenciais estão sendo rejeitadas.
+
+### 6.3. Abordar o Erro `FATAL: database "axiom" does not exist` no PostgreSQL
+
+Embora este erro não esteja impedindo sua aplicação de iniciar (já que ela se conecta ao `almoxarifado`), ele indica que algum processo ainda está tentando se conectar a um banco de dados `axiom` que não existe.
+
+**Ações:**
+
+1.  **Verifique Outros Serviços/Conexões no EasyPanel:**
+    *   Pode haver outro serviço ou conexão configurada no EasyPanel que está tentando se conectar ao banco de dados `axiom`. Revise todas as suas configurações de serviço no EasyPanel para identificar qualquer referência a `axiom` que não seja para o nome do usuário.
+
+2.  **Limpeza de Configurações Antigas:**
+    *   Se você já teve um banco de dados chamado `axiom` e o removeu, pode haver caches ou referências persistentes em algum lugar do EasyPanel. Verifique as configurações do seu serviço de banco de dados (`viajey / cassio POSTGRES`) para garantir que não há configurações residuais apontando para `axiom` como nome de banco de dados.
+
+Ao seguir estas etapas, você deve ser capaz de resolver os problemas de inicialização da aplicação e de autenticação, e também limpar as referências incorretas ao banco de dados `axiom`.
+

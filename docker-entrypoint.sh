@@ -71,6 +71,12 @@ fi
 echo ">>> Sistema configurado com sucesso! <<<"
 echo "Iniciando aplicação na porta $PORT..."
 
+# Verificar se é ambiente de produção e fazer build se necessário
+if [ "$NODE_ENV" = "production" ] && [ ! -f "dist/index.js" ]; then
+  echo "Build não encontrado, executando build de produção..."
+  npm run build 2>/dev/null || echo "Build falhou, tentando iniciar mesmo assim..."
+fi
+
 # A aplicação Node.js fará toda a inicialização automática do banco de dados
 # incluindo criação do banco 'almoxarifado', tabelas e usuários padrão
 exec "$@"

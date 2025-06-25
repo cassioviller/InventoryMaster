@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM node:20-slim
 
 WORKDIR /app
@@ -35,4 +36,4 @@ RUN chmod +x /usr/local/bin/build-database-url.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Comando para iniciar a aplicação após o script de entrada
-CMD ["npm", "run", "start"]
+CMD ["npm", "start"]

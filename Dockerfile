@@ -15,8 +15,9 @@ RUN npm ci
 # Copiar o restante dos arquivos do projeto
 COPY . .
 
-# Tornar o script de entrada executável
-RUN chmod +x docker-entrypoint.sh
+# Copiar e tornar scripts executáveis
+COPY validate-database-url.sh ./
+RUN chmod +x docker-entrypoint.sh validate-database-url.sh
 
 # Executar o build da aplicação
 RUN npm run build

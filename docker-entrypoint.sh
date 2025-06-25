@@ -3,24 +3,36 @@ set -e
 
 echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
 
-# Verificar e configurar DATABASE_URL automaticamente
+# Validar e corrigir DATABASE_URL para prevenir erro EasyPanel
 echo "Verificando configuração do banco de dados..."
+
+# Executar validação crítica
+if [ -f "validate-database-url.sh" ]; then
+    chmod +x validate-database-url.sh
+    ./validate-database-url.sh
+    if [ $? -ne 0 ]; then
+        echo "ERRO: Validação de DATABASE_URL falhou"
+        exit 1
+    fi
+fi
 
 if [ -z "$DATABASE_URL" ]; then
   echo "DATABASE_URL não definida - configurando automaticamente..."
   
-  # Configuração padrão para PostgreSQL
+  # FORÇAR configuração correta para EasyPanel - prevenir sobrescrita de POSTGRES_DB
   POSTGRES_USER="${POSTGRES_USER:-axiom}"
   POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-estruturas}"
   POSTGRES_HOST="${POSTGRES_HOST:-viajey_cassio}"
   POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-  POSTGRES_DB="${POSTGRES_DB:-almoxarifado}"
+  # FORÇAR banco "almoxarifado" - ignorar qualquer POSTGRES_DB externa
+  POSTGRES_DB="almoxarifado"
   
   # Construir DATABASE_URL
   DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
   export DATABASE_URL
   
   echo "DATABASE_URL configurada: postgres://$POSTGRES_USER:***@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
+  echo "IMPORTANTE: Banco forçado para 'almoxarifado' para prevenir erro EasyPanel"
 fi
 
 # Verificar outras variáveis essenciais

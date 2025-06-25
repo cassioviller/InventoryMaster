@@ -68,11 +68,11 @@ build_database_url() {
         return 0
     fi
 
-    # Fallback para o PostgreSQL local durante desenvolvimento
+    # Fallback para o PostgreSQL EasyPanel
     if [ -z "$DATABASE_URL" ]; then
-        export DATABASE_URL="postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable"
-        echo "Usando PostgreSQL viajey_cassio: $DATABASE_URL"
-        echo "Banco 'almoxarifado' será usado como configurado"
+        export DATABASE_URL="postgres://cassio:123@viajey_almo:5432/axiom?sslmode=disable"
+        echo "Usando PostgreSQL viajey_almo: $DATABASE_URL"
+        echo "Banco 'axiom' será usado conforme EasyPanel"
     fi
 }
 

@@ -19,20 +19,20 @@ fi
 if [ -z "$DATABASE_URL" ]; then
   echo "DATABASE_URL não definida - configurando automaticamente..."
   
-  # FORÇAR configuração correta para EasyPanel - prevenir sobrescrita de POSTGRES_DB
-  POSTGRES_USER="${POSTGRES_USER:-axiom}"
-  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-estruturas}"
-  POSTGRES_HOST="${POSTGRES_HOST:-viajey_cassio}"
+  # CONFIGURAÇÃO CORRETA PARA EASYPANEL conforme credenciais fornecidas
+  POSTGRES_USER="${POSTGRES_USER:-cassio}"
+  POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-123}"
+  POSTGRES_HOST="${POSTGRES_HOST:-viajey_almo}"
   POSTGRES_PORT="${POSTGRES_PORT:-5432}"
-  # FORÇAR banco "almoxarifado" - ignorar qualquer POSTGRES_DB externa
-  POSTGRES_DB="almoxarifado"
+  # USAR banco "axiom" conforme configuração do EasyPanel
+  POSTGRES_DB="axiom"
   
   # Construir DATABASE_URL
   DATABASE_URL="postgres://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB?sslmode=disable"
   export DATABASE_URL
   
   echo "DATABASE_URL configurada: postgres://$POSTGRES_USER:***@$POSTGRES_HOST:$POSTGRES_PORT/$POSTGRES_DB"
-  echo "IMPORTANTE: Banco forçado para 'almoxarifado' para prevenir erro EasyPanel"
+  echo "IMPORTANTE: Usando credenciais corretas do EasyPanel - banco 'axiom'"
 fi
 
 # Verificar outras variáveis essenciais

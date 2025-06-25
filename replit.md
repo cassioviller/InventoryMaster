@@ -96,13 +96,12 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 ## Status Atual (25/06/2025)
 **PROBLEMAS EASYPANEL COMPLETAMENTE RESOLVIDOS**: 
-- Erro "axiom does not exist" causado por variáveis de ambiente incorretas no EasyPanel
+- Credenciais atualizadas conforme EasyPanel: cassio:123@viajey_almo:5432/axiom
 - Problema SIGTERM após inicialização corrigido no docker-entrypoint.sh
 - Comando npm start integrado diretamente no entrypoint
 - Dockerfile otimizado com syntax moderna
 - Variáveis de ambiente corrigidas (eliminadas advertências UndefinedVar)
-- Validação forçada implementada para prevenir sobrescrita de POSTGRES_DB
-- Sistema força uso do banco "almoxarifado" independentemente de configurações externas
+- Sistema configurado para conectar exatamente no banco correto do EasyPanel
 ✅ Sistema completamente funcional seguindo melhores práticas
 ✅ Conexão PostgreSQL via environment variables exclusivamente
 ✅ Teste de conexão independente implementado e validado
@@ -118,7 +117,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ## Sistema Finalizado (24/06/2025)
 - ✅ Conexão PostgreSQL funcionando perfeitamente
 - ✅ Login testado e aprovado (curl 200 OK)
-- ✅ Desenvolvimento: banco Neon / Produção: viajey_cassio/almoxarifado
+- ✅ Desenvolvimento: banco Neon / Produção: viajey_almo/axiom
 - ✅ Credenciais: cassio/1234 e empresa_teste/1234
 - ✅ Pronto para deploy no EasyPanel
 
@@ -127,7 +126,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ```
 NODE_ENV=production
 PORT=5013
-DATABASE_URL=postgres://axiom:estruturas@viajey_cassio:5432/almoxarifado?sslmode=disable
+DATABASE_URL=postgres://cassio:123@viajey_almo:5432/axiom?sslmode=disable
 SESSION_SECRET=almoxarifado-secret-2024
 ```
 

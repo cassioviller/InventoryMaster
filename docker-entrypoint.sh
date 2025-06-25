@@ -1,43 +1,40 @@
 #!/bin/bash
 set -e
 
-echo ">>> Iniciando Sistema de Gerenciamento de Almoxarifado <<<"
+echo "=== Iniciando Sistema de Gerenciamento de Almoxarifado em modo: ${NODE_ENV:-production} ==="
 
-# CORREÇÃO CRÍTICA: Limpar variáveis PostgreSQL conflitantes do EasyPanel
-echo "Verificando configuração do banco de dados..."
+# Configuração do ambiente
+export NODE_ENV=${NODE_ENV:-production}
+export PORT=${PORT:-5013}
 
-# Limpar variáveis que podem causar confusão
-echo "Limpando variáveis PostgreSQL conflitantes..."
-unset PGDATABASE
-unset PGUSER  
-unset PGHOST
-unset PGPORT
-unset PGPASSWORD
+# Verificar se DATABASE_URL está definida (abordagem robusta)
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERRO: Variável DATABASE_URL não está definida!"
+  echo "Configure DATABASE_URL no ambiente de execução."
+  exit 1
+fi
 
-echo "Variáveis PostgreSQL limpas para evitar conflitos"
+echo "DATABASE_URL encontrada: ${DATABASE_URL//:*@/:***@}"
 
-# FORÇAR DATABASE_URL correta para EasyPanel, ignorando variáveis conflitantes
-echo "Configurando DATABASE_URL para EasyPanel..."
+# Extrair informações de conexão da DATABASE_URL para logs
+if [[ $DATABASE_URL =~ postgres://([^:]+):([^@]+)@([^:]+):([0-9]+)/([^?]+) ]]; then
+  PGUSER="${BASH_REMATCH[1]}"
+  PGHOST="${BASH_REMATCH[3]}"
+  PGPORT="${BASH_REMATCH[4]}"
+  PGDATABASE="${BASH_REMATCH[5]}"
+  
+  echo "Configuração extraída da DATABASE_URL:"
+  echo "- Usuário: $PGUSER"
+  echo "- Host: $PGHOST"
+  echo "- Porta: $PGPORT"
+  echo "- Banco: $PGDATABASE"
+else
+  echo "Aviso: Não foi possível extrair componentes da DATABASE_URL"
+fi
 
-# CONFIGURAÇÃO FORÇADA - ignorar qualquer variável externa
-DATABASE_URL="postgres://cassio:123@viajey_almo:5432/axiom?sslmode=disable"
-export DATABASE_URL
-
-echo "DATABASE_URL FORÇADA: postgres://cassio:***@viajey_almo:5432/axiom"
-echo "IMPORTANTE: Ignorando variáveis PGDATABASE/PGUSER para prevenir conflitos"
-
-# Verificar outras variáveis essenciais
-export NODE_ENV="${NODE_ENV:-production}"
-export PORT="${PORT:-5013}"
-
-echo "Configuração:"
-echo "- NODE_ENV: $NODE_ENV"
-echo "- PORT: $PORT"
-echo "- DATABASE_URL: ${DATABASE_URL//:*@/:***@}"
-
-# Aguardar PostgreSQL estar pronto com timeout mais robusto
-echo "Aguardando inicialização do PostgreSQL..."
-MAX_ATTEMPTS=60
+# Verificar se o banco de dados está acessível
+echo "Verificando conexão com o banco de dados..."
+MAX_ATTEMPTS=30
 ATTEMPTS=0
 
 while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do

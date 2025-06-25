@@ -95,14 +95,14 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Código limpo e estável para desenvolvimento e produção
 
 ## Status Atual (25/06/2025)
-**PROBLEMAS EASYPANEL COMPLETAMENTE RESOLVIDOS**: 
-- Credenciais atualizadas conforme EasyPanel: cassio:123@viajey_almo:5432/axiom
-- Problema SIGTERM após inicialização corrigido no docker-entrypoint.sh
-- Comando npm start integrado diretamente no entrypoint
-- Dockerfile otimizado com syntax moderna
-- Variáveis de ambiente corrigidas (eliminadas advertências UndefinedVar)
-- Sistema configurado para conectar exatamente no banco correto do EasyPanel
-- CORREÇÃO CRÍTICA: Conflito PGDATABASE resolvido - sistema força DATABASE_URL ignorando variáveis PostgreSQL do EasyPanel
+**SOLUÇÃO ROBUSTA IMPLEMENTADA BASEADA EM APLICAÇÃO FUNCIONAL**: 
+- DATABASE_URL definida diretamente no Dockerfile como ENV com valor padrão
+- Docker entrypoint reescrito para EXIGIR DATABASE_URL (não construir)
+- Sistema extrai componentes da DATABASE_URL (não usa variáveis separadas)
+- Verificação de conexão robusta com pg_isready e fallback TCP
+- Eliminados scripts de construção de URL (build-database-url.sh removido)
+- Imune a conflitos de variáveis PGDATABASE/PGUSER do EasyPanel
+- Abordagem "fonte única de verdade" para configuração de banco
 ✅ Sistema completamente funcional seguindo melhores práticas
 ✅ Conexão PostgreSQL via environment variables exclusivamente
 ✅ Teste de conexão independente implementado e validado

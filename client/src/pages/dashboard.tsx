@@ -8,7 +8,7 @@ import {
   ArrowUp,
   Loader2
 } from 'lucide-react';
-import { authenticatedRequest } from '@/lib/auth';
+import { authenticatedRequest } from '@/lib/auth-request';
 import type { Material, Category } from '@shared/schema';
 
 interface DashboardStats {
@@ -25,6 +25,7 @@ export default function Dashboard() {
       const res = await authenticatedRequest('/api/dashboard/stats');
       return res.json() as Promise<DashboardStats>;
     },
+    enabled: !!localStorage.getItem('token'),
   });
 
   const { data: lowStockData, isLoading: lowStockLoading } = useQuery({
@@ -34,6 +35,7 @@ export default function Dashboard() {
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
+    enabled: !!localStorage.getItem('token'),
   });
 
   const lowStockMaterials = lowStockData || [];

@@ -15,7 +15,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { authenticatedRequest } from '@/lib/auth';
+import { authenticatedRequest } from '@/lib/auth-request';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import { MaterialModal } from '@/components/modals/material-modal';
@@ -155,13 +155,21 @@ export default function Management() {
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ['/api/users'],
+    queryKey: ['/api/users', searchQuery],
     queryFn: async () => {
-      const res = await authenticatedRequest('/api/users');
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        let url = '/api/users';
+        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
+        
+        const res = await authenticatedRequest(url);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching users:', error);
+        return [];
+      }
     },
-    enabled: activeTab === 'users' && canCreateUsers,
+    enabled: activeTab === 'users' && canCreateUsers && !!localStorage.getItem('token'),
   });
 
   const employees = employeesData || [];

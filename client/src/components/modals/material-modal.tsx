@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { authenticatedRequest } from '@/lib/auth';
+import { authenticatedRequest } from '@/lib/auth-request';
 
 interface MaterialModalProps {
   open: boolean;
@@ -181,7 +181,7 @@ export function MaterialModal({ open, onOpenChange, material, onClose }: Materia
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories?.map((category: any) => (
+                      {Array.isArray(categories) && categories.map((category: any) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
                         </SelectItem>

@@ -57,6 +57,10 @@ echo "Banco de dados conectado com sucesso!"
 echo "Executando migrações do banco de dados..."
 npm run db:push
 
+# Aguarda um pouco para garantir que as tabelas foram criadas
+echo "Aguardando estabilização do banco..."
+sleep 3
+
 # Inicia a aplicação
 echo "Iniciando aplicação..."
 exec "$@"

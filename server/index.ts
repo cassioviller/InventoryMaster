@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { createDefaultUsers } from "./init-users";
 
 console.log("🔧 Sistema de Almoxarifado - Iniciando...");
 
@@ -40,6 +41,11 @@ app.use((req, res, next) => {
 
 (async () => {
   const server = await registerRoutes(app);
+  
+  // Inicializar usuários padrão após conexão com banco (sempre)
+  setTimeout(async () => {
+    await createDefaultUsers();
+  }, 3000); // Aguarda 3 segundos para garantir que o banco está pronto
   
   console.log('✅ Sistema inicializado');
 

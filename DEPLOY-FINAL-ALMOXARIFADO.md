@@ -83,10 +83,19 @@ SESSION_SECRET=almoxarifado-secret-2024
 ✅ **Sistema online**: Aplicação rodando na porta 80
 
 ### Agora você pode:
-1. Testar login com as credenciais: cassio/1234, admin/1234, estruturas/1234
+1. **Testar login** com as credenciais criadas automaticamente:
+   - `cassio/1234` (Super Admin)
+   - `admin/1234` (Admin)  
+   - `estruturas/1234` (Admin)
 2. Acessar todas as funcionalidades do sistema de almoxarifado
 3. Gerenciar materiais, funcionários, fornecedores e movimentações
 4. Gerar relatórios financeiros e de estoque
+
+### Melhorias Implementadas:
+✅ **Criação automática de usuários** no deploy
+✅ **Hash seguro de senhas** com bcrypt
+✅ **Verificação de usuários existentes** (preserva dados)
+✅ **Inicialização em modo produção** com delay para estabilidade
 
 ## Observações Importantes
 - A configuração segue exatamente o padrão do projeto de comissões que funcionou

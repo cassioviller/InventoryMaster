@@ -1,11 +1,11 @@
 #!/bin/bash
 set -e
 
-# Verificar se a URL está correta (deve conter almoxarifado)
-if ! echo "$DATABASE_URL" | grep -q "almoxarifado:1234@viajey_cassio"; then
+# Verificar se a URL está correta (deve conter almoxa)
+if ! echo "$DATABASE_URL" | grep -q "almoxa:almoxa@viajey_almoxa"; then
   echo "❌ ERRO: DATABASE_URL incorreta ou fallback ativado!"
   echo "URL atual: ${DATABASE_URL//:*@/:***@}"
-  echo "Esperado: postgres://almoxarifado:1234@viajey_cassio:5432/almoxarifado"
+  echo "Esperado: postgres://almoxa:almoxa@viajey_almoxa:5432/almoxa"
   exit 1
 fi
 

@@ -9,7 +9,7 @@ export async function createDefaultUsers() {
     
     // Verificar DATABASE_URL para evitar fallback
     const dbUrl = process.env.DATABASE_URL;
-    if (!dbUrl || !dbUrl.includes('almoxarifado:1234@viajey_cassio')) {
+    if (!dbUrl || !dbUrl.includes('almoxa:almoxa@viajey_almoxa')) {
       console.error('❌ ERRO: DATABASE_URL incorreta ou fallback ativado!');
       console.error('URL atual:', dbUrl?.replace(/:[^:@]*@/, ':***@'));
       return;

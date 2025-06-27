@@ -1,0 +1,74 @@
+Olá, agente! Neste projeto, quero replicar a mesma configuração de conexão que funcionou no outro repositório de comissões. Faça as seguintes correções:
+
+1. **.env**  
+   - Mantenha apenas estas linhas (sem toggle “Criar .env”):  
+     ```
+     NODE_ENV=production
+     DATABASE_URL=postgres://comissoes_user:senha123forte@estruturas_comissoes:5432/comissoes?sslmode=disable
+     PORT=5000
+     ```
+   - Remova qualquer outro ENV DATABASE_URL no Dockerfile.
+
+2. **Dockerfile**  
+   - Remova a instrução  
+     ```dockerfile
+     ENV DATABASE_URL=${DATABASE_URL:-postgres://…}
+     ```  
+   - Garanta que só exista  
+     ```dockerfile
+     ENTRYPOINT ["./docker-entrypoint.sh"]
+     CMD ["npm","run","start"]
+     ```
+   - Use imagem `node:20-slim`, instale `postgresql-client`, copie `package*.json` → `npm ci`, copie código, chmod no entrypoint, build, expose 5000.
+
+3. **docker-entrypoint.sh**  
+   - No topo, garanta:
+     ```bash
+     #!/bin/bash
+     set -e
+     ```
+   - Logo após, adicione checagem rápida para abortar se a URL ainda apontar para banco errado:
+     ```bash
+     if echo "$DATABASE_URL" | grep -q "://estruturas_comissoes:"; then
+       echo "❌ ERRO: DATABASE_URL contém banco incorreto (‘estruturas’)"
+       exit 1
+     fi
+     ```
+   - Aguarde Postgres com `pg_isready` em loop (até 30 tentativas).  
+   - Execute `npm run db:push`.  
+   - Finalize com `exec "$@"`.
+
+4. **drizzle.config.ts**  
+   - No topo, importe dotenv:
+     ```ts
+     import 'dotenv/config';
+     ```
+   - Use `process.env.DATABASE_URL` sem fallback.
+
+5. **server/db.ts**  
+   - Use somente:
+     ```ts
+     import postgres from 'postgres';
+     import { drizzle } from 'drizzle-orm/postgres-js';
+     const url = process.env.DATABASE_URL!;
+     console.log(`Conectando: ${url.replace(/:[^:@]*@/,':***@')}`);
+     const client = postgres(url, { ssl: url.includes('sslmode=require') });
+     export const db = drizzle(client);
+     ```
+   - Remova condicionais por NODE_ENV.
+
+6. **Validar**  
+   - No terminal Replit, rode:
+     ```bash
+     npm ci
+     npm run db:push
+     npm run build
+     npm start
+     ```
+   - Deve aparecer no log:
+     ```
+     Banco de dados conectado com sucesso!
+     ```
+   - Sem mais `FATAL: database "estruturas" does not exist`.
+
+Por favor, aplique todas essas mudanças de uma só vez e me retorne se o serviço sobe sem o erro de “database does not exist”. Obrigado!```

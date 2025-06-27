@@ -1,88 +1,69 @@
 #!/bin/bash
 set -e
 
-echo "=== Iniciando Sistema de Gerenciamento de Almoxarifado em modo: ${NODE_ENV:-production} ==="
-
-# Configuração do ambiente
-export NODE_ENV=${NODE_ENV:-production}
-export PORT=${PORT:-5013}
-
-# Verificar se DATABASE_URL está definida (abordagem robusta)
-if [ -z "$DATABASE_URL" ]; then
-  echo "ERRO: Variável DATABASE_URL não está definida!"
-  echo "Configure DATABASE_URL no ambiente de execução."
+# Checagem rápida para abortar se a URL ainda apontar para banco errado
+if echo "$DATABASE_URL" | grep -q "://viajey_almo:"; then
+  echo "❌ ERRO: DATABASE_URL contém banco incorreto ('viajey_almo')"
   exit 1
 fi
 
-echo "DATABASE_URL encontrada: ${DATABASE_URL//:*@/:***@}"
+# Configuração do ambiente
+export NODE_ENV=${NODE_ENV:-production}
+export PORT=${PORT:-5000}
 
-# Extrair informações de conexão da DATABASE_URL para logs
-if [[ $DATABASE_URL =~ postgres://([^:]+):([^@]+)@([^:]+):([0-9]+)/([^?]+) ]]; then
-  PGUSER="${BASH_REMATCH[1]}"
-  PGHOST="${BASH_REMATCH[3]}"
-  PGPORT="${BASH_REMATCH[4]}"
-  PGDATABASE="${BASH_REMATCH[5]}"
-  
-  echo "Configuração extraída da DATABASE_URL:"
-  echo "- Usuário: $PGUSER"
-  echo "- Host: $PGHOST"
-  echo "- Porta: $PGPORT"
-  echo "- Banco: $PGDATABASE"
-else
-  echo "Aviso: Não foi possível extrair componentes da DATABASE_URL"
+echo "=== Iniciando aplicação em modo: $NODE_ENV ==="
+
+# Verifica se DATABASE_URL está definido
+if [ -z "$DATABASE_URL" ]; then
+  echo "ERRO: Variável DATABASE_URL não está definida!"
+  exit 1
 fi
 
-# Verificar se o banco de dados está acessível
+# Verifica se o banco de dados está acessível
 echo "Verificando conexão com o banco de dados..."
 MAX_ATTEMPTS=30
-ATTEMPTS=0
+COUNTER=0
 
-while [ $ATTEMPTS -lt $MAX_ATTEMPTS ]; do
-  if timeout 10 node -e "
-    const { Pool } = require('pg');
-    // Usar DATABASE_URL do ambiente
-    let dbUrl = process.env.DATABASE_URL;
-    const ssl = dbUrl.includes('sslmode=disable') ? false : { rejectUnauthorized: false };
-    const pool = new Pool({ 
-      connectionString: dbUrl,
-      ssl: ssl
-    });
-    pool.query('SELECT 1').then(() => {
-      console.log('PostgreSQL conectado com sucesso');
-      process.exit(0);
-    }).catch((err) => {
-      console.log('Erro de conexão:', err.message);
-      process.exit(1);
-    });
-  " 2>/dev/null; then
-    echo "PostgreSQL está pronto!"
-    break
+# Tenta extrair informações de conexão do DATABASE_URL
+PGHOST=$(echo $DATABASE_URL | sed -E 's/^.*@([^:]+):.*/\1/' 2>/dev/null || echo "localhost")
+PGPORT=$(echo $DATABASE_URL | sed -E 's/^.*:([0-9]+).*/\1/' 2>/dev/null || echo "5432")
+PGUSER=$(echo $DATABASE_URL | sed -E 's/^.*:\/\/([^:]+):.*/\1/' 2>/dev/null || echo "postgres")
+
+echo "Tentando conectar a: Host=$PGHOST, Porta=$PGPORT, Usuário=$PGUSER"
+
+# Função para verificar conexão de forma segura
+check_db_connection() {
+  # Se tiver SSL, usamos curl para testar
+  if [[ "$DATABASE_URL" == *"sslmode=require"* ]]; then
+    curl -s "https://$PGHOST:$PGPORT" > /dev/null 2>&1
+    return $?
+  else
+    # Se não tiver SSL, usamos pg_isready
+    pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" > /dev/null 2>&1
+    return $?
   fi
-  ATTEMPTS=$((ATTEMPTS+1))
-  echo "PostgreSQL não está pronto - tentativa $ATTEMPTS de $MAX_ATTEMPTS - aguardando..."
-  sleep 3
+}
+
+# Loop de tentativas
+until check_db_connection || [ $COUNTER -eq $MAX_ATTEMPTS ]
+do
+  echo "Aguardando banco de dados... ($COUNTER/$MAX_ATTEMPTS)"
+  sleep 2
+  COUNTER=$((COUNTER+1))
 done
 
-if [ $ATTEMPTS -eq $MAX_ATTEMPTS ]; then
-  echo "AVISO: Não foi possível verificar PostgreSQL após $MAX_ATTEMPTS tentativas."
-  echo "Iniciando aplicação - a inicialização automática do banco será feita pela aplicação."
+if [ $COUNTER -eq $MAX_ATTEMPTS ]; then
+  echo "Falha ao conectar ao banco de dados!"
+  echo "URL do banco: ${DATABASE_URL//:*@/:***@}"
+  exit 1
 fi
 
-echo ">>> Sistema configurado com sucesso! <<<"
-echo "Iniciando aplicação na porta $PORT..."
+echo "Banco de dados conectado com sucesso!"
 
-# Verificar se é ambiente de produção e fazer build se necessário
-if [ "$NODE_ENV" = "production" ] && [ ! -f "dist/index.js" ]; then
-  echo "Build não encontrado, executando build de produção..."
-  npm run build 2>/dev/null || echo "Build falhou, tentando iniciar mesmo assim..."
-fi
+# Executa migrações do banco de dados
+echo "Executando migrações do banco de dados..."
+npm run db:push
 
-# A aplicação Node.js fará toda a inicialização automática do banco de dados
-# incluindo criação do banco 'almoxarifado', tabelas e usuários padrão
-
-# Iniciar a aplicação Node.js
-echo "Executando: npm start"
-npm start
-
-# Fallback para argumentos adicionais do Docker
+# Inicia a aplicação
+echo "Iniciando aplicação..."
 exec "$@"

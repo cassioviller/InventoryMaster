@@ -1,4 +1,3 @@
-# syntax=docker/dockerfile:1
 FROM node:20-slim
 
 WORKDIR /app
@@ -22,15 +21,10 @@ RUN chmod +x docker-entrypoint.sh
 RUN npm run build
 
 # Expor a porta utilizada pelo aplicativo
-EXPOSE 5013
-
-# Valores padrão para variáveis de ambiente
-ENV DATABASE_URL=${DATABASE_URL:-postgres://cassio:123@viajey_almo:5432/axiom?sslmode=disable}
-ENV NODE_ENV=${NODE_ENV:-production}
-ENV PORT=${PORT:-5013}
+EXPOSE 5000
 
 # Usar o script de entrada para inicialização
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
-# O comando start está integrado no entrypoint
-CMD []
+# Comando para iniciar a aplicação após o script de entrada
+CMD ["npm", "run", "start"]

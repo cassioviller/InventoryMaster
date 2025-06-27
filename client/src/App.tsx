@@ -44,28 +44,22 @@ function Router() {
   return (
     <Switch>
       <Route path="/login">
-        {isAuthenticated ? (
-          isSuperAdmin ? <Redirect to="/super-admin" /> : <Redirect to="/" />
-        ) : (
-          <Login />
-        )}
+        {isAuthenticated ? <Redirect to="/" /> : <Login />}
       </Route>
       
       <Route path="/super-admin">
-        <ProtectedRoute>
-          {isSuperAdmin ? <SuperAdmin /> : <Redirect to="/" />}
+        <ProtectedRoute requireAdmin>
+          <AuthenticatedLayout>
+            <SuperAdmin />
+          </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>
       
       <Route path="/">
         <ProtectedRoute>
-          {isSuperAdmin ? (
-            <Redirect to="/super-admin" />
-          ) : (
-            <AuthenticatedLayout>
-              <Dashboard />
-            </AuthenticatedLayout>
-          )}
+          <AuthenticatedLayout>
+            <Dashboard />
+          </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>
       

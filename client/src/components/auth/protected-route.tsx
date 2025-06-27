@@ -1,4 +1,5 @@
 import { useAuth } from '@/hooks/use-auth';
+import { Redirect } from 'wouter';
 import { Loader2 } from 'lucide-react';
 
 interface ProtectedRouteProps {
@@ -18,11 +19,10 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
   }
 
   if (!isAuthenticated) {
-    window.location.href = '/login';
-    return null;
+    return <Redirect to="/login" />;
   }
 
-  if (requireAdmin && user?.role !== 'admin') {
+  if (requireAdmin && user?.role !== 'admin' && user?.role !== 'super_admin') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">

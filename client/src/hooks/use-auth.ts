@@ -46,6 +46,11 @@ export function useAuth(): AuthContextType {
       }
     },
     retry: false,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
   });
 
   const loginMutation = useMutation({
@@ -66,7 +71,7 @@ export function useAuth(): AuthContextType {
   const logout = () => {
     localStorage.removeItem('token');
     queryClient.setQueryData(['/api/auth/verify'], null);
-    queryClient.invalidateQueries();
+    queryClient.clear();
   };
 
   return {

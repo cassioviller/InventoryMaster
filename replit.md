@@ -114,6 +114,10 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ✅ Conexão PostgreSQL funcionando em produção (viajey_cassio:5432)
 ✅ Migrações executadas automaticamente no deploy
 ✅ Aplicação rodando na porta 80 conforme esperado
+✅ **CRIAÇÃO AUTOMÁTICA DE USUÁRIOS** implementada e funcionando
+✅ Usuários padrão criados automaticamente no deploy: cassio, admin, estruturas
+✅ Hash seguro de senhas com bcrypt implementado
+✅ Sistema preserva dados existentes e não duplica usuários
 
 ## Sistema Finalizado (24/06/2025)
 - ✅ Conexão PostgreSQL funcionando perfeitamente

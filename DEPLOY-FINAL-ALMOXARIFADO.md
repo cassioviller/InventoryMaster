@@ -66,7 +66,7 @@ SESSION_SECRET=almoxarifado-secret-2024
 - **Admin**: `admin` / `1234`
 - **Estruturas**: `estruturas` / `1234`
 
-## Status Atual - DEPLOY REALIZADO COM SUCESSO! 🎉
+## Status Atual - DEPLOY REALIZADO COM SUCESSO!
 ✅ Sistema funcionando em desenvolvimento com banco Neon
 ✅ Configuração de produção implementada e testada
 ✅ Scripts de deploy configurados e validados
@@ -75,6 +75,9 @@ SESSION_SECRET=almoxarifado-secret-2024
 ✅ **DEPLOY FUNCIONANDO**: Conectado a viajey_cassio:5432/almoxarifado
 ✅ **SISTEMA ONLINE**: Aplicação rodando na porta 80
 ✅ **BANCO CONECTADO**: PostgreSQL respondendo normalmente
+✅ **USUÁRIOS CRIADOS**: Sistema cria automaticamente usuários padrão
+✅ **ERRO CORRIGIDO**: Schema compatibility issues resolvidas
+✅ **LOGIN FUNCIONANDO**: Autenticação operacional com hash seguro
 
 ## Deploy Realizado - Próximos Passos
 ✅ **Deploy no EasyPanel**: Concluído com sucesso

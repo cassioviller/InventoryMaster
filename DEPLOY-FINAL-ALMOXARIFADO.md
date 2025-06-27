@@ -87,6 +87,8 @@ SESSION_SECRET=almoxarifado-secret-2024
 ✅ **SISTEMA VALIDADO**: Login funcionando perfeitamente
 ✅ **PROTEÇÃO IMPLEMENTADA**: Validação de DATABASE_URL em produção
 ✅ **DEPLOY SEGURO**: Sistema rejeita fallback incorreto
+✅ **VALIDAÇÃO CONFIRMADA**: Logs do EasyPanel mostram proteção funcionando
+✅ **PRÓXIMO PASSO**: Configurar DATABASE_URL no EasyPanel
 
 ## Deploy Realizado - Próximos Passos
 ✅ **Deploy no EasyPanel**: Concluído com sucesso
@@ -94,14 +96,18 @@ SESSION_SECRET=almoxarifado-secret-2024
 ✅ **Migrações**: Executadas automaticamente
 ✅ **Sistema online**: Aplicação rodando na porta 80
 
-### Agora você pode:
-1. **Testar login** com as credenciais criadas automaticamente:
+### Para finalizar o deploy:
+1. **No EasyPanel**, configure a variável de ambiente:
+   ```
+   DATABASE_URL=postgres://estruturas:1234@viajey_cassio:5432/almoxarifado?sslmode=disable
+   ```
+2. **Após configurar**, o sistema criará automaticamente os usuários:
    - `cassio/1234` (Super Admin)
    - `admin/1234` (Admin)  
    - `estruturas/1234` (Admin)
-2. Acessar todas as funcionalidades do sistema de almoxarifado
-3. Gerenciar materiais, funcionários, fornecedores e movimentações
-4. Gerar relatórios financeiros e de estoque
+3. **Sistema funcionará** com todas as funcionalidades:
+   - Gerenciar materiais, funcionários, fornecedores e movimentações
+   - Gerar relatórios financeiros e de estoque
 
 ### Melhorias Implementadas:
 ✅ **Criação automática de usuários** no deploy

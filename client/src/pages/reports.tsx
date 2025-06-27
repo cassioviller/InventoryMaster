@@ -19,7 +19,7 @@ import {
   RefreshCw,
   Truck
 } from 'lucide-react';
-import { authenticatedRequest } from '@/lib/auth';
+import { authenticatedRequest } from '@/lib/auth-request';
 import { exportToPDF, exportToExcel } from '@/lib/export-utils';
 
 export default function Reports() {

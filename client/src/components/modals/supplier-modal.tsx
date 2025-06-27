@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { authenticatedRequest } from '@/lib/auth';
+import { authenticatedRequest } from '@/lib/auth-request';
 
 interface SupplierModalProps {
   open: boolean;

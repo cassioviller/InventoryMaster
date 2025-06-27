@@ -45,10 +45,13 @@ export function useAuth(): AuthContextType {
         return null;
       }
     },
+    enabled: !!localStorage.getItem('token'),
     retry: false,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    refetchInterval: false,
+    refetchIntervalInBackground: false,
     staleTime: Infinity,
     gcTime: Infinity
   });

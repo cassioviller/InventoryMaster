@@ -94,26 +94,22 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (25/06/2025)
-**SOLUÇÃO ROBUSTA IMPLEMENTADA BASEADA EM APLICAÇÃO FUNCIONAL**: 
-- DATABASE_URL definida diretamente no Dockerfile como ENV com valor padrão
-- Docker entrypoint reescrito para EXIGIR DATABASE_URL (não construir)
-- Sistema extrai componentes da DATABASE_URL (não usa variáveis separadas)
-- Verificação de conexão robusta com pg_isready e fallback TCP
-- Eliminados scripts de construção de URL (build-database-url.sh removido)
-- Imune a conflitos de variáveis PGDATABASE/PGUSER do EasyPanel
-- Abordagem "fonte única de verdade" para configuração de banco
-✅ Sistema completamente funcional seguindo melhores práticas
-✅ Conexão PostgreSQL via environment variables exclusivamente
-✅ Teste de conexão independente implementado e validado
-✅ Login API funcionando perfeitamente (200 OK) - Teste realizado em 25/06/2025
-✅ Autenticação JWT operacional com verificação de token
-✅ Endpoints protegidos respondendo corretamente
-✅ Error handling robusto implementado
-✅ Logs detalhados para diagnóstico
-✅ Solução definitiva para erro "axiom does not exist" - Validação forçada implementada
-✅ Script de validação crítica previne configurações incorretas do EasyPanel
-✅ Pronto para deploy no EasyPanel
+## Status Atual (27/06/2025)
+**CONFIGURAÇÃO DEFINITIVA IMPLEMENTADA - BASEADA NO PROJETO DE COMISSÕES**:
+- Replicada configuração exata que funcionou no projeto de comissões
+- `.env` com DATABASE_URL limpo (cassio:123@viajey_almo:5432/axiom)
+- `Dockerfile` sem ENV hardcoded, usando script de entrada
+- `docker-entrypoint.sh` com validação pg_isready e npm run db:push
+- `drizzle.config.ts` com dotenv/config importado
+- `server/db.ts` usando postgres-js com SSL condicional
+- Sistema inicializado sem db-production-only.ts (removido)
+✅ Sistema completamente funcional (27/06/2025 13:18)
+✅ Conexão PostgreSQL estabelecida com postgres-js
+✅ Login API funcionando perfeitamente (200 OK)
+✅ Token JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+✅ Usuário cassio autenticado como super_admin
+✅ Configuração limpa e estável baseada em referência funcional
+✅ Pronto para deploy seguindo padrão do projeto de comissões
 
 ## Sistema Finalizado (24/06/2025)
 - ✅ Conexão PostgreSQL funcionando perfeitamente

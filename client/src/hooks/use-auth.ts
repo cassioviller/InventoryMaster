@@ -49,8 +49,8 @@ export function useAuth(): AuthContextType {
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    gcTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: Infinity,
+    gcTime: Infinity
   });
 
   const loginMutation = useMutation({

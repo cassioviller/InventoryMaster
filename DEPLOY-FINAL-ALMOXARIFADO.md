@@ -88,6 +88,7 @@ SESSION_SECRET=almoxarifado-secret-2024
 ✅ **PROTEÇÃO IMPLEMENTADA**: Validação de DATABASE_URL em produção
 ✅ **DEPLOY SEGURO**: Sistema rejeita fallback incorreto
 ✅ **VALIDAÇÃO CONFIRMADA**: Logs do EasyPanel mostram proteção funcionando
+✅ **CORREÇÃO FINAL**: Usuario e banco corrigidos para "almoxarifado"
 ✅ **PRÓXIMO PASSO**: Configurar DATABASE_URL no EasyPanel
 
 ## Deploy Realizado - Próximos Passos
@@ -99,7 +100,7 @@ SESSION_SECRET=almoxarifado-secret-2024
 ### Para finalizar o deploy:
 1. **No EasyPanel**, configure a variável de ambiente:
    ```
-   DATABASE_URL=postgres://estruturas:1234@viajey_cassio:5432/almoxarifado?sslmode=disable
+   DATABASE_URL=postgres://almoxarifado:1234@viajey_cassio:5432/almoxarifado?sslmode=disable
    ```
 2. **Após configurar**, o sistema criará automaticamente os usuários:
    - `cassio/1234` (Super Admin)

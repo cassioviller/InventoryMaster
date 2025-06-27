@@ -110,7 +110,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ✅ Token JWT gerado e validado com sucesso
 ✅ Usuário cassio autenticado como super_admin
 ✅ Configuração limpa e estável baseada em referência funcional
-✅ Credenciais de produção atualizadas: estruturas:1234@viajey_cassio:5432/almoxarifado
+✅ Credenciais de produção atualizadas: almoxarifado:1234@viajey_cassio:5432/almoxarifado
 ✅ **DEPLOY REALIZADO COM SUCESSO** - Sistema online no EasyPanel
 ✅ Conexão PostgreSQL funcionando em produção (viajey_cassio:5432)
 ✅ Migrações executadas automaticamente no deploy
@@ -131,6 +131,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ✅ Sistema pronto para deploy final no EasyPanel
 ✅ **VALIDAÇÃO CONFIRMADA**: Logs mostram rejeição de fallback (conforme esperado)
 ✅ Deploy funcionando - aguarda apenas DATABASE_URL correta no EasyPanel
+✅ **CORREÇÃO APLICADA**: Usuario e banco corrigidos para "almoxarifado"
 
 ## Sistema Finalizado (24/06/2025)
 - ✅ Conexão PostgreSQL funcionando perfeitamente

@@ -2,10 +2,8 @@ import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from "@shared/schema";
 
-// Em desenvolvimento usar Neon, em produção usar EasyPanel
-const url = process.env.NODE_ENV === 'production' 
-  ? process.env.DATABASE_URL!
-  : process.env.DATABASE_URL || 'postgresql://neondb_owner:7YPEYyLMlk1d@ep-fancy-wave-a5f1svp6.us-east-2.aws.neon.tech/neondb?sslmode=require';
+// Usar sempre DATABASE_URL sem fallback
+const url = process.env.DATABASE_URL;
 
 if (!url) throw new Error('DATABASE_URL não definida');
 

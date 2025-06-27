@@ -7,6 +7,14 @@ export async function createDefaultUsers() {
   try {
     console.log('🔄 Verificando usuários padrão...');
     
+    // Verificar DATABASE_URL para evitar fallback
+    const dbUrl = process.env.DATABASE_URL;
+    if (!dbUrl || !dbUrl.includes('viajey_cassio')) {
+      console.error('❌ ERRO: DATABASE_URL incorreta ou fallback ativado!');
+      console.error('URL atual:', dbUrl?.replace(/:[^:@]*@/, ':***@'));
+      return;
+    }
+    
     // Verificar se já existem usuários
     const existingUsers = await db.select({ username: users.username }).from(users).limit(1);
     

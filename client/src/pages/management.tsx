@@ -64,25 +64,37 @@ export default function Management() {
   const { data: materialsData, isLoading: materialsLoading } = useQuery({
     queryKey: ['/api/materials', searchQuery, selectedCategory],
     queryFn: async () => {
-      let url = '/api/materials';
-      const params = new URLSearchParams();
-      if (searchQuery) params.append('search', searchQuery);
-      if (selectedCategory) params.append('categoryId', selectedCategory);
-      if (params.toString()) url += '?' + params.toString();
-      
-      const res = await authenticatedRequest(url);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        let url = '/api/materials';
+        const params = new URLSearchParams();
+        if (searchQuery) params.append('search', searchQuery);
+        if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
+        if (params.toString()) url += '?' + params.toString();
+        
+        const res = await authenticatedRequest(url);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching materials:', error);
+        return [];
+      }
     },
+    enabled: !!localStorage.getItem('token'),
   });
 
   const { data: categoriesData } = useQuery({
     queryKey: ['/api/categories'],
     queryFn: async () => {
-      const res = await authenticatedRequest('/api/categories');
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        const res = await authenticatedRequest('/api/categories');
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        return [];
+      }
     },
+    enabled: !!localStorage.getItem('token'),
   });
 
   const materials = materialsData || [];
@@ -91,40 +103,55 @@ export default function Management() {
   const { data: employeesData, isLoading: employeesLoading } = useQuery({
     queryKey: ['/api/employees', searchQuery],
     queryFn: async () => {
-      let url = '/api/employees';
-      if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-      
-      const res = await authenticatedRequest(url);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        let url = '/api/employees';
+        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
+        
+        const res = await authenticatedRequest(url);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching employees:', error);
+        return [];
+      }
     },
-    enabled: activeTab === 'employees',
+    enabled: activeTab === 'employees' && !!localStorage.getItem('token'),
   });
 
   const { data: suppliersData, isLoading: suppliersLoading } = useQuery({
     queryKey: ['/api/suppliers', searchQuery],
     queryFn: async () => {
-      let url = '/api/suppliers';
-      if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-      
-      const res = await authenticatedRequest(url);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        let url = '/api/suppliers';
+        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
+        
+        const res = await authenticatedRequest(url);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching suppliers:', error);
+        return [];
+      }
     },
-    enabled: activeTab === 'suppliers',
+    enabled: activeTab === 'suppliers' && !!localStorage.getItem('token'),
   });
 
   const { data: thirdPartiesData, isLoading: thirdPartiesLoading } = useQuery({
     queryKey: ['/api/third-parties', searchQuery],
     queryFn: async () => {
-      let url = '/api/third-parties';
-      if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-      
-      const res = await authenticatedRequest(url);
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      try {
+        let url = '/api/third-parties';
+        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
+        
+        const res = await authenticatedRequest(url);
+        const data = await res.json();
+        return Array.isArray(data) ? data : [];
+      } catch (error) {
+        console.error('Error fetching third parties:', error);
+        return [];
+      }
     },
-    enabled: activeTab === 'third-parties',
+    enabled: activeTab === 'third-parties' && !!localStorage.getItem('token'),
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
@@ -281,7 +308,7 @@ export default function Management() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as categorias</SelectItem>
-                    {(categories || []).map((category) => (
+                    {Array.isArray(categories) && categories.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name}
                       </SelectItem>

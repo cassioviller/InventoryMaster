@@ -35,7 +35,7 @@ function authenticateToken(req: AuthenticatedRequest, res: Response, next: NextF
 
 // Middleware to verify admin role
 function requireAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  if (req.user?.role !== 'admin') {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'super_admin') {
     return res.status(403).json({ message: 'Admin access required' });
   }
   next();

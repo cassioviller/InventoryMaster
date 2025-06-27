@@ -1,0 +1,79 @@
+Olá, Agente! Preciso que você ajuste todo o setup de conexão ao PostgreSQL e deploy via Docker neste projeto, usando exatamente o mesmo padrão que deu certo no repositório de comissões. Segue o passo-a-passo completo:
+
+---
+
+1. **.env**  
+   - Mantenha **apenas** estas linhas (desligue “Criar arquivo .env” no painel):  
+     ```
+     NODE_ENV=production
+     DATABASE_URL=postgres://estruturas:1234@viajey_cassio:5432/almoxarifado?sslmode=disable
+     PORT=5000
+     ```
+   - Remova todo e qualquer outro `ENV DATABASE_URL` ou variáveis duplicadas.
+
+2. **Dockerfile**  
+   - Use `node:20-slim` como base.  
+   - Instale apenas `postgresql-client`, `wget`, `curl`.  
+   - Copie e instale dependências (`COPY package*.json && npm ci`).  
+   - Copie o código (`COPY . .`), torne o entrypoint executável (`chmod +x docker-entrypoint.sh`), rode `npm run build`.  
+   - **Remova** qualquer linha que defina `ENV DATABASE_URL=…` com fallback interno.  
+   - Deixe apenas:  
+     ```dockerfile
+     EXPOSE 5000
+     ENTRYPOINT ["./docker-entrypoint.sh"]
+     CMD ["npm","run","start"]
+     ```
+
+3. **docker-entrypoint.sh**  
+   - No topo:
+     ```bash
+     #!/bin/bash
+     set -e
+     ```
+   - Logo após, garanta que a URL é a certa e falhe rápido se não for:
+     ```bash
+     if echo "$DATABASE_URL" | grep -q "://estruturas:1234@"; then
+       echo "❌ ERRO: DATABASE_URL incorreta ou fallback ativado!"
+       exit 1
+     fi
+     ```
+   - Em seguida, aguarde o Postgres:
+     ```bash
+     MAX=30; i=0
+     until pg_isready -d "$DATABASE_URL" > /dev/null 2>&1 || [ $i -ge $MAX ]; do
+       echo "Aguardando Postgres… ($i/$MAX)"; sleep 2; i=$((i+1))
+     done
+     [ $i -ge $MAX ] && { echo "Falha ao conectar ao Postgres"; exit 1; }
+     echo "Postgres pronto!"
+     ```
+   - Execute migrações:
+     ```bash
+     npm run db:push
+     ```
+   - Finalmente, inicie a aplicação:
+     ```bash
+     exec "$@"
+     ```
+
+4. **drizzle.config.ts**  
+   - Logo no topo, adicione:
+     ```ts
+     import 'dotenv/config';
+     ```
+   - Mantenha apenas `process.env.DATABASE_URL` (sem fallback).
+
+5. **server/db.ts**  
+   Substitua a lógica atual por esta:
+   ```ts
+   import postgres from 'postgres';
+   import { drizzle } from 'drizzle-orm/postgres-js';
+   const url = process.env.DATABASE_URL!;
+   if (!url) throw new Error('DATABASE_URL não definida');
+   console.log(`Conectando ao banco: ${url.replace(/:[^:@]*@/,':***@')}`);
+   const sql = postgres(url, {
+     ssl: url.includes('sslmode=require'),
+     max: 10,
+     connect_timeout: 10,
+     idle_timeout: 30,
+   });
+   export const db = drizzle(sql);

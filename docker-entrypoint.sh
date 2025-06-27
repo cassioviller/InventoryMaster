@@ -1,66 +1,33 @@
 #!/bin/bash
+set -e
 
-# Configuração do ambiente
-export NODE_ENV=${NODE_ENV:-production}
-export PORT=${PORT:-5000}
-
-echo "=== Iniciando aplicação em modo: $NODE_ENV ==="
-
-# Verifica se DATABASE_URL está definido
-if [ -z "$DATABASE_URL" ]; then
-  echo "ERRO: Variável DATABASE_URL não está definida!"
+# Verificar se a URL está correta (sem fallback)
+if ! echo "$DATABASE_URL" | grep -q "://estruturas:1234@"; then
+  echo "❌ ERRO: DATABASE_URL incorreta ou fallback ativado!"
+  echo "URL atual: ${DATABASE_URL//:*@/:***@}"
   exit 1
 fi
 
-# Verifica se o banco de dados está acessível
-echo "Verificando conexão com o banco de dados..."
-MAX_ATTEMPTS=30
-COUNTER=0
+echo "✅ DATABASE_URL correta detectada"
 
-# Tenta extrair informações de conexão do DATABASE_URL
-PGHOST=$(echo $DATABASE_URL | sed -E 's/^.*@([^:]+):.*/\1/' 2>/dev/null || echo "localhost")
-PGPORT=$(echo $DATABASE_URL | sed -E 's/^.*:([0-9]+).*/\1/' 2>/dev/null || echo "5432")
-PGUSER=$(echo $DATABASE_URL | sed -E 's/^.*:\/\/([^:]+):.*/\1/' 2>/dev/null || echo "postgres")
-
-echo "Tentando conectar a: Host=$PGHOST, Porta=$PGPORT, Usuário=$PGUSER"
-
-# Função para verificar conexão de forma segura
-check_db_connection() {
-  # Se tiver SSL, usamos curl para testar
-  if [[ "$DATABASE_URL" == *"sslmode=require"* ]]; then
-    curl -s "https://$PGHOST:$PGPORT" > /dev/null 2>&1
-    return $?
-  else
-    # Se não tiver SSL, usamos pg_isready
-    pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" > /dev/null 2>&1
-    return $?
-  fi
-}
-
-# Loop de tentativas
-until check_db_connection || [ $COUNTER -eq $MAX_ATTEMPTS ]
-do
-  echo "Aguardando banco de dados... ($COUNTER/$MAX_ATTEMPTS)"
+# Aguardar PostgreSQL
+MAX=30
+i=0
+until pg_isready -d "$DATABASE_URL" > /dev/null 2>&1 || [ $i -ge $MAX ]; do
+  echo "Aguardando Postgres… ($i/$MAX)"
   sleep 2
-  COUNTER=$((COUNTER+1))
+  i=$((i+1))
 done
 
-if [ $COUNTER -eq $MAX_ATTEMPTS ]; then
-  echo "Falha ao conectar ao banco de dados!"
-  echo "URL do banco: ${DATABASE_URL//:*@/:***@}"
+if [ $i -ge $MAX ]; then
+  echo "Falha ao conectar ao Postgres"
   exit 1
 fi
 
-echo "Banco de dados conectado com sucesso!"
+echo "Postgres pronto!"
 
-# Executa migrações do banco de dados
-echo "Executando migrações do banco de dados..."
+# Executar migrações
 npm run db:push
 
-# Aguarda um pouco para garantir que as tabelas foram criadas
-echo "Aguardando estabilização do banco..."
-sleep 3
-
-# Inicia a aplicação
-echo "Iniciando aplicação..."
+# Iniciar aplicação
 exec "$@"

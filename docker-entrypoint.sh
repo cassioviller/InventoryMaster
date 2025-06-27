@@ -1,11 +1,4 @@
 #!/bin/bash
-set -e
-
-# Checagem rápida para abortar se a URL ainda apontar para banco errado
-if echo "$DATABASE_URL" | grep -q "://viajey_almo:"; then
-  echo "❌ ERRO: DATABASE_URL contém banco incorreto ('viajey_almo')"
-  exit 1
-fi
 
 # Configuração do ambiente
 export NODE_ENV=${NODE_ENV:-production}

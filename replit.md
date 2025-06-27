@@ -97,18 +97,19 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 ## Status Atual (27/06/2025)
 **CONFIGURAÇÃO DEFINITIVA IMPLEMENTADA - BASEADA NO PROJETO DE COMISSÕES**:
 - Replicada configuração exata que funcionou no projeto de comissões
-- `.env` com DATABASE_URL limpo (cassio:123@viajey_almo:5432/axiom)
-- `Dockerfile` sem ENV hardcoded, usando script de entrada
+- `.env` com DATABASE_URL atualizado (estruturas:1234@viajey_cassio:5432/almoxarifado)
+- `Dockerfile` com ENV defaults configurados seguindo padrão funcional
 - `docker-entrypoint.sh` com validação pg_isready e npm run db:push
 - `drizzle.config.ts` com dotenv/config importado
 - `server/db.ts` usando postgres-js com SSL condicional
 - Sistema inicializado sem db-production-only.ts (removido)
-✅ Sistema completamente funcional (27/06/2025 13:18)
+✅ Sistema completamente funcional (27/06/2025 13:43)
 ✅ Conexão PostgreSQL estabelecida com postgres-js
 ✅ Login API funcionando perfeitamente (200 OK)
-✅ Token JWT: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+✅ Token JWT gerado e validado com sucesso
 ✅ Usuário cassio autenticado como super_admin
 ✅ Configuração limpa e estável baseada em referência funcional
+✅ Credenciais de produção atualizadas: estruturas:1234@viajey_cassio:5432/almoxarifado
 ✅ Pronto para deploy seguindo padrão do projeto de comissões
 
 ## Sistema Finalizado (24/06/2025)

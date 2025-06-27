@@ -20,6 +20,9 @@ const queryClient = postgres(process.env.DATABASE_URL, {
   idle_timeout: 30 // Timeout de inatividade
 });
 
+// Nota: Para deploys com EasyPanel, substituir a URL para:
+// postgres://estruturas:1234@viajey_cassio:5432/almoxarifado?sslmode=disable
+
 export const db = drizzle(queryClient, { schema });
 
 // Função para verificar conexão

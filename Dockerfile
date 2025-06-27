@@ -23,6 +23,11 @@ RUN npm run build
 # Expor a porta utilizada pelo aplicativo
 EXPOSE 5000
 
+# Valores padrão para variáveis de ambiente
+ENV DATABASE_URL=${DATABASE_URL:-postgres://estruturas:1234@viajey_cassio:5432/almoxarifado?sslmode=disable}
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV PORT=${PORT:-5000}
+
 # Usar o script de entrada para inicialização
 ENTRYPOINT ["./docker-entrypoint.sh"]
 

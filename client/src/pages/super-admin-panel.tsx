@@ -1,20 +1,101 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { UserPlus, Users, Settings } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { UserPlus, Users, Settings, Edit, Trash2 } from 'lucide-react';
 import { UserModal } from '@/components/modals/user-modal';
 import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+interface User {
+  id: number;
+  username: string;
+  role: string;
+  createdAt: string;
+}
 
 export default function SuperAdminPanel() {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deleteUserId, setDeleteUserId] = useState<number | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    username: '',
+    role: '',
+    password: ''
+  });
+  
   const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['/api/users'],
     enabled: !!localStorage.getItem('token'),
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      return apiRequest(`/api/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Sucesso",
+        description: "Usuário atualizado com sucesso",
+      });
+      setIsEditDialogOpen(false);
+      setEditingUser(null);
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar usuário",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: number) => {
+      return apiRequest(`/api/users/${id}`, {
+        method: 'DELETE',
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      toast({
+        title: "Sucesso",
+        description: "Usuário excluído com sucesso",
+      });
+      setIsDeleteDialogOpen(false);
+      setDeleteUserId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Erro",
+        description: "Falha ao excluir usuário",
+        variant: "destructive",
+      });
+    },
   });
 
   const getRoleBadgeColor = (role: string) => {
@@ -40,6 +121,49 @@ export default function SuperAdminPanel() {
         return 'Usuário';
       default:
         return role;
+    }
+  };
+
+  const handleEditUser = (userToEdit: User) => {
+    setEditingUser(userToEdit);
+    setEditForm({
+      username: userToEdit.username,
+      role: userToEdit.role,
+      password: ''
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    setDeleteUserId(userId);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleUpdateUser = () => {
+    if (!editingUser || !editForm.username) {
+      toast({
+        title: "Erro",
+        description: "Username é obrigatório",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const updateData: any = {
+      username: editForm.username,
+      role: editForm.role
+    };
+    
+    if (editForm.password) {
+      updateData.password = editForm.password;
+    }
+
+    updateUserMutation.mutate({ id: editingUser.id, data: updateData });
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteUserId) {
+      deleteUserMutation.mutate(deleteUserId);
     }
   };
 

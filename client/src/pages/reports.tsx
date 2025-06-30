@@ -261,7 +261,21 @@ export default function Reports() {
 
       const response = await authenticatedRequest(`/api/reports/financial-stock?${params}`);
       const data = await response.json();
-      setReportData(Array.isArray(data) ? data : []);
+      
+      // Processar dados para calcular valores corretamente
+      const processedData = data.map((item: any) => {
+        const unitPrice = parseFloat(item.unitPrice || '0');
+        const currentStock = item.currentStock || 0;
+        const subtotal = unitPrice * currentStock;
+        
+        return {
+          ...item,
+          unitPrice: unitPrice,
+          subtotal: subtotal
+        };
+      });
+      
+      setReportData(Array.isArray(processedData) ? processedData : []);
       setActiveReport('financial');
     } catch (error) {
       console.error('Erro ao gerar relatório:', error);

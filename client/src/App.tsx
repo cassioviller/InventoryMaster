@@ -14,6 +14,7 @@ import MaterialExit from "@/pages/material-exit";
 import Management from "@/pages/management";
 import Reports from "@/pages/reports";
 import FinancialReports from "@/pages/financial-reports";
+import CostCenterReports from "@/pages/cost-center-reports";
 import SuperAdminPanel from "@/pages/super-admin-panel";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
@@ -99,6 +100,14 @@ function Router() {
         <ProtectedRoute>
           <AuthenticatedLayout>
             <FinancialReports />
+          </AuthenticatedLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/cost-center-reports">
+        <ProtectedRoute>
+          <AuthenticatedLayout>
+            <CostCenterReports />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>

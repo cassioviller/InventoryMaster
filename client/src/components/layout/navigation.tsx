@@ -4,7 +4,8 @@ import {
   ArrowUp, 
   Settings, 
   BarChart3,
-  DollarSign
+  DollarSign,
+  Building2
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -40,6 +41,11 @@ const navItems = [
     path: '/financial-reports',
     label: 'Relatório Financeiro',
     icon: DollarSign,
+  },
+  {
+    path: '/cost-center-reports',
+    label: 'Centro de Custo',
+    icon: Building2,
   },
 ];
 

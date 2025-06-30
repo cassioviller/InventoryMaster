@@ -1,0 +1,162 @@
+# Prompt para Implementação de Centro de Custos e Relatório de Movimentações
+
+## Contexto
+
+O sistema InventoryMaster precisa implementar um módulo completo de Centro de Custos para permitir controle financeiro por departamento/projeto, além de modificar o Relatório de Movimentações Gerais para incluir informações de valores.
+
+## IMPLEMENTAÇÃO 1: Cadastro de Centro de Custos
+
+### Funcionalidade Principal
+Criar um sistema completo de cadastro e gestão de centros de custo que permita organizar e controlar gastos por departamento, projeto ou setor específico.
+
+### Características do Centro de Custo
+- **Código único**: Identificador alfanumérico (ex: MANUT001, PROD002)
+- **Nome descritivo**: Nome completo do centro (ex: "Manutenção Predial", "Produção Linha A")
+- **Descrição detalhada**: Explicação do propósito e escopo do centro
+- **Departamento**: Classificação por área (Manutenção, Produção, Administração, etc.)
+- **Responsável**: Pessoa encarregada pelo centro de custo
+- **Orçamento mensal**: Valor limite para gastos mensais
+- **Orçamento anual**: Valor limite para gastos anuais
+- **Status**: Ativo ou Inativo
+
+### Interface de Cadastro
+- **Página dedicada** no menu "Cadastros > Centros de Custo"
+- **Formulário de criação** com todos os campos necessários
+- **Listagem completa** com filtros por departamento, status e busca por código/nome
+- **Ações disponíveis**: Criar, Editar, Ativar/Desativar, Visualizar Relatório
+- **Validações**: Código único, campos obrigatórios, formato de valores
+
+### Funcionalidades da Listagem
+- **Filtros avançados**: Por departamento, status (ativo/inativo), busca textual
+- **Ordenação**: Por código, nome, departamento, data de criação
+- **Paginação**: Para grandes volumes de centros
+- **Informações resumidas**: Código, nome, departamento, responsável, orçamento, status
+- **Indicadores visuais**: Status ativo/inativo, alertas de orçamento
+
+## IMPLEMENTAÇÃO 2: Modificações no Relatório de Movimentações Gerais
+
+### Novas Colunas Obrigatórias
+- **Valor Unitário (R$)**: Preço unitário do material na movimentação
+- **Valor Total (R$)**: Quantidade multiplicada pelo valor unitário
+- **Centro de Custo**: Nome ou código do centro responsável pela movimentação
+
+### Estrutura Atualizada do Relatório
+O relatório deve exibir as colunas na seguinte ordem:
+1. Data
+2. Tipo (Entrada/Saída)
+3. Material
+4. Quantidade
+5. **Valor Unitário (R$)** - NOVO
+6. **Valor Total (R$)** - NOVO
+7. Origem/Destino
+8. **Centro de Custo** - NOVO
+9. Responsável
+
+### Novos Filtros no Relatório
+- **Por Centro de Custo**: Dropdown com todos os centros cadastrados
+- **Por Faixa de Valor**: Campos de valor mínimo e máximo
+- **Por Departamento**: Filtro baseado no departamento do centro de custo
+
+### Totalizadores e Resumos
+- **Total de Entradas**: Soma de todos os valores de entrada no período
+- **Total de Saídas**: Soma de todos os valores de saída no período
+- **Saldo Líquido**: Diferença entre entradas e saídas
+- **Agrupamento por Centro**: Subtotais por centro de custo
+
+## IMPLEMENTAÇÃO 3: Integração com Movimentações
+
+### Entrada de Material
+- **Campo obrigatório**: Centro de Custo deve ser selecionado
+- **Dropdown dinâmico**: Listar apenas centros ativos
+- **Cálculo automático**: Valor total = quantidade × valor unitário
+- **Validação**: Centro deve estar ativo no momento da entrada
+
+### Saída de Material
+- **Campo obrigatório**: Centro de Custo de destino
+- **Valor automático**: Usar preço do lote (FIFO ou selecionado)
+- **Controle orçamentário**: Alertar se exceder orçamento do centro
+- **Validação**: Verificar se centro tem orçamento disponível
+
+## IMPLEMENTAÇÃO 4: Relatórios por Centro de Custo
+
+### Relatório Individual por Centro
+- **Período selecionável**: Mensal, trimestral, anual ou personalizado
+- **Resumo financeiro**: Orçamento vs Realizado vs Saldo
+- **Indicador percentual**: % do orçamento utilizado
+- **Alertas visuais**: Cores diferentes para níveis de utilização (verde <70%, amarelo 70-90%, vermelho >90%)
+
+### Informações Detalhadas
+- **Materiais mais consumidos**: Top 10 materiais por valor
+- **Histórico de movimentações**: Todas as entradas e saídas do período
+- **Comparativo mensal**: Evolução dos gastos mês a mês
+- **Análise de eficiência**: Custo por unidade produzida (se aplicável)
+
+### Relatório Consolidado
+- **Ranking de centros**: Ordenação por consumo total
+- **Comparativo de departamentos**: Gastos por área
+- **Análise de orçamento**: Centros que mais extrapolaram limites
+- **Tendências**: Crescimento ou redução de gastos por centro
+
+## IMPLEMENTAÇÃO 5: Dashboard de Controle
+
+### Widgets de Monitoramento
+- **Top 5 centros**: Maiores consumidores do período
+- **Alertas de orçamento**: Centros próximos do limite (>80%)
+- **Gráfico de distribuição**: Gastos por departamento
+- **Indicadores gerais**: Total gasto, economia, extrapolações
+
+### Funcionalidades de Gestão
+- **Notificações automáticas**: Alertas quando orçamento atingir 80% e 100%
+- **Exportação de dados**: Excel e PDF dos relatórios
+- **Histórico de alterações**: Log de modificações nos centros
+- **Backup de configurações**: Possibilidade de restaurar centros desativados
+
+## IMPLEMENTAÇÃO 6: Validações e Regras de Negócio
+
+### Validações de Cadastro
+- **Código único**: Não permitir códigos duplicados
+- **Formato do código**: Apenas letras maiúsculas e números
+- **Campos obrigatórios**: Código e nome são essenciais
+- **Valores positivos**: Orçamentos não podem ser negativos
+
+### Regras de Movimentação
+- **Centro obrigatório**: Toda movimentação deve ter centro associado
+- **Centro ativo**: Apenas centros ativos podem receber movimentações
+- **Controle de orçamento**: Alertar (não bloquear) quando exceder limite
+- **Rastreabilidade**: Manter histórico de qual centro foi usado
+
+### Regras de Exclusão
+- **Não permitir exclusão**: Centros com movimentações não podem ser deletados
+- **Desativação**: Apenas desativar centros em uso
+- **Transferência**: Possibilidade de transferir movimentações entre centros
+- **Arquivamento**: Manter dados históricos de centros desativados
+
+## IMPLEMENTAÇÃO 7: Melhorias na Experiência do Usuário
+
+### Interface Intuitiva
+- **Busca inteligente**: Buscar por código ou nome simultaneamente
+- **Autocomplete**: Sugestões durante digitação
+- **Feedback visual**: Loading, sucesso e erro claramente indicados
+- **Responsividade**: Funcionar bem em desktop e mobile
+
+### Facilidades Operacionais
+- **Importação em lote**: Permitir cadastro de múltiplos centros via Excel
+- **Templates**: Modelos pré-definidos para tipos comuns de centro
+- **Duplicação**: Criar novo centro baseado em existente
+- **Histórico de ações**: Log de todas as operações realizadas
+
+## Resultado Esperado
+
+Após a implementação completa:
+
+✅ **Sistema de Centro de Custos** totalmente funcional
+✅ **Relatório de Movimentações** com informações financeiras completas
+✅ **Controle orçamentário** por departamento/projeto
+✅ **Rastreabilidade** de todos os gastos por centro
+✅ **Relatórios gerenciais** detalhados para tomada de decisão
+✅ **Interface intuitiva** para gestão eficiente
+✅ **Validações robustas** para integridade dos dados
+✅ **Alertas automáticos** para controle de orçamento
+
+O sistema deve permitir que gestores tenham controle total sobre os custos de cada área, facilitando a análise de eficiência, planejamento orçamentário e tomada de decisões estratégicas.
+

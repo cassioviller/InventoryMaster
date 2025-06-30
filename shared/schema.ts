@@ -1,13 +1,14 @@
-import { pgTable, text, integer, serial, timestamp, boolean, decimal, pgEnum } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
-import { z } from 'zod';
+import { pgTable, serial, text, integer, timestamp, boolean, decimal, pgEnum } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { createInsertSchema, createSelectSchema } from "drizzle-zod";
+import { z } from "zod";
 
 // Enums
 export const userRoleEnum = pgEnum('user_role', ['super_admin', 'admin', 'user']);
 export const movementTypeEnum = pgEnum('movement_type', ['entry', 'exit']);
 export const originTypeEnum = pgEnum('origin_type', ['supplier', 'employee_return', 'third_party_return']);
 export const destinationTypeEnum = pgEnum('destination_type', ['employee', 'third_party']);
+export const documentTypeEnum = pgEnum('document_type', ['cpf', 'cnpj']);
 
 // Users table
 export const users = pgTable("users", {
@@ -33,11 +34,11 @@ export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   cnpj: text("cnpj"),
-  contact: text("contact"),
-  phone: text("phone"),
   email: text("email"),
+  phone: text("phone"),
   address: text("address"),
-  active: boolean("active").default(true).notNull(),
+  notes: text("notes"),
+  isActive: boolean("is_active").notNull().default(true),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -46,14 +47,13 @@ export const suppliers = pgTable("suppliers", {
 export const materials = pgTable("materials", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  description: text("description"),
   categoryId: integer("category_id").references(() => categories.id),
-  unit: text("unit").notNull(),
-  quantity: integer("quantity").default(0).notNull(),
-  minQuantity: integer("min_quantity").default(0).notNull(),
-  unitPrice: decimal("unit_price").default('0').notNull(),
-  totalValue: decimal("total_value").default('0').notNull(),
-  location: text("location"),
+  currentStock: integer("current_stock").notNull().default(0),
+  minimumStock: integer("minimum_stock").notNull().default(0),
+  unit: text("unit").notNull().default('un'),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).default('0.00'),
+  description: text("description"),
+  lastSupplierId: integer("last_supplier_id").references(() => suppliers.id),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -62,11 +62,10 @@ export const materials = pgTable("materials", {
 export const employees = pgTable("employees", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  position: text("position"),
   department: text("department"),
   email: text("email"),
   phone: text("phone"),
-  active: boolean("active").default(true).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -75,13 +74,12 @@ export const employees = pgTable("employees", {
 export const thirdParties = pgTable("third_parties", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type").notNull(),
   document: text("document"),
-  contact: text("contact"),
+  documentType: documentTypeEnum("document_type").default('cpf'),
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
-  active: boolean("active").default(true).notNull(),
+  isActive: boolean("is_active").notNull().default(true),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -89,28 +87,28 @@ export const thirdParties = pgTable("third_parties", {
 // Material movements table
 export const materialMovements = pgTable("material_movements", {
   id: serial("id").primaryKey(),
-  materialId: integer("material_id").references(() => materials.id).notNull(),
   type: movementTypeEnum("type").notNull(),
-  quantity: integer("quantity").notNull(),
-  unitPrice: decimal("unit_price").default('0').notNull(),
-  totalValue: decimal("total_value").default('0').notNull(),
-  
-  // Entry fields
+  date: timestamp("date").defaultNow().notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  originType: originTypeEnum("origin_type"),
   supplierId: integer("supplier_id").references(() => suppliers.id),
-  
-  // Exit fields
-  employeeId: integer("employee_id").references(() => employees.id),
-  thirdPartyId: integer("third_party_id").references(() => thirdParties.id),
-  
-  // Return fields
   returnEmployeeId: integer("return_employee_id").references(() => employees.id),
   returnThirdPartyId: integer("return_third_party_id").references(() => thirdParties.id),
-  
-  // Common fields
-  observation: text("observation"),
-  userId: integer("user_id").references(() => users.id).notNull(),
-  ownerId: integer("owner_id").notNull().default(1),
+  destinationType: destinationTypeEnum("destination_type"),
+  destinationEmployeeId: integer("destination_employee_id").references(() => employees.id),
+  destinationThirdPartyId: integer("destination_third_party_id").references(() => thirdParties.id),
+  notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Movement items table (for multiple materials per movement)
+export const movementItems = pgTable("movement_items", {
+  id: serial("id").primaryKey(),
+  movementId: integer("movement_id").references(() => materialMovements.id).notNull(),
+  materialId: integer("material_id").references(() => materials.id).notNull(),
+  quantity: integer("quantity").notNull(),
+  unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
+  purpose: text("purpose"),
 });
 
 // Audit logs table
@@ -137,6 +135,7 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
 }));
 
 export const suppliersRelations = relations(suppliers, ({ many }) => ({
+  materials: many(materials),
   materialMovements: many(materialMovements),
 }));
 
@@ -145,47 +144,63 @@ export const materialsRelations = relations(materials, ({ one, many }) => ({
     fields: [materials.categoryId],
     references: [categories.id],
   }),
-  movements: many(materialMovements),
+  lastSupplier: one(suppliers, {
+    fields: [materials.lastSupplierId],
+    references: [suppliers.id],
+  }),
+  movementItems: many(movementItems),
 }));
 
 export const employeesRelations = relations(employees, ({ many }) => ({
-  materialMovements: many(materialMovements),
-  returnMovements: many(materialMovements),
+  returnMovements: many(materialMovements, { relationName: "employeeReturns" }),
+  destinationMovements: many(materialMovements, { relationName: "employeeDestinations" }),
 }));
 
 export const thirdPartiesRelations = relations(thirdParties, ({ many }) => ({
-  materialMovements: many(materialMovements),
-  returnMovements: many(materialMovements),
+  returnMovements: many(materialMovements, { relationName: "thirdPartyReturns" }),
+  destinationMovements: many(materialMovements, { relationName: "thirdPartyDestinations" }),
 }));
 
-export const materialMovementsRelations = relations(materialMovements, ({ one }) => ({
-  material: one(materials, {
-    fields: [materialMovements.materialId],
-    references: [materials.id],
+export const materialMovementsRelations = relations(materialMovements, ({ one, many }) => ({
+  user: one(users, {
+    fields: [materialMovements.userId],
+    references: [users.id],
   }),
   supplier: one(suppliers, {
     fields: [materialMovements.supplierId],
     references: [suppliers.id],
   }),
-  employee: one(employees, {
-    fields: [materialMovements.employeeId],
-    references: [employees.id],
-  }),
-  thirdParty: one(thirdParties, {
-    fields: [materialMovements.thirdPartyId],
-    references: [thirdParties.id],
-  }),
   returnEmployee: one(employees, {
     fields: [materialMovements.returnEmployeeId],
     references: [employees.id],
+    relationName: "employeeReturns",
   }),
   returnThirdParty: one(thirdParties, {
     fields: [materialMovements.returnThirdPartyId],
     references: [thirdParties.id],
+    relationName: "thirdPartyReturns",
   }),
-  user: one(users, {
-    fields: [materialMovements.userId],
-    references: [users.id],
+  destinationEmployee: one(employees, {
+    fields: [materialMovements.destinationEmployeeId],
+    references: [employees.id],
+    relationName: "employeeDestinations",
+  }),
+  destinationThirdParty: one(thirdParties, {
+    fields: [materialMovements.destinationThirdPartyId],
+    references: [thirdParties.id],
+    relationName: "thirdPartyDestinations",
+  }),
+  items: many(movementItems),
+}));
+
+export const movementItemsRelations = relations(movementItems, ({ one }) => ({
+  movement: one(materialMovements, {
+    fields: [movementItems.movementId],
+    references: [materialMovements.id],
+  }),
+  material: one(materials, {
+    fields: [movementItems.materialId],
+    references: [materials.id],
   }),
 }));
 
@@ -198,24 +213,21 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
 
 // Zod schemas for validation
 export const loginSchema = z.object({
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(1, 'Password is required'),
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
 });
 
 export const insertUserSchema = createInsertSchema(users, {
-  username: z.string().min(1, 'Username is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  role: z.enum(['super_admin', 'admin', 'user']).default('user'),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(4, "Password must be at least 4 characters"),
 }).omit({ id: true, createdAt: true });
 
 export const selectUserSchema = createSelectSchema(users);
 export type User = z.infer<typeof selectUserSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type LoginData = z.infer<typeof loginSchema>;
 
 export const insertCategorySchema = createInsertSchema(categories, {
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
+  name: z.string().min(1, "Name is required"),
 }).omit({ id: true, createdAt: true });
 
 export const selectCategorySchema = createSelectSchema(categories);
@@ -223,13 +235,7 @@ export type Category = z.infer<typeof selectCategorySchema>;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
 export const insertSupplierSchema = createInsertSchema(suppliers, {
-  name: z.string().min(1, 'Name is required'),
-  cnpj: z.string().optional(),
-  contact: z.string().optional(),
-  phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  address: z.string().optional(),
-  active: z.boolean().default(true),
+  name: z.string().min(1, "Name is required"),
 }).omit({ id: true, createdAt: true });
 
 export const selectSupplierSchema = createSelectSchema(suppliers);
@@ -237,27 +243,17 @@ export type Supplier = z.infer<typeof selectSupplierSchema>;
 export type InsertSupplier = z.infer<typeof insertSupplierSchema>;
 
 export const insertMaterialSchema = createInsertSchema(materials, {
-  name: z.string().min(1, 'Name is required'),
-  description: z.string().optional(),
-  categoryId: z.number().int().positive('Category is required'),
-  unit: z.string().min(1, 'Unit is required'),
-  quantity: z.number().int().min(0).default(0),
-  minQuantity: z.number().int().min(0).default(0),
-  unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid price format').default('0'),
-  location: z.string().optional(),
-}).omit({ id: true, createdAt: true, totalValue: true });
+  name: z.string().min(1, "Name is required"),
+  currentStock: z.number().min(0, "Stock cannot be negative"),
+  minimumStock: z.number().min(0, "Minimum stock cannot be negative"),
+}).omit({ id: true, createdAt: true });
 
 export const selectMaterialSchema = createSelectSchema(materials);
 export type Material = z.infer<typeof selectMaterialSchema>;
 export type InsertMaterial = z.infer<typeof insertMaterialSchema>;
 
 export const insertEmployeeSchema = createInsertSchema(employees, {
-  name: z.string().min(1, 'Name is required'),
-  position: z.string().optional(),
-  department: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().optional(),
-  active: z.boolean().default(true),
+  name: z.string().min(1, "Name is required"),
 }).omit({ id: true, createdAt: true });
 
 export const selectEmployeeSchema = createSelectSchema(employees);
@@ -265,14 +261,7 @@ export type Employee = z.infer<typeof selectEmployeeSchema>;
 export type InsertEmployee = z.infer<typeof insertEmployeeSchema>;
 
 export const insertThirdPartySchema = createInsertSchema(thirdParties, {
-  name: z.string().min(1, 'Name is required'),
-  type: z.string().min(1, 'Type is required'),
-  document: z.string().optional(),
-  contact: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  active: z.boolean().default(true),
+  name: z.string().min(1, "Name is required"),
 }).omit({ id: true, createdAt: true });
 
 export const selectThirdPartySchema = createSelectSchema(thirdParties);
@@ -281,26 +270,23 @@ export type InsertThirdParty = z.infer<typeof insertThirdPartySchema>;
 
 // Movement schemas
 export const movementItemSchema = z.object({
-  materialId: z.number().int().positive(),
-  quantity: z.number().int().positive(),
-  unitPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Invalid price format'),
+  materialId: z.number(),
+  quantity: z.number().min(1),
+  unitPrice: z.string(),
+  purpose: z.string().optional(),
 });
 
 export const createEntrySchema = z.object({
-  type: z.literal('entry'),
-  supplierId: z.number().int().positive(),
-  items: z.array(movementItemSchema).min(1, 'At least one item is required'),
+  supplierId: z.number(),
   observation: z.string().optional(),
+  items: z.array(movementItemSchema).min(1),
 });
 
 export const createExitSchema = z.object({
-  type: z.literal('exit'),
-  employeeId: z.number().int().positive().optional(),
-  thirdPartyId: z.number().int().positive().optional(),
-  items: z.array(movementItemSchema).min(1, 'At least one item is required'),
+  employeeId: z.number().optional(),
+  thirdPartyId: z.number().optional(),
   observation: z.string().optional(),
-}).refine(data => data.employeeId || data.thirdPartyId, {
-  message: 'Either employee or third party must be selected',
+  items: z.array(movementItemSchema).min(1),
 });
 
 export const selectMovementSchema = createSelectSchema(materialMovements);
@@ -312,13 +298,13 @@ export type MovementItem = z.infer<typeof movementItemSchema>;
 export const selectAuditLogSchema = createSelectSchema(auditLogs);
 export type AuditLog = z.infer<typeof selectAuditLogSchema>;
 
-// Type aliases
+// Type aliases for convenience
 export type UserRole = 'super_admin' | 'admin' | 'user';
 export type MovementType = 'entry' | 'exit';
 export type OriginType = 'supplier' | 'employee_return' | 'third_party_return';
 export type DestinationType = 'employee' | 'third_party';
 
-// Extended types with relations
+// Additional types for UI
 export type MaterialWithDetails = Material & {
   category?: Category;
   lastSupplier?: Supplier;

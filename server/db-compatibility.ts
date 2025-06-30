@@ -59,15 +59,63 @@ async function migrateCamelCaseToSnakeCase() {
   try {
     console.log('🔄 Iniciando migração de schema...');
     
-    // Renomear colunas da tabela users
-    await sql`ALTER TABLE users RENAME COLUMN "createdAt" TO created_at;`;
-    console.log('✅ users.createdAt → created_at');
+    // Definir todas as migrações necessárias de uma vez
+    const tableMigrations = [
+      { table: 'users', mappings: { 'createdAt': 'created_at', 'ownerId': 'owner_id' } },
+      { table: 'categories', mappings: { 'createdAt': 'created_at', 'ownerId': 'owner_id' } },
+      { table: 'materials', mappings: { 
+        'createdAt': 'created_at', 
+        'ownerId': 'owner_id',
+        'categoryId': 'category_id',
+        'currentStock': 'current_stock',
+        'minimumStock': 'minimum_stock',
+        'unitPrice': 'unit_price',
+        'lastSupplierId': 'last_supplier_id'
+      }},
+      { table: 'suppliers', mappings: { 
+        'createdAt': 'created_at', 
+        'ownerId': 'owner_id',
+        'isActive': 'is_active'
+      }},
+      { table: 'employees', mappings: { 
+        'createdAt': 'created_at', 
+        'ownerId': 'owner_id',
+        'isActive': 'is_active'
+      }},
+      { table: 'third_parties', mappings: { 
+        'createdAt': 'created_at', 
+        'ownerId': 'owner_id',
+        'isActive': 'is_active'
+      }},
+      { table: 'material_movements', mappings: { 
+        'createdAt': 'created_at'
+      }},
+      { table: 'audit_logs', mappings: { 
+        'createdAt': 'created_at', 
+        'ownerId': 'owner_id',
+        'userId': 'user_id',
+        'entityId': 'entity_id',
+        'ipAddress': 'ip_address',
+        'userAgent': 'user_agent'
+      }}
+    ];
     
-    // Verificar e migrar outras tabelas se necessário
-    const tables = ['categories', 'materials', 'suppliers', 'employees', 'third_parties', 'material_movements', 'audit_logs'];
-    
-    for (const table of tables) {
+    for (const { table, mappings } of tableMigrations) {
       try {
+        // Verificar se a tabela existe
+        const tableExists = await sql`
+          SELECT EXISTS (
+            SELECT FROM information_schema.tables 
+            WHERE table_name = ${table}
+          );
+        `;
+        
+        if (!tableExists[0]?.exists) {
+          console.log(`⚠️ Tabela ${table} não existe`);
+          continue;
+        }
+        
+        // Obter colunas existentes
         const tableColumns = await sql`
           SELECT column_name 
           FROM information_schema.columns 
@@ -76,31 +124,8 @@ async function migrateCamelCaseToSnakeCase() {
         
         const columnNames = tableColumns.map(row => row.column_name);
         
-        if (columnNames.includes('createdAt')) {
-          await sql`ALTER TABLE ${sql(table)} RENAME COLUMN "createdAt" TO created_at;`;
-          console.log(`✅ ${table}.createdAt → created_at`);
-        }
-        
-        if (columnNames.includes('ownerId')) {
-          await sql`ALTER TABLE ${sql(table)} RENAME COLUMN "ownerId" TO owner_id;`;
-          console.log(`✅ ${table}.ownerId → owner_id`);
-        }
-        
-        // Migrar outras colunas específicas conforme necessário
-        const columnMappings: Record<string, string> = {
-          'categoryId': 'category_id',
-          'currentStock': 'current_stock',
-          'minimumStock': 'minimum_stock',
-          'unitPrice': 'unit_price',
-          'lastSupplierId': 'last_supplier_id',
-          'isActive': 'is_active',
-          'userId': 'user_id',
-          'entityId': 'entity_id',
-          'ipAddress': 'ip_address',
-          'userAgent': 'user_agent'
-        };
-        
-        for (const [oldName, newName] of Object.entries(columnMappings)) {
+        // Executar migrações para esta tabela
+        for (const [oldName, newName] of Object.entries(mappings)) {
           if (columnNames.includes(oldName) && !columnNames.includes(newName)) {
             try {
               await sql`ALTER TABLE ${sql(table)} RENAME COLUMN ${sql(oldName)} TO ${sql(newName)};`;
@@ -112,7 +137,7 @@ async function migrateCamelCaseToSnakeCase() {
         }
         
       } catch (tableErr) {
-        console.log(`⚠️ Tabela ${table} não encontrada ou erro na migração:`, tableErr);
+        console.log(`⚠️ Erro ao processar tabela ${table}:`, tableErr);
       }
     }
     

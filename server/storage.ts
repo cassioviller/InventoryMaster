@@ -1138,9 +1138,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCostCenter(id: number, ownerId?: number): Promise<boolean> {
-    const conditions = ownerId ? and(eq(costCenters.id, id), eq(costCenters.ownerId, ownerId)) : eq(costCenters.id, id);
-    const result = await db.delete(costCenters).where(conditions);
-    return result.rowCount > 0;
+    try {
+      const conditions = ownerId ? and(eq(costCenters.id, id), eq(costCenters.ownerId, ownerId)) : eq(costCenters.id, id);
+      await db.delete(costCenters).where(conditions);
+      return true;
+    } catch (error) {
+      console.error('Error deleting cost center:', error);
+      return false;
+    }
   }
 
   async getCostCenterReport(costCenterId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {

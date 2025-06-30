@@ -12,6 +12,7 @@ import {
   insertSupplierSchema,
   insertEmployeeSchema,
   insertThirdPartySchema,
+  insertCostCenterSchema,
   createEntrySchema,
   createExitSchema,
   type User,
@@ -20,6 +21,7 @@ import {
   type Supplier,
   type Employee,
   type ThirdParty,
+  type CostCenter,
   type MaterialMovement,
   type CreateEntry,
   type CreateExit,
@@ -867,6 +869,110 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       res.status(500).json({ 
         message: "Failed to generate supplier tracking report",
         error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
+    }
+  });
+
+  // Cost Center routes
+  app.get("/api/cost-centers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const costCenters = await storage.getCostCenters(ownerId);
+      res.json(costCenters);
+    } catch (error) {
+      console.error('Error fetching cost centers:', error);
+      res.status(500).json({ message: "Failed to fetch cost centers" });
+    }
+  });
+
+  app.get("/api/cost-centers/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const costCenter = await storage.getCostCenter(id, ownerId);
+      
+      if (!costCenter) {
+        return res.status(404).json({ message: "Cost center not found" });
+      }
+      
+      res.json(costCenter);
+    } catch (error) {
+      console.error('Error fetching cost center:', error);
+      res.status(500).json({ message: "Failed to fetch cost center" });
+    }
+  });
+
+  app.post("/api/cost-centers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const validatedData = insertCostCenterSchema.parse(req.body);
+      
+      const costCenterData = {
+        ...validatedData,
+        ownerId: ownerId || 1
+      };
+      
+      const costCenter = await storage.createCostCenter(costCenterData);
+      res.status(201).json(costCenter);
+    } catch (error) {
+      console.error('Error creating cost center:', error);
+      res.status(400).json({ message: "Failed to create cost center" });
+    }
+  });
+
+  app.put("/api/cost-centers/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const validatedData = insertCostCenterSchema.partial().parse(req.body);
+      
+      const costCenter = await storage.updateCostCenter(id, validatedData, ownerId);
+      
+      if (!costCenter) {
+        return res.status(404).json({ message: "Cost center not found" });
+      }
+      
+      res.json(costCenter);
+    } catch (error) {
+      console.error('Error updating cost center:', error);
+      res.status(400).json({ message: "Failed to update cost center" });
+    }
+  });
+
+  app.delete("/api/cost-centers/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const success = await storage.deleteCostCenter(id, ownerId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Cost center not found" });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting cost center:', error);
+      res.status(500).json({ message: "Failed to delete cost center" });
+    }
+  });
+
+  // Cost Center Report route
+  app.get("/api/reports/cost-center", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const { costCenterId, startDate, endDate } = req.query;
+      
+      const costCenterIdNum = costCenterId ? parseInt(costCenterId as string) : undefined;
+      const startDateObj = startDate ? new Date(startDate as string) : undefined;
+      const endDateObj = endDate ? new Date(endDate as string) : undefined;
+      
+      const report = await storage.getCostCenterReport(costCenterIdNum, startDateObj, endDateObj, ownerId);
+      res.json(Array.isArray(report) ? report : []);
+    } catch (error) {
+      console.error('Error generating cost center report:', error);
+      res.status(500).json({ 
+        message: "Failed to generate cost center report",
+        error: process.env.NODE_ENV === 'development' ? error : undefined
       });
     }
   });

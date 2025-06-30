@@ -24,10 +24,11 @@ import { EmployeeModal } from '@/components/modals/employee-modal';
 import { SupplierModal } from '@/components/modals/supplier-modal';
 import { ThirdPartyModal } from '@/components/modals/third-party-modal';
 import { UserModal } from '@/components/modals/user-modal';
+import { CostCenterModal } from '@/components/modals/cost-center-modal';
 import { useAuth } from '@/hooks/use-auth';
-import type { Material, Category, Employee, Supplier, ThirdParty, User } from '@shared/schema';
+import type { Material, Category, Employee, Supplier, ThirdParty, User, CostCenter } from '@shared/schema';
 
-type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users';
+type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users' | 'cost-centers';
 
 const getTabItems = (canCreateUsers: boolean) => {
   const baseItems = [
@@ -36,6 +37,7 @@ const getTabItems = (canCreateUsers: boolean) => {
     { id: 'employees', label: 'Funcionários' },
     { id: 'suppliers', label: 'Fornecedores' },
     { id: 'third-parties', label: 'Terceiros' },
+    { id: 'cost-centers', label: 'Centros de Custo' },
   ];
   
   if (canCreateUsers) {

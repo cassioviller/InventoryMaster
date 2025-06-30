@@ -112,8 +112,9 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - ✅ **Interface Super Admin isolada** - cassio vê APENAS Painel Super Admin (sem dashboard/materiais)
 - ✅ Navegação adaptativa - super_admin tem interface completamente separada
 - ✅ Redirecionamento automático - super_admin vai direto para /super-admin
-- ✅ Funcionalidade de criação de usuários testada e funcionando
-- ✅ Usuários de exemplo criados para teste do sistema completo
+- ✅ Funcionalidade de criação de usuários corrigida (hash de senha implementado)
+- ✅ Sistema de login funcionando para todos os usuários criados
+- ✅ Usuários de exemplo criados: teste2/teste2, admin_sistema/admin123
 
 ### Problemas Resolvidos Hoje:
 - ✅ Criação de categorias e materiais (400 errors corrigidos)

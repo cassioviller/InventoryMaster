@@ -47,12 +47,14 @@ export const materials = pgTable("materials", {
 export const suppliers = pgTable("suppliers", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  contact: text("contact"),
+  cnpj: text("cnpj"),
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
+  isActive: boolean("is_active").notNull().default(true),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  notes: text("notes"),
 });
 
 // Employees table - aligned with database
@@ -62,19 +64,21 @@ export const employees = pgTable("employees", {
   department: text("department"),
   email: text("email"),
   phone: text("phone"),
-  isActive: boolean("isActive").notNull().default(true),
-  ownerId: integer("ownerId").notNull().default(1),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  ownerId: integer("owner_id").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Third parties table - aligned with database
 export const thirdParties = pgTable("third_parties", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  contact: text("contact"),
+  document: text("document"),
+  documentType: text("document_type"),
   email: text("email"),
   phone: text("phone"),
   address: text("address"),
+  isActive: boolean("is_active").notNull().default(true),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });

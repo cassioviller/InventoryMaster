@@ -746,7 +746,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMovementsByType(type: 'entry' | 'exit', ownerId?: number): Promise<MaterialMovement[]> {
-    const conditions = [eq(materialMovements.movementType, type)];
+    const conditions = [eq(materialMovements.type, type)];
     if (ownerId) {
       conditions.push(eq(materialMovements.ownerId, ownerId));
     }
@@ -803,13 +803,13 @@ export class DatabaseStorage implements IStorage {
 
     const movements = await db
       .select({
-        movementType: materialMovements.movementType
+        type: materialMovements.type
       })
       .from(materialMovements)
       .where(and(...conditions));
 
-    const entries = movements.filter(m => m.movementType === 'entry').length;
-    const exits = movements.filter(m => m.movementType === 'exit').length;
+    const entries = movements.filter(m => m.type === 'entry').length;
+    const exits = movements.filter(m => m.type === 'exit').length;
 
     return { entries, exits };
   }
@@ -819,10 +819,10 @@ export class DatabaseStorage implements IStorage {
     const [movement] = await db
       .insert(materialMovements)
       .values({
-        movementType: 'entry',
+        type: 'entry',
         supplierId: data.supplierId,
         observation: data.observation,
-        items: JSON.stringify(data.items),
+        userId: userId,
         ownerId: 1, // Default owner
         quantity: data.items.reduce((sum, item) => sum + item.quantity, 0),
         materialId: data.items[0]?.materialId || 0,
@@ -844,11 +844,11 @@ export class DatabaseStorage implements IStorage {
     const [movement] = await db
       .insert(materialMovements)
       .values({
-        movementType: 'exit',
+        type: 'exit',
         employeeId: data.employeeId,
         thirdPartyId: data.thirdPartyId,
         observation: data.observation,
-        items: JSON.stringify(data.items),
+        userId: userId,
         ownerId: 1, // Default owner
         quantity: data.items.reduce((sum, item) => sum + item.quantity, 0),
         materialId: data.items[0]?.materialId || 0,
@@ -933,7 +933,7 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
-    if (type) conditions.push(eq(materialMovements.movementType, type));
+    if (type) conditions.push(eq(materialMovements.type, type));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
     
     return await db
@@ -944,7 +944,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]> {
-    const conditions = [eq(materialMovements.movementType, 'exit')];
+    const conditions = [eq(materialMovements.type, 'exit')];
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));

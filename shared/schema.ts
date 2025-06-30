@@ -83,6 +83,21 @@ export const thirdParties = pgTable("third_parties", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Cost Centers table - new implementation
+export const costCenters = pgTable("cost_centers", {
+  id: serial("id").primaryKey(),
+  code: text("code").notNull().unique(),
+  name: text("name").notNull(),
+  description: text("description"),
+  department: text("department").notNull(),
+  responsible: text("responsible").notNull(),
+  monthlyBudget: decimal("monthly_budget", { precision: 10, scale: 2 }),
+  annualBudget: decimal("annual_budget", { precision: 10, scale: 2 }),
+  isActive: boolean("is_active").notNull().default(true),
+  ownerId: integer("owner_id").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Material movements table - aligned with database structure
 export const materialMovements = pgTable("material_movements", {
   id: serial("id").primaryKey(),
@@ -100,6 +115,7 @@ export const materialMovements = pgTable("material_movements", {
   destinationEmployeeId: integer("destination_employee_id").references(() => employees.id),
   destinationThirdPartyId: integer("destination_third_party_id").references(() => thirdParties.id),
   notes: text("notes"),
+  costCenterId: integer("cost_center_id").references(() => costCenters.id),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -155,6 +171,10 @@ export const thirdPartiesRelations = relations(thirdParties, ({ many }) => ({
   returnMovements: many(materialMovements),
 }));
 
+export const costCentersRelations = relations(costCenters, ({ many }) => ({
+  movements: many(materialMovements),
+}));
+
 export const materialMovementsRelations = relations(materialMovements, ({ one }) => ({
   user: one(users, {
     fields: [materialMovements.userId],
@@ -183,6 +203,10 @@ export const materialMovementsRelations = relations(materialMovements, ({ one })
   returnThirdParty: one(thirdParties, {
     fields: [materialMovements.returnThirdPartyId],
     references: [thirdParties.id],
+  }),
+  costCenter: one(costCenters, {
+    fields: [materialMovements.costCenterId],
+    references: [costCenters.id],
   }),
 }));
 
@@ -294,6 +318,7 @@ export const createEntrySchema = z.object({
   supplierId: z.number().optional(),
   returnEmployeeId: z.number().optional(),
   returnThirdPartyId: z.number().optional(),
+  costCenterId: z.number().min(1, "Centro de custo é obrigatório"),
   items: z.array(movementItemSchema).min(1),
   notes: z.string().optional(),
 });
@@ -304,6 +329,7 @@ export const createExitSchema = z.object({
   destinationType: z.enum(["employee", "third_party"]),
   destinationEmployeeId: z.number().optional(),
   destinationThirdPartyId: z.number().optional(),
+  costCenterId: z.number().min(1, "Centro de custo é obrigatório"),
   items: z.array(movementItemSchema).min(1),
   notes: z.string().optional(),
 });
@@ -339,4 +365,19 @@ export type MovementWithDetails = MaterialMovement & {
   thirdParty?: ThirdParty;
   returnEmployee?: Employee;
   returnThirdParty?: ThirdParty;
+  costCenter?: CostCenter;
 };
+
+// Cost Center Zod schemas
+export const insertCostCenterSchema = createInsertSchema(costCenters, {
+  code: z.string().min(1, "Código é obrigatório").max(20, "Código deve ter no máximo 20 caracteres"),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
+  department: z.string().min(1, "Departamento é obrigatório"),
+  responsible: z.string().min(1, "Responsável é obrigatório"),
+  monthlyBudget: z.string().optional(),
+  annualBudget: z.string().optional(),
+}).omit({ id: true, createdAt: true, ownerId: true });
+
+export const selectCostCenterSchema = createSelectSchema(costCenters);
+export type CostCenter = z.infer<typeof selectCostCenterSchema>;
+export type InsertCostCenter = z.infer<typeof insertCostCenterSchema>;

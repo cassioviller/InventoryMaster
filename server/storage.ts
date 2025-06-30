@@ -577,10 +577,31 @@ export class DatabaseStorage implements IStorage {
     if (categoryId) conditions.push(eq(materials.categoryId, categoryId));
     if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
     
-    return await db
-      .select()
+    const stockData = await db
+      .select({
+        id: materials.id,
+        name: materials.name,
+        description: materials.description,
+        unit: materials.unit,
+        currentStock: materials.currentStock,
+        minimumStock: materials.minimumStock,
+        unitPrice: materials.unitPrice,
+        categoryId: materials.categoryId,
+        category: {
+          id: categories.id,
+          name: categories.name
+        }
+      })
       .from(materials)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .leftJoin(categories, eq(materials.categoryId, categories.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(materials.name);
+
+    return stockData.map(item => ({
+      ...item,
+      stockStatus: item.currentStock <= item.minimumStock ? 'low_stock' : 'ok',
+      totalValue: item.currentStock * parseFloat(item.unitPrice || '0')
+    }));
   }
 
   async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]> {
@@ -589,23 +610,102 @@ export class DatabaseStorage implements IStorage {
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     if (type) conditions.push(eq(materialMovements.type, type));
     
-    return await db
-      .select()
+    const movements = await db
+      .select({
+        id: materialMovements.id,
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+        unitPrice: materialMovements.unitPrice,
+        notes: materialMovements.notes,
+        createdAt: materialMovements.createdAt,
+        originType: materialMovements.originType,
+        destinationType: materialMovements.destinationType,
+        materialId: materialMovements.materialId,
+        supplierId: materialMovements.supplierId,
+        destinationEmployeeId: materialMovements.destinationEmployeeId,
+        destinationThirdPartyId: materialMovements.destinationThirdPartyId,
+        returnEmployeeId: materialMovements.returnEmployeeId,
+        returnThirdPartyId: materialMovements.returnThirdPartyId,
+        material: {
+          id: materials.id,
+          name: materials.name,
+          unit: materials.unit
+        },
+        supplier: {
+          id: suppliers.id,
+          name: suppliers.name
+        },
+        employee: {
+          id: employees.id,
+          name: employees.name
+        },
+        thirdParty: {
+          id: thirdParties.id,
+          name: thirdParties.name
+        }
+      })
       .from(materialMovements)
+      .leftJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(suppliers, eq(materialMovements.supplierId, suppliers.id))
+      .leftJoin(employees, or(
+        eq(materialMovements.destinationEmployeeId, employees.id),
+        eq(materialMovements.returnEmployeeId, employees.id)
+      ))
+      .leftJoin(thirdParties, or(
+        eq(materialMovements.destinationThirdPartyId, thirdParties.id),
+        eq(materialMovements.returnThirdPartyId, thirdParties.id)
+      ))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(materialMovements.createdAt));
+
+    return movements;
   }
 
-  async getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]> {
+  async getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {
     const conditions = [eq(materialMovements.type, 'exit')];
+    if (materialId) conditions.push(eq(materialMovements.materialId, materialId));
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     
-    return await db
-      .select()
+    const consumptionData = await db
+      .select({
+        id: materialMovements.id,
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+        unitPrice: materialMovements.unitPrice,
+        notes: materialMovements.notes,
+        createdAt: materialMovements.createdAt,
+        destinationType: materialMovements.destinationType,
+        materialId: materialMovements.materialId,
+        destinationEmployeeId: materialMovements.destinationEmployeeId,
+        destinationThirdPartyId: materialMovements.destinationThirdPartyId,
+        material: {
+          id: materials.id,
+          name: materials.name,
+          unit: materials.unit,
+          unitPrice: materials.unitPrice
+        },
+        employee: {
+          id: employees.id,
+          name: employees.name
+        },
+        thirdParty: {
+          id: thirdParties.id,
+          name: thirdParties.name
+        }
+      })
       .from(materialMovements)
+      .leftJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(employees, eq(materialMovements.destinationEmployeeId, employees.id))
+      .leftJoin(thirdParties, eq(materialMovements.destinationThirdPartyId, thirdParties.id))
       .where(and(...conditions))
       .orderBy(desc(materialMovements.createdAt));
+
+    return consumptionData.map(item => ({
+      ...item,
+      totalValue: item.quantity * parseFloat(item.unitPrice || '0'),
+      destination: item.employee?.name || item.thirdParty?.name || 'N/A'
+    }));
   }
 
   async getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]> {
@@ -634,6 +734,93 @@ export class DatabaseStorage implements IStorage {
     return materialsData.map(material => ({
       ...material,
       totalValue: material.currentStock * parseFloat(material.unitPrice || '0'),
+    }));
+  }
+
+  async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]> {
+    const { sql } = await import('drizzle-orm');
+    const conditions = [];
+    if (employeeId) {
+      conditions.push(or(
+        eq(materialMovements.destinationEmployeeId, employeeId),
+        eq(materialMovements.returnEmployeeId, employeeId)
+      ));
+    }
+    if (month) conditions.push(eq(sql`EXTRACT(MONTH FROM ${materialMovements.createdAt})`, month));
+    if (year) conditions.push(eq(sql`EXTRACT(YEAR FROM ${materialMovements.createdAt})`, year));
+    if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
+    if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
+    
+    const movements = await db
+      .select({
+        id: materialMovements.id,
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+        unitPrice: materialMovements.unitPrice,
+        notes: materialMovements.notes,
+        createdAt: materialMovements.createdAt,
+        materialId: materialMovements.materialId,
+        destinationEmployeeId: materialMovements.destinationEmployeeId,
+        returnEmployeeId: materialMovements.returnEmployeeId,
+        material: {
+          id: materials.id,
+          name: materials.name,
+          unit: materials.unit
+        },
+        employee: {
+          id: employees.id,
+          name: employees.name
+        }
+      })
+      .from(materialMovements)
+      .leftJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(employees, or(
+        eq(materialMovements.destinationEmployeeId, employees.id),
+        eq(materialMovements.returnEmployeeId, employees.id)
+      ))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(materialMovements.createdAt));
+
+    return movements;
+  }
+
+  async getSupplierTrackingReport(supplierId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {
+    const conditions = [eq(materialMovements.type, 'entry')];
+    if (supplierId) conditions.push(eq(materialMovements.supplierId, supplierId));
+    if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
+    if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
+    
+    const supplierData = await db
+      .select({
+        id: materialMovements.id,
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+        unitPrice: materialMovements.unitPrice,
+        notes: materialMovements.notes,
+        createdAt: materialMovements.createdAt,
+        materialId: materialMovements.materialId,
+        supplierId: materialMovements.supplierId,
+        material: {
+          id: materials.id,
+          name: materials.name,
+          unit: materials.unit
+        },
+        supplier: {
+          id: suppliers.id,
+          name: suppliers.name,
+          contact: suppliers.contact,
+          email: suppliers.email
+        }
+      })
+      .from(materialMovements)
+      .leftJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(suppliers, eq(materialMovements.supplierId, suppliers.id))
+      .where(and(...conditions))
+      .orderBy(desc(materialMovements.createdAt));
+
+    return supplierData.map(item => ({
+      ...item,
+      totalValue: item.quantity * parseFloat(item.unitPrice || '0')
     }));
   }
 }

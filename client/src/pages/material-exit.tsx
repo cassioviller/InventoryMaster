@@ -21,6 +21,19 @@ interface MaterialExitItem {
   purpose?: string;
 }
 
+interface MaterialLot {
+  unitPrice: string;
+  totalEntries: number;
+  availableQuantity: number;
+  entryDate: string;
+  supplierId: number | null;
+}
+
+interface FifoSimulation {
+  lots: Array<{ unitPrice: string; quantity: number; }>;
+  totalValue: number;
+}
+
 export default function MaterialExit() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -28,6 +41,8 @@ export default function MaterialExit() {
   const [selectedMaterial, setSelectedMaterial] = useState('');
   const [quantity, setQuantity] = useState('');
   const [purpose, setPurpose] = useState('');
+  const [selectedMaterialLots, setSelectedMaterialLots] = useState<MaterialLot[]>([]);
+  const [fifoSimulation, setFifoSimulation] = useState<FifoSimulation | null>(null);
 
   const form = useForm<Omit<CreateExit, 'items'>>({
     resolver: zodResolver(createExitSchema.omit({ items: true })),
@@ -101,6 +116,55 @@ export default function MaterialExit() {
 
   const destinationType = form.watch('destinationType');
 
+  // Fetch material lots when material is selected
+  const fetchMaterialLots = async (materialId: number) => {
+    try {
+      const res = await authenticatedRequest(`/api/materials/${materialId}/lots`);
+      const lots = await res.json();
+      setSelectedMaterialLots(Array.isArray(lots) ? lots : []);
+    } catch (error) {
+      console.error('Error fetching material lots:', error);
+      setSelectedMaterialLots([]);
+    }
+  };
+
+  // Simulate FIFO exit when quantity changes
+  const simulateFifoExit = async (materialId: number, quantity: number) => {
+    try {
+      const res = await authenticatedRequest(`/api/materials/${materialId}/simulate-exit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity }),
+      });
+      const simulation = await res.json();
+      setFifoSimulation(simulation);
+    } catch (error) {
+      console.error('Error simulating FIFO exit:', error);
+      setFifoSimulation(null);
+    }
+  };
+
+  // Handle material selection
+  const handleMaterialChange = (materialId: string) => {
+    setSelectedMaterial(materialId);
+    setFifoSimulation(null);
+    if (materialId) {
+      fetchMaterialLots(parseInt(materialId));
+    } else {
+      setSelectedMaterialLots([]);
+    }
+  };
+
+  // Handle quantity change
+  const handleQuantityChange = (newQuantity: string) => {
+    setQuantity(newQuantity);
+    if (selectedMaterial && newQuantity && parseInt(newQuantity) > 0) {
+      simulateFifoExit(parseInt(selectedMaterial), parseInt(newQuantity));
+    } else {
+      setFifoSimulation(null);
+    }
+  };
+
   const addMaterial = () => {
     if (!selectedMaterial || !quantity || parseInt(quantity) <= 0) {
       toast({
@@ -153,6 +217,8 @@ export default function MaterialExit() {
     setSelectedMaterial('');
     setQuantity('');
     setPurpose('');
+    setSelectedMaterialLots([]);
+    setFifoSimulation(null);
   };
 
   const removeItem = (index: number) => {

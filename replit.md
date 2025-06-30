@@ -114,7 +114,9 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - ✅ Redirecionamento automático - super_admin vai direto para /super-admin
 - ✅ Funcionalidade de criação de usuários corrigida (hash de senha implementado)
 - ✅ Sistema de login funcionando para todos os usuários criados
-- ✅ Usuários de exemplo criados: teste2/teste2, admin_sistema/admin123
+- ✅ Usuário operacional criado: operador/123456 (funcionando)
+- ✅ Sistema populado com dados completos de teste
+- ✅ 3 categorias, 2 fornecedores, 2 funcionários, 4 materiais criados
 
 ### Problemas Resolvidos Hoje:
 - ✅ Criação de categorias e materiais (400 errors corrigidos)

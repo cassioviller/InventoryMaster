@@ -404,14 +404,20 @@ export class DatabaseStorage implements IStorage {
 
   // Movement methods
   async createEntry(entry: CreateEntry, userId: number): Promise<MaterialMovement> {
+    // For entries, create one movement record per item
+    const firstItem = entry.items[0];
     const result = await db.insert(materialMovements).values({
       type: entry.type,
       userId: userId,
+      materialId: firstItem.materialId,
+      quantity: firstItem.quantity,
+      unitPrice: firstItem.unitPrice,
       originType: entry.originType,
       supplierId: entry.supplierId,
       returnEmployeeId: entry.returnEmployeeId,
       returnThirdPartyId: entry.returnThirdPartyId,
       notes: entry.notes,
+      ownerId: userId,
     }).returning();
 
     // Update material stock for each item
@@ -437,13 +443,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExit(exit: CreateExit, userId: number): Promise<MaterialMovement> {
+    // For exits, create one movement record per item
+    const firstItem = exit.items[0];
     const result = await db.insert(materialMovements).values({
       type: exit.type,
       userId: userId,
+      materialId: firstItem.materialId,
+      quantity: firstItem.quantity,
+      unitPrice: firstItem.unitPrice,
       destinationType: exit.destinationType,
       destinationEmployeeId: exit.destinationEmployeeId,
       destinationThirdPartyId: exit.destinationThirdPartyId,
       notes: exit.notes,
+      ownerId: userId,
     }).returning();
 
     // Update material stock for each item

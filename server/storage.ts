@@ -7,7 +7,7 @@ import {
   type MaterialMovement, type CreateEntry, type CreateExit,
   type MaterialWithDetails, type MovementWithDetails
 } from "@shared/schema";
-import { db } from "./db";
+import { db } from "./db-compatibility";
 import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike } from "drizzle-orm";
 
 export interface IStorage {

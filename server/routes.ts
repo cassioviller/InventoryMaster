@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
+import { db } from "./db-compatibility";
 import {
   loginSchema,
   insertUserSchema,

@@ -1,34 +1,23 @@
-import postgres from 'postgres';
-import { drizzle } from 'drizzle-orm/postgres-js';
-import * as schema from "../shared/schema";
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { drizzle } from 'drizzle-orm/neon-serverless';
+import ws from "ws";
+import * as schema from "@shared/schema";
 
-// Usar sempre DATABASE_URL sem fallback
-const url = process.env.DATABASE_URL;
+neonConfig.webSocketConstructor = ws;
 
-if (!url) throw new Error('DATABASE_URL não definida');
-
-console.log(`Conectando ao banco: ${url.replace(/:[^:@]*@/,':***@')}`);
-
-const sql = postgres(url, {
-  ssl: url.includes('sslmode=require'),
-  max: 10,
-  connect_timeout: 10,
-  idle_timeout: 30,
-});
-
-export const db = drizzle(sql, { schema });
-
-// Função para verificar conexão
-async function testDatabaseConnection() {
-  try {
-    await sql`SELECT 1`;
-    console.log('✅ Conexão com banco de dados estabelecida');
-    return true;
-  } catch (err) {
-    console.error('❌ Erro ao conectar ao banco de dados:', err);
-    return false;
-  }
+if (!process.env.DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL must be set. Did you forget to provision a database?",
+  );
 }
 
-// Iniciar verificação, mas não bloqueie a inicialização do servidor
-testDatabaseConnection();
+// Garantir SSL para Neon
+let databaseUrl = process.env.DATABASE_URL;
+if (databaseUrl.includes('neon.tech') && !databaseUrl.includes('sslmode')) {
+  databaseUrl = databaseUrl + (databaseUrl.includes('?') ? '&' : '?') + 'sslmode=require';
+}
+
+console.log('🔧 Configurando conexão PostgreSQL:', databaseUrl.replace(/:[^:]*@/, ':***@'));
+
+export const pool = new Pool({ connectionString: databaseUrl });
+export const db = drizzle({ client: pool, schema });

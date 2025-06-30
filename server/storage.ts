@@ -7,7 +7,7 @@ import {
   type MaterialMovement, type CreateEntry, type CreateExit,
   type MaterialWithDetails, type MovementWithDetails
 } from "@shared/schema";
-import { db } from "./db-compatibility";
+import { db } from "./db";
 import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike } from "drizzle-orm";
 
 export interface IStorage {
@@ -71,7 +71,9 @@ export interface IStorage {
   // Report methods
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
   getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]>;
-  getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]>;
+  getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
+  getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]>;
+  getSupplierTrackingReport(supplierId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
   getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]>;
 }
 

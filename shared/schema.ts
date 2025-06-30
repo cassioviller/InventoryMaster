@@ -89,6 +89,9 @@ export const materialMovements = pgTable("material_movements", {
   type: movementTypeEnum("type").notNull(),
   date: timestamp("date").defaultNow().notNull(),
   userId: integer("user_id").notNull().references(() => users.id),
+  materialId: integer("material_id").notNull().references(() => materials.id),
+  quantity: integer("quantity").notNull(),
+  unitPrice: text("unit_price"),
   originType: originTypeEnum("origin_type"),
   supplierId: integer("supplier_id").references(() => suppliers.id),
   returnEmployeeId: integer("return_employee_id").references(() => employees.id),
@@ -155,6 +158,10 @@ export const materialMovementsRelations = relations(materialMovements, ({ one })
   user: one(users, {
     fields: [materialMovements.userId],
     references: [users.id],
+  }),
+  material: one(materials, {
+    fields: [materialMovements.materialId],
+    references: [materials.id],
   }),
   supplier: one(suppliers, {
     fields: [materialMovements.supplierId],

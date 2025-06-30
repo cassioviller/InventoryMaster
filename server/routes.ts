@@ -91,9 +91,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
-      // Verify password
+      // Verify password using bcrypt
+      console.log(`Attempting login for ${username} with password ${password}`);
+      console.log(`User hash from DB: ${user.password}`);
+      
       const isPasswordValid = await bcrypt.compare(password, user.password);
+      console.log(`Bcrypt comparison result: ${isPasswordValid}`);
+      
       if (!isPasswordValid) {
+        console.log(`Login failed for user ${username}: bcrypt comparison failed`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
@@ -372,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       console.log('Using ownerId:', ownerId);
       
-      const employeesList = await storage.getAllEmployees(ownerId);
+      const employeesList = await storage.getEmployees(ownerId);
       console.log('Storage result:', employeesList);
       res.json(employeesList || []);
     } catch (error) {

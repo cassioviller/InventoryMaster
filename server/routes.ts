@@ -91,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Verify password
-      const isPasswordValid = await storage.verifyPassword(password, user.password);
+      const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
@@ -127,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User routes
   app.get("/api/users", authenticateToken, requireSystemSuperAdmin, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const users = await storage.getAllUsers();
+      const users = await storage.getUsers();
       res.json(users);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch users" });
@@ -213,7 +213,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/categories", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const categories = await storage.getAllCategories(ownerId);
+      const categories = await storage.getCategories(ownerId);
       res.json(categories);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch categories" });
@@ -285,7 +285,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/materials", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const materials = await storage.getAllMaterials(ownerId);
+      const materials = await storage.getMaterials(ownerId);
       res.json(materials);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch materials" });
@@ -419,7 +419,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/suppliers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const suppliers = await storage.getAllSuppliers(ownerId);
+      const suppliers = await storage.getSuppliers(ownerId);
       res.json(suppliers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch suppliers" });
@@ -464,7 +464,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/third-parties", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const thirdParties = await storage.getAllThirdParties(ownerId);
+      const thirdParties = await storage.getThirdParties(ownerId);
       res.json(thirdParties);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch third parties" });
@@ -509,7 +509,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/movements", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const movements = await storage.getAllMovements(ownerId);
+      const movements = await storage.getMovements(ownerId);
       res.json(movements);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch movements" });

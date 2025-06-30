@@ -257,6 +257,9 @@ export default function Management() {
       case 'users':
         setUserModalOpen(true);
         break;
+      case 'cost-centers':
+        setCostCenterModalOpen(true);
+        break;
     }
   };
 
@@ -268,6 +271,7 @@ export default function Management() {
     setSupplierModalOpen(false);
     setThirdPartyModalOpen(false);
     setUserModalOpen(false);
+    setCostCenterModalOpen(false);
   };
 
   const handleDelete = async (id: number, type: string) => {
@@ -277,7 +281,8 @@ export default function Management() {
       const endpoint = type === 'third-party' ? 'third-parties' : 
                       type === 'category' ? 'categories' :
                       type === 'material' ? 'materials' :
-                      type === 'user' ? 'users' : `${type}s`;
+                      type === 'user' ? 'users' : 
+                      type === 'cost-center' ? 'cost-centers' : `${type}s`;
       
       await apiRequest(`/api/${endpoint}/${id}`, 'DELETE');
       
@@ -294,6 +299,8 @@ export default function Management() {
         queryClient.invalidateQueries({ queryKey: ['/api/materials'] });
       } else if (type === 'user') {
         queryClient.invalidateQueries({ queryKey: ['/api/users'] });
+      } else if (type === 'cost-center') {
+        queryClient.invalidateQueries({ queryKey: ['/api/cost-centers'] });
       }
       
       toast({
@@ -747,6 +754,95 @@ export default function Management() {
           </div>
         );
 
+      case 'cost-centers':
+        if (costCentersLoading) {
+          return (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          );
+        }
+
+        return (
+          <div className="space-y-4">
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Código</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Departamento</TableHead>
+                    <TableHead>Responsável</TableHead>
+                    <TableHead>Orçamento Mensal</TableHead>
+                    <TableHead>Orçamento Anual</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {costCentersLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : costCenters?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                        Nenhum centro de custo encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    Array.isArray(costCenters) && costCenters.map((costCenter) => (
+                      <TableRow key={costCenter.id}>
+                        <TableCell className="font-medium">{costCenter.code}</TableCell>
+                        <TableCell>{costCenter.name}</TableCell>
+                        <TableCell>{costCenter.department}</TableCell>
+                        <TableCell>{costCenter.responsible}</TableCell>
+                        <TableCell>
+                          {costCenter.monthlyBudget 
+                            ? `R$ ${parseFloat(costCenter.monthlyBudget.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            : '-'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {costCenter.annualBudget 
+                            ? `R$ ${parseFloat(costCenter.annualBudget.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+                            : '-'
+                          }
+                        </TableCell>
+                        <TableCell>
+                          {new Date(costCenter.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(costCenter)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(costCenter.id, 'cost-center')}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        );
+
       default:
         return null;
     }
@@ -847,6 +943,12 @@ export default function Management() {
           editingUser={editingItem}
         />
       )}
+      <CostCenterModal
+        open={costCenterModalOpen}
+        onOpenChange={setCostCenterModalOpen}
+        costCenter={editingItem}
+        onClose={handleModalClose}
+      />
     </div>
   );
 }

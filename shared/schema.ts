@@ -9,17 +9,14 @@ export const movementTypeEnum = pgEnum('movement_type', ['entry', 'exit']);
 export const originTypeEnum = pgEnum('origin_type', ['supplier', 'employee_return', 'third_party_return']);
 export const destinationTypeEnum = pgEnum('destination_type', ['employee', 'third_party']);
 
-// Users table - aligned with database
+// Users table - aligned with database structure
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  email: text("email"),
   password: text("password").notNull(),
-  name: text("name"),
   role: text("role").notNull().default('user'),
-  isActive: boolean("isActive").notNull().default(true),
-  ownerId: integer("ownerId"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ownerId: integer("owner_id"),
 });
 
 // Categories table - aligned with database  
@@ -196,7 +193,6 @@ export type LoginData = z.infer<typeof loginSchema>;
 export const insertUserSchema = createInsertSchema(users, {
   username: z.string().min(1).max(50),
   password: z.string().min(4),
-  email: z.string().email().optional(),
 }).omit({
   id: true,
   createdAt: true,

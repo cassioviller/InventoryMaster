@@ -822,7 +822,7 @@ export class DatabaseStorage implements IStorage {
         supplier: {
           id: suppliers.id,
           name: suppliers.name,
-          contact: suppliers.contact,
+          contact: suppliers.email,
           email: suppliers.email
         }
       })

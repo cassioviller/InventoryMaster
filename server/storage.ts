@@ -14,10 +14,12 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(insertUser: InsertUser): Promise<User>;
   updateUser(id: number, updateUser: Partial<InsertUser>): Promise<User | undefined>;
   deleteUser(id: number): Promise<boolean>;
   getUsers(ownerId?: number): Promise<User[]>;
+  createAuditLog(data: any): Promise<void>;
 
   // Category methods
   getCategories(ownerId?: number): Promise<Category[]>;
@@ -92,6 +94,11 @@ export class DatabaseStorage implements IStorage {
   async getUserByEmail(email: string): Promise<User | undefined> {
     // Funcionalidade não implementada - retorna undefined para compatibilidade
     return undefined;
+  }
+
+  async createAuditLog(data: any): Promise<void> {
+    // Funcionalidade não implementada - mantém compatibilidade
+    return;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {

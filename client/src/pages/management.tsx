@@ -31,15 +31,15 @@ type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third
 
 const getTabItems = (canCreateUsers: boolean) => {
   const baseItems = [
-    { id: 'materials' as const, label: 'Materiais' },
-    { id: 'categories' as const, label: 'Categorias' },
-    { id: 'employees' as const, label: 'Funcionários' },
-    { id: 'suppliers' as const, label: 'Fornecedores' },
-    { id: 'third-parties' as const, label: 'Terceiros' },
+    { id: 'materials', label: 'Materiais' },
+    { id: 'categories', label: 'Categorias' },
+    { id: 'employees', label: 'Funcionários' },
+    { id: 'suppliers', label: 'Fornecedores' },
+    { id: 'third-parties', label: 'Terceiros' },
   ];
   
   if (canCreateUsers) {
-    baseItems.push({ id: 'users' as const, label: 'Usuários' });
+    baseItems.push({ id: 'users', label: 'Usuários' });
   }
   
   return baseItems;

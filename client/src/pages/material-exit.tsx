@@ -32,6 +32,7 @@ export default function MaterialExit() {
   const form = useForm<Omit<CreateExit, 'items'>>({
     resolver: zodResolver(createExitSchema.omit({ items: true })),
     defaultValues: {
+      type: 'exit',
       date: new Date().toISOString().split('T')[0],
       destinationType: 'employee',
     },
@@ -69,7 +70,7 @@ export default function MaterialExit() {
   const thirdParties = thirdPartiesData || [];
 
   const createExitMutation = useMutation({
-    mutationFn: async (data: CreateExitData) => {
+    mutationFn: async (data: CreateExit) => {
       const res = await authenticatedRequest('/api/movements/exit', {
         method: 'POST',
         body: JSON.stringify(data),
@@ -159,7 +160,12 @@ export default function MaterialExit() {
   };
 
   const onSubmit = (data: Omit<CreateExit, 'items'>) => {
+    console.log("=== BOTÃO CONFIRMAR SAÍDA CLICADO ===");
+    console.log("Form data received:", data);
+    console.log("Added items:", addedItems);
+    
     if (addedItems.length === 0) {
+      console.log("ERROR: No items added");
       toast({
         title: "Nenhum material adicionado",
         description: "Adicione pelo menos um material antes de confirmar a saída.",
@@ -170,12 +176,15 @@ export default function MaterialExit() {
 
     const exitData: CreateExit = {
       ...data,
+      type: "exit",
       items: addedItems.map(item => ({
         materialId: item.materialId,
         quantity: item.quantity,
+        unitPrice: "0",
       })),
     };
 
+    console.log("Final exit data:", exitData);
     createExitMutation.mutate(exitData);
   };
 
@@ -195,6 +204,15 @@ export default function MaterialExit() {
       <CardContent className="space-y-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Hidden type field */}
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <input type="hidden" {...field} value="exit" />
+              )}
+            />
+            
             {/* Date and Destination */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField

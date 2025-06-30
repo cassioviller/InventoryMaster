@@ -35,7 +35,23 @@ export default function FinancialReports() {
     queryFn: async () => {
       const res = await authenticatedRequest('/api/reports/financial-stock');
       const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      
+      // Process data to ensure proper calculations
+      const processedData = Array.isArray(data) ? data.map((item: any) => {
+        const unitPrice = parseFloat(item.unitPrice || '0') || 0;
+        const currentStock = parseInt(item.currentStock || '0') || 0;
+        const subtotal = unitPrice * currentStock;
+        
+        return {
+          ...item,
+          unitPrice: unitPrice,
+          currentStock: currentStock,
+          subtotal: subtotal,
+          totalValue: subtotal, // Alias for compatibility
+        };
+      }) : [];
+      
+      return processedData;
     },
     enabled: !!localStorage.getItem('token'),
   });

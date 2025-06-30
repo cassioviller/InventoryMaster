@@ -190,6 +190,8 @@ export const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+export type LoginData = z.infer<typeof loginSchema>;
+
 // User schemas
 export const insertUserSchema = createInsertSchema(users, {
   username: z.string().min(1).max(50),

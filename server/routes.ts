@@ -82,28 +82,47 @@ function requireSystemSuperAdmin(req: AuthenticatedRequest, res: Response, next:
 export async function registerRoutes(app: Express): Promise<Server> {
   // Authentication routes
   app.post("/api/auth/login", async (req: Request, res: Response) => {
+    console.log('=== LOGIN REQUEST DEBUG ===');
+    console.log('Request headers:', req.headers);
+    console.log('Raw body:', req.body);
+    console.log('Body type:', typeof req.body);
+    console.log('Body keys:', Object.keys(req.body || {}));
+    
     try {
-      const { username, password } = loginSchema.parse(req.body);
+      // Manual validation for debugging
+      if (!req.body || typeof req.body !== 'object') {
+        console.log('Invalid body structure');
+        return res.status(400).json({ message: "Invalid request format" });
+      }
+      
+      const { username, password } = req.body;
+      console.log(`Extracted: username="${username}", password="${password}"`);
+      
+      if (!username || !password) {
+        console.log('Missing username or password');
+        return res.status(400).json({ message: "Username and password required" });
+      }
       
       // Get user from database
+      console.log('Searching for user in database...');
       const user = await storage.getUserByUsername(username);
+      console.log('User query result:', user ? `Found: ${user.username}` : 'Not found');
+      
       if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Verify password using bcrypt
-      console.log(`Attempting login for ${username} with password ${password}`);
-      console.log(`User hash from DB: ${user.password}`);
-      
+      console.log('Verifying password...');
       const isPasswordValid = await bcrypt.compare(password, user.password);
-      console.log(`Bcrypt comparison result: ${isPasswordValid}`);
+      console.log('Password verification result:', isPasswordValid);
       
       if (!isPasswordValid) {
-        console.log(`Login failed for user ${username}: bcrypt comparison failed`);
         return res.status(401).json({ message: "Invalid credentials" });
       }
 
       // Generate JWT token
+      console.log('Generating JWT token...');
       const token = jwt.sign(
         { 
           id: user.id, 
@@ -114,6 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         { expiresIn: '24h' }
       );
 
+      console.log('=== LOGIN SUCCESS ===');
       res.json({ 
         token, 
         user: { 
@@ -123,7 +143,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } 
       });
     } catch (error) {
-      res.status(400).json({ message: "Invalid login data" });
+      console.error('=== LOGIN ERROR ===');
+      console.error('Error details:', error);
+      res.status(500).json({ message: "Server error" });
     }
   });
 

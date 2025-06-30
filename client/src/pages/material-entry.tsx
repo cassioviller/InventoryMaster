@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createEntrySchema, type CreateEntryData } from '@shared/schema';
+import { createEntrySchema, type CreateEntry } from '@shared/schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -28,7 +28,7 @@ export default function MaterialEntry() {
   const [quantity, setQuantity] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
 
-  const form = useForm<Omit<CreateEntryData, 'items'>>({
+  const form = useForm<Omit<CreateEntry, 'items'>>({
     resolver: zodResolver(createEntrySchema.omit({ items: true })),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
@@ -163,7 +163,7 @@ export default function MaterialEntry() {
     setAddedItems(addedItems.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: Omit<CreateEntryData, 'items'>) => {
+  const onSubmit = (data: Omit<CreateEntry, 'items'>) => {
     if (addedItems.length === 0) {
       toast({
         title: "Nenhum material adicionado",
@@ -173,12 +173,12 @@ export default function MaterialEntry() {
       return;
     }
 
-    const entryData: CreateEntryData = {
+    const entryData: CreateEntry = {
       ...data,
       items: addedItems.map(item => ({
         materialId: item.materialId,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
+        unitPrice: item.unitPrice.toString(),
       })),
     };
 

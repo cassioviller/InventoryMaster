@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createExitSchema, type CreateExitData } from '@shared/schema';
+import { createExitSchema, type CreateExit } from '@shared/schema';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,7 @@ export default function MaterialExit() {
   const [quantity, setQuantity] = useState('');
   const [purpose, setPurpose] = useState('');
 
-  const form = useForm<Omit<CreateExitData, 'items'>>({
+  const form = useForm<Omit<CreateExit, 'items'>>({
     resolver: zodResolver(createExitSchema.omit({ items: true })),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],

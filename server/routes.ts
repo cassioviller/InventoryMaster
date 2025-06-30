@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import {
   loginSchema,
@@ -327,7 +328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/dashboard/low-stock", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const materials = await storage.getMaterialsWithLowStock(ownerId);
+      const materials = await storage.getLowStockMaterials(ownerId);
       res.json(materials);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch low stock alerts" });

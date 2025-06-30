@@ -1,6 +1,6 @@
 import postgres from 'postgres';
 import { drizzle } from 'drizzle-orm/postgres-js';
-import * as schema from "@shared/schema";
+import * as schema from "../shared/schema";
 
 // Usar sempre DATABASE_URL sem fallback
 const url = process.env.DATABASE_URL;

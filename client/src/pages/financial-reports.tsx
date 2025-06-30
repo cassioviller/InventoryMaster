@@ -31,6 +31,12 @@ export default function FinancialReports() {
 
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: ['/api/reports/financial-stock'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/reports/financial-stock');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    enabled: !!localStorage.getItem('token'),
   });
 
   // Filter and sort data locally to avoid excessive API calls

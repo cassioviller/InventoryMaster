@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { UserPlus, Users, Settings } from 'lucide-react';
 import { UserModal } from '@/components/modals/user-modal';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function SuperAdminPanel() {
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);

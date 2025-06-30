@@ -89,6 +89,11 @@ export class DatabaseStorage implements IStorage {
     return result[0] || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    // Funcionalidade não implementada - retorna undefined para compatibilidade
+    return undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     const result = await db.insert(users).values(insertUser).returning();
     return result[0];

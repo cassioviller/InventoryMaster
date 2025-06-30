@@ -14,7 +14,7 @@ import MaterialExit from "@/pages/material-exit";
 import Management from "@/pages/management";
 import Reports from "@/pages/reports";
 import FinancialReports from "@/pages/financial-reports";
-import SuperAdmin from "@/pages/super-admin";
+import SuperAdminPanel from "@/pages/super-admin-panel";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -50,7 +50,7 @@ function Router() {
       <Route path="/super-admin">
         <ProtectedRoute requireAdmin>
           <AuthenticatedLayout>
-            <SuperAdmin />
+            <SuperAdminPanel />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>

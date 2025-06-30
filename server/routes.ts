@@ -180,7 +180,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const userData = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(userData);
+      
+      // Hash password before creating user
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const userToCreate = {
+        ...userData,
+        password: hashedPassword
+      };
+      
+      const user = await storage.createUser(userToCreate);
       
       await storage.createAuditLog({
         userId: req.user!.id,

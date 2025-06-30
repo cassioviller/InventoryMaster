@@ -251,22 +251,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/categories", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log("=== CREATE CATEGORY DEBUG ===");
+      console.log("Request body:", req.body);
+      console.log("User:", req.user);
+      
       const categoryData = insertCategorySchema.parse(req.body);
       categoryData.ownerId = req.user!.id;
+      
+      console.log("Parsed category data:", categoryData);
+      
       const category = await storage.createCategory(categoryData);
       
-      await storage.createAuditLog({
-        userId: req.user!.id,
-        action: 'CREATE',
-        tableName: 'categories',
-        recordId: category.id,
-        oldValues: null,
-        newValues: JSON.stringify(categoryData),
-      });
-
+      console.log("Created category:", category);
       res.status(201).json(category);
     } catch (error) {
-      res.status(400).json({ message: "Failed to create category" });
+      console.error("Category creation error:", error);
+      res.status(400).json({ 
+        message: "Failed to create category",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 
@@ -323,22 +326,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/materials", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log("=== CREATE MATERIAL DEBUG ===");
+      console.log("Request body:", req.body);
+      console.log("User:", req.user);
+      
       const materialData = insertMaterialSchema.parse(req.body);
       materialData.ownerId = req.user!.id;
+      
+      console.log("Parsed material data:", materialData);
+      
       const material = await storage.createMaterial(materialData);
       
-      await storage.createAuditLog({
-        userId: req.user!.id,
-        action: 'CREATE',
-        tableName: 'materials',
-        recordId: material.id,
-        oldValues: null,
-        newValues: JSON.stringify(materialData),
-      });
-
+      console.log("Created material:", material);
       res.status(201).json(material);
     } catch (error) {
-      res.status(400).json({ message: "Failed to create material" });
+      console.error("Material creation error:", error);
+      res.status(400).json({ 
+        message: "Failed to create material",
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   });
 

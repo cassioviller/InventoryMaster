@@ -746,7 +746,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMovementsByType(type: 'entry' | 'exit', ownerId?: number): Promise<MaterialMovement[]> {
-    const conditions = [eq(materialMovements.type, type)];
+    const conditions = [eq(materialMovements.movementType, type)];
     if (ownerId) {
       conditions.push(eq(materialMovements.ownerId, ownerId));
     }
@@ -803,13 +803,13 @@ export class DatabaseStorage implements IStorage {
 
     const movements = await db
       .select({
-        type: materialMovements.type
+        movementType: materialMovements.movementType
       })
       .from(materialMovements)
       .where(and(...conditions));
 
-    const entries = movements.filter(m => m.type === 'entry').length;
-    const exits = movements.filter(m => m.type === 'exit').length;
+    const entries = movements.filter(m => m.movementType === 'entry').length;
+    const exits = movements.filter(m => m.movementType === 'exit').length;
 
     return { entries, exits };
   }
@@ -819,11 +819,15 @@ export class DatabaseStorage implements IStorage {
     const [movement] = await db
       .insert(materialMovements)
       .values({
-        type: 'entry',
+        movementType: 'entry',
         supplierId: data.supplierId,
         observation: data.observation,
-        items: data.items,
+        items: JSON.stringify(data.items),
         ownerId: 1, // Default owner
+        quantity: data.items.reduce((sum, item) => sum + item.quantity, 0),
+        materialId: data.items[0]?.materialId || 0,
+        unitPrice: data.items[0]?.unitPrice || '0',
+        totalValue: data.items.reduce((sum, item) => sum + (item.quantity * parseFloat(item.unitPrice)), 0).toFixed(2),
       })
       .returning();
 
@@ -840,12 +844,16 @@ export class DatabaseStorage implements IStorage {
     const [movement] = await db
       .insert(materialMovements)
       .values({
-        type: 'exit',
+        movementType: 'exit',
         employeeId: data.employeeId,
         thirdPartyId: data.thirdPartyId,
         observation: data.observation,
-        items: data.items,
+        items: JSON.stringify(data.items),
         ownerId: 1, // Default owner
+        quantity: data.items.reduce((sum, item) => sum + item.quantity, 0),
+        materialId: data.items[0]?.materialId || 0,
+        unitPrice: data.items[0]?.unitPrice || '0',
+        totalValue: data.items.reduce((sum, item) => sum + (item.quantity * parseFloat(item.unitPrice)), 0).toFixed(2),
       })
       .returning();
 
@@ -925,7 +933,7 @@ export class DatabaseStorage implements IStorage {
     const conditions = [];
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
-    if (type) conditions.push(eq(materialMovements.type, type));
+    if (type) conditions.push(eq(materialMovements.movementType, type));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
     
     return await db
@@ -936,7 +944,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMaterialConsumptionReport(startDate?: Date, endDate?: Date, categoryId?: number, ownerId?: number): Promise<any[]> {
-    const conditions = [eq(materialMovements.type, 'exit')];
+    const conditions = [eq(materialMovements.movementType, 'exit')];
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));

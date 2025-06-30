@@ -95,21 +95,18 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Código limpo e estável para desenvolvimento e produção
 
 ## Status Atual (30/06/2025)
-**SISTEMA COMPLETAMENTE REVISADO E FUNCIONAL - FINAL**:
-- Checkup completo realizado e todos os problemas corrigidos
-- Schema compartilhado reorganizado em shared/schema.ts
-- Função authenticatedRequest padronizada em todas as páginas
-- Autenticação JWT funcionando perfeitamente
-- Validação de tokens implementada corretamente
-- Sistema de redirecionamento otimizado
-- Todos os endpoints CRUD testados e funcionando
-- Relatórios financeiros corrigidos e operacionais
-- Sistema testado com dados reais e movimentações
-- Funcionalidades de entrada e saída de materiais operacionais
-- Dashboard com estatísticas funcionando
-- Movimentações de entrada/saída testadas e funcionando
-- Sistema pronto para uso em produção
-- Todas as correções de imports e tipos finalizadas
+**SISTEMA EM CORREÇÃO FINAL - PROBLEMAS DE DEPLOY IDENTIFICADOS**:
+- Problemas de schema identificados durante deploy (owner_id missing)
+- Schema compartilhado sendo corrigido em shared/schema.ts
+- Storage.ts reescrito com validações corretas
+- Usuário cassio configurado como super_admin no banco
+- Autenticação JWT funcionando (token válido)
+- Problemas de compatibilidade de tipos sendo resolvidos
+- Sistema de materiais necessita correção de schema
+- Dashboard com erros de consulta SQL
+- Movimentações precisam ajuste de campo 'type' vs 'movementType'
+- Deploy preparado mas necessita correções de schema
+- TypeScript types sendo alinhados com schema real
 
 ## Status Anterior (27/06/2025)
 **CONFIGURAÇÃO DEFINITIVA IMPLEMENTADA - BASEADA NO PROJETO DE COMISSÕES**:

@@ -74,8 +74,8 @@ export interface IStorage {
   getMovementsByDateRange(startDate: Date, endDate: Date, ownerId?: number): Promise<MaterialMovement[]>;
   getMovementsByEmployee(employeeId: number, ownerId?: number): Promise<MaterialMovement[]>;
   getTodayMovements(ownerId?: number): Promise<{ entries: number; exits: number }>;
-  createEntry(userId: number, data: CreateEntryData): Promise<MaterialMovement>;
-  createExit(userId: number, data: CreateExitData): Promise<MaterialMovement>;
+  createEntry(userId: number, data: CreateEntry): Promise<MaterialMovement>;
+  createExit(userId: number, data: CreateExit): Promise<MaterialMovement>;
 
   // Dashboard Statistics
   getDashboardStats(ownerId?: number): Promise<{
@@ -109,8 +109,8 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getUserByEmail(email: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.email, email));
-    return user || undefined;
+    // Email field removed from schema
+    return undefined;
   }
 
   async createUser(user: InsertUser): Promise<User> {

@@ -130,6 +130,12 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
   - Entradas de estoque de fornecedores
   - Saídas para funcionários e terceiros
 - ✅ Dashboard e relatórios funcionando com dados reais
+- ✅ CORREÇÕES IMPLEMENTADAS (30/06/2025):
+  - Botão "Confirmar Entrada" corrigido e funcionando
+  - Relatório financeiro corrigido - não mostra mais NaN
+  - Cálculo de valores totais implementado corretamente
+  - Separação de materiais por preço implementada (diferentes preços = linhas separadas)
+  - Logs de debug adicionados para troubleshooting
 
 ### Problemas Resolvidos Hoje:
 - ✅ Criação de categorias e materiais (400 errors corrigidos)

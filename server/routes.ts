@@ -247,6 +247,64 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user route
+  app.put("/api/users/:id", authenticateToken, requireSystemSuperAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const updateData = req.body;
+
+      // Hash password if provided
+      if (updateData.password) {
+        updateData.password = await bcrypt.hash(updateData.password, 10);
+      }
+
+      const updatedUser = await storage.updateUser(userId, updateData);
+      
+      await storage.createAuditLog({
+        userId: req.user!.id,
+        action: 'UPDATE',
+        tableName: 'users',
+        recordId: userId,
+        oldValues: null,
+        newValues: JSON.stringify(updateData),
+      });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      res.status(400).json({ message: "Failed to update user" });
+    }
+  });
+
+  // Delete user route
+  app.delete("/api/users/:id", authenticateToken, requireSystemSuperAdmin, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const userId = parseInt(req.params.id);
+      
+      // Prevent deletion of super admin users
+      const userToDelete = await storage.getUser(userId);
+      if (userToDelete?.role === 'super_admin') {
+        return res.status(403).json({ message: "Cannot delete super admin users" });
+      }
+
+      await storage.deleteUser(userId);
+      
+      await storage.createAuditLog({
+        userId: req.user!.id,
+        action: 'DELETE',
+        tableName: 'users',
+        recordId: userId,
+        oldValues: null,
+        newValues: null,
+      });
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(400).json({ message: "Failed to delete user" });
+    }
+  });
+
   // Categories routes
   app.get("/api/categories", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {

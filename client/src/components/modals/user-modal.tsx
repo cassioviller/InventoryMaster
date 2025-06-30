@@ -60,7 +60,7 @@ export function UserModal({ open, onOpenChange, editingUser }: UserModalProps) {
   const createUserMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
       const { confirmPassword, ...userData } = data;
-      return apiRequest('POST', '/api/users', userData);
+      return apiRequest('/api/users', 'POST', userData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users'] });

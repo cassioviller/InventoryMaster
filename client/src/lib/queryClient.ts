@@ -23,8 +23,16 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  // Validate HTTP method
+  const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
+  const upperMethod = method.toUpperCase();
+  
+  if (!validMethods.includes(upperMethod)) {
+    throw new Error(`Invalid HTTP method: ${method}`);
+  }
+
   const res = await fetch(url, {
-    method,
+    method: upperMethod,
     headers,
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",

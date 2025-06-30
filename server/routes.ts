@@ -648,11 +648,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/movements/exit", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log("=== CREATE EXIT DEBUG ===");
+      console.log("Request body:", req.body);
+      console.log("User:", req.user);
+      
       const exitData = createExitSchema.parse(req.body);
-      const movement = await storage.createExit(req.user!.id, exitData);
+      console.log("Parsed exit data:", exitData);
+      
+      const movement = await storage.createExit(exitData, req.user!.id);
+      console.log("Exit created successfully:", movement);
+      
       res.status(201).json(movement);
     } catch (error) {
-      res.status(400).json({ message: "Failed to create exit" });
+      console.error("Error creating exit:", error);
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: 'Validation error', 
+          errors: (error as any).errors 
+        });
+      }
+      res.status(500).json({ 
+        message: "Failed to create exit",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

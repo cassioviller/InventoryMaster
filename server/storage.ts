@@ -112,8 +112,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUser(id: number): Promise<boolean> {
-    const result = await db.delete(users).where(eq(users.id, id));
-    return result.length > 0;
+    try {
+      await db.delete(users).where(eq(users.id, id));
+      return true;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      return false;
+    }
   }
 
   async getUsers(ownerId?: number): Promise<User[]> {
@@ -152,11 +157,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCategory(id: number, ownerId?: number): Promise<boolean> {
-    const conditions = [eq(categories.id, id)];
-    if (ownerId) conditions.push(eq(categories.ownerId, ownerId));
+    try {
+      const conditions = [eq(categories.id, id)];
+      if (ownerId) conditions.push(eq(categories.ownerId, ownerId));
 
-    const result = await db.delete(categories).where(and(...conditions));
-    return result.rowCount !== null && result.rowCount > 0;
+      await db.delete(categories).where(and(...conditions));
+      return true;
+    } catch (error) {
+      console.error('Error deleting category:', error);
+      return false;
+    }
   }
 
   // Material methods
@@ -234,11 +244,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteMaterial(id: number, ownerId?: number): Promise<boolean> {
-    const conditions = [eq(materials.id, id)];
-    if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
+    try {
+      const conditions = [eq(materials.id, id)];
+      if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
 
-    const result = await db.delete(materials).where(and(...conditions));
-    return result.rowCount !== null && result.rowCount > 0;
+      await db.delete(materials).where(and(...conditions));
+      return true;
+    } catch (error) {
+      console.error('Error deleting material:', error);
+      return false;
+    }
   }
 
   async getLowStockMaterials(ownerId?: number): Promise<MaterialWithDetails[]> {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, DollarSign, Package, TrendingUp, Download, FileText, Search } from "lucide-react";
 import { exportToPDF, exportToExcel, formatCurrency } from "@/lib/export-utils";
+import { authenticatedRequest } from '@/lib/auth-request';
 import {
   Table,
   TableBody,

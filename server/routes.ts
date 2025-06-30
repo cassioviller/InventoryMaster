@@ -2,7 +2,28 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import jwt from "jsonwebtoken";
 import { storage } from "./storage";
-import { loginSchema, insertUserSchema, insertCategorySchema, insertMaterialSchema, insertEmployeeSchema, insertSupplierSchema, insertThirdPartySchema, createEntrySchema, createExitSchema } from "@shared/schema";
+import {
+  loginSchema,
+  insertUserSchema,
+  insertCategorySchema,
+  insertMaterialSchema,
+  insertSupplierSchema,
+  insertEmployeeSchema,
+  insertThirdPartySchema,
+  createEntrySchema,
+  createExitSchema,
+  type User,
+  type Category,
+  type Material,
+  type Supplier,
+  type Employee,
+  type ThirdParty,
+  type MaterialMovement,
+  type CreateEntry,
+  type CreateExit,
+  type MovementItem,
+  type UserRole,
+} from "../shared/schema";
 
 // Extend Request interface to include user
 interface AuthenticatedRequest extends Request {

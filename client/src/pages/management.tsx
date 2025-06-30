@@ -39,7 +39,7 @@ const getTabItems = (canCreateUsers: boolean) => {
   ];
   
   if (canCreateUsers) {
-    baseItems.push({ id: 'users' as ActiveTab, label: 'Usuários' });
+    baseItems.push({ id: 'users' as const, label: 'Usuários' });
   }
   
   return baseItems;

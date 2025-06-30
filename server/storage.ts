@@ -1,12 +1,12 @@
 import {
   users, categories, materials, employees, suppliers, thirdParties,
-  materialMovements, movementItems, auditLog,
+  materialMovements, auditLogs,
   type User, type InsertUser, type Category, type InsertCategory,
   type Material, type InsertMaterial, type Employee, type InsertEmployee,
   type Supplier, type InsertSupplier, type ThirdParty, type InsertThirdParty,
-  type MaterialMovement, type InsertMovement, type MovementItem, type InsertMovementItem,
-  type AuditLog, type CreateEntryData, type CreateExitData
-} from "@shared/schema";
+  type MaterialMovement, type AuditLog, type CreateEntry, type CreateExit,
+  type MovementItem
+} from "../shared/schema";
 import { db } from "./db";
 import { eq, and, desc, asc, sql, gte, lte, ilike, or } from "drizzle-orm";
 import bcrypt from "bcrypt";

@@ -1,11 +1,11 @@
 import { 
   users, categories, materials, suppliers, employees, thirdParties, 
-  materialMovements, auditLogs,
+  materialMovements, auditLogs, costCenters,
   type User, type InsertUser, type Category, type InsertCategory,
   type Material, type InsertMaterial, type Supplier, type InsertSupplier,
   type Employee, type InsertEmployee, type ThirdParty, type InsertThirdParty,
   type MaterialMovement, type CreateEntry, type CreateExit,
-  type MaterialWithDetails, type MovementWithDetails
+  type MaterialWithDetails, type MovementWithDetails, type CostCenter, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike } from "drizzle-orm";
@@ -70,13 +70,21 @@ export interface IStorage {
     totalMovements: number;
   }>;
 
+  // Cost Center methods
+  getCostCenters(ownerId?: number): Promise<CostCenter[]>;
+  getCostCenter(id: number, ownerId?: number): Promise<CostCenter | undefined>;
+  createCostCenter(insertCostCenter: InsertCostCenter): Promise<CostCenter>;
+  updateCostCenter(id: number, updateCostCenter: Partial<InsertCostCenter>, ownerId?: number): Promise<CostCenter | undefined>;
+  deleteCostCenter(id: number, ownerId?: number): Promise<boolean>;
+
   // Report methods
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
-  getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]>;
+  getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number, costCenterId?: number): Promise<any[]>;
   getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
   getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]>;
   getSupplierTrackingReport(supplierId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
   getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]>;
+  getCostCenterReport(costCenterId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -341,11 +349,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteSupplier(id: number, ownerId?: number): Promise<boolean> {
-    const conditions = [eq(suppliers.id, id)];
-    if (ownerId) conditions.push(eq(suppliers.ownerId, ownerId));
+    try {
+      const conditions = [eq(suppliers.id, id)];
+      if (ownerId) conditions.push(eq(suppliers.ownerId, ownerId));
 
-    const result = await db.delete(suppliers).where(and(...conditions));
-    return result.rowCount !== null && result.rowCount > 0;
+      const result = await db.delete(suppliers).where(and(...conditions));
+      return true; // Se não houve erro, consideramos sucesso
+    } catch (error) {
+      console.error('Error deleting supplier:', error);
+      return false;
+    }
   }
 
   // Employee methods
@@ -384,11 +397,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteEmployee(id: number, ownerId?: number): Promise<boolean> {
-    const conditions = [eq(employees.id, id)];
-    if (ownerId) conditions.push(eq(employees.ownerId, ownerId));
+    try {
+      const conditions = [eq(employees.id, id)];
+      if (ownerId) conditions.push(eq(employees.ownerId, ownerId));
 
-    const result = await db.delete(employees).where(and(...conditions));
-    return result.rowCount !== null && result.rowCount > 0;
+      await db.delete(employees).where(and(...conditions));
+      return true;
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      return false;
+    }
   }
 
   // Third party methods
@@ -422,11 +440,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteThirdParty(id: number, ownerId?: number): Promise<boolean> {
-    const conditions = [eq(thirdParties.id, id)];
-    if (ownerId) conditions.push(eq(thirdParties.ownerId, ownerId));
+    try {
+      const conditions = [eq(thirdParties.id, id)];
+      if (ownerId) conditions.push(eq(thirdParties.ownerId, ownerId));
 
-    const result = await db.delete(thirdParties).where(and(...conditions));
-    return result.rowCount !== null && result.rowCount > 0;
+      await db.delete(thirdParties).where(and(...conditions));
+      return true;
+    } catch (error) {
+      console.error('Error deleting third party:', error);
+      return false;
+    }
   }
 
   // Movement methods
@@ -1086,6 +1109,76 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(materialMovements.createdAt));
 
     return supplierData.map(item => ({
+      ...item,
+      totalValue: item.quantity * parseFloat(item.unitPrice || '0')
+    }));
+  }
+
+  // Cost Center methods
+  async getCostCenters(ownerId?: number): Promise<CostCenter[]> {
+    const conditions = ownerId ? eq(costCenters.ownerId, ownerId) : undefined;
+    return await db.select().from(costCenters).where(conditions).orderBy(costCenters.name);
+  }
+
+  async getCostCenter(id: number, ownerId?: number): Promise<CostCenter | undefined> {
+    const conditions = ownerId ? and(eq(costCenters.id, id), eq(costCenters.ownerId, ownerId)) : eq(costCenters.id, id);
+    const result = await db.select().from(costCenters).where(conditions).limit(1);
+    return result[0] || undefined;
+  }
+
+  async createCostCenter(insertCostCenter: InsertCostCenter): Promise<CostCenter> {
+    const [costCenter] = await db.insert(costCenters).values(insertCostCenter).returning();
+    return costCenter;
+  }
+
+  async updateCostCenter(id: number, updateCostCenter: Partial<InsertCostCenter>, ownerId?: number): Promise<CostCenter | undefined> {
+    const conditions = ownerId ? and(eq(costCenters.id, id), eq(costCenters.ownerId, ownerId)) : eq(costCenters.id, id);
+    const [costCenter] = await db.update(costCenters).set(updateCostCenter).where(conditions).returning();
+    return costCenter || undefined;
+  }
+
+  async deleteCostCenter(id: number, ownerId?: number): Promise<boolean> {
+    const conditions = ownerId ? and(eq(costCenters.id, id), eq(costCenters.ownerId, ownerId)) : eq(costCenters.id, id);
+    const result = await db.delete(costCenters).where(conditions);
+    return result.rowCount > 0;
+  }
+
+  async getCostCenterReport(costCenterId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {
+    const conditions = [];
+    if (costCenterId) conditions.push(eq(materialMovements.costCenterId, costCenterId));
+    if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
+    if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
+    if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
+
+    const movements = await db
+      .select({
+        id: materialMovements.id,
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+        unitPrice: materialMovements.unitPrice,
+        notes: materialMovements.notes,
+        createdAt: materialMovements.createdAt,
+        materialId: materialMovements.materialId,
+        costCenterId: materialMovements.costCenterId,
+        material: {
+          id: materials.id,
+          name: materials.name,
+          unit: materials.unit
+        },
+        costCenter: {
+          id: costCenters.id,
+          code: costCenters.code,
+          name: costCenters.name,
+          department: costCenters.department
+        }
+      })
+      .from(materialMovements)
+      .leftJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(costCenters, eq(materialMovements.costCenterId, costCenters.id))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(materialMovements.createdAt));
+
+    return movements.map(item => ({
       ...item,
       totalValue: item.quantity * parseFloat(item.unitPrice || '0')
     }));

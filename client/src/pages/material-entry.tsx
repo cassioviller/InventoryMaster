@@ -79,11 +79,25 @@ export default function MaterialEntry() {
 
   const createEntryMutation = useMutation({
     mutationFn: async (data: CreateEntryData) => {
+      console.log("=== ENVIANDO ENTRADA ===");
+      console.log("Data:", JSON.stringify(data, null, 2));
+      
       const res = await authenticatedRequest('/api/movements/entry', {
         method: 'POST',
         body: JSON.stringify(data),
       });
-      return res.json();
+      
+      console.log("Response status:", res.status);
+      
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Error response:", errorText);
+        throw new Error(`HTTP ${res.status}: ${errorText}`);
+      }
+      
+      const result = await res.json();
+      console.log("Success result:", result);
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/materials'] });
@@ -96,11 +110,13 @@ export default function MaterialEntry() {
       setAddedItems([]);
       setSelectedMaterial('');
       setQuantity('');
+      setUnitPrice('');
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Entry mutation error:", error);
       toast({
         title: "Erro ao registrar entrada",
-        description: "Tente novamente.",
+        description: error instanceof Error ? error.message : "Tente novamente.",
         variant: "destructive",
       });
     },

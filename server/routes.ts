@@ -620,11 +620,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post("/api/movements/entry", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
+      console.log("=== RECEIVED ENTRY REQUEST ===");
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      console.log("User:", req.user);
+      
       const entryData = createEntrySchema.parse(req.body);
-      const movement = await storage.createEntry(req.user!.id, entryData);
+      console.log("Parsed entry data:", entryData);
+      
+      const movement = await storage.createEntry(entryData, req.user!.id);
+      console.log("Entry created successfully:", movement);
+      
       res.status(201).json(movement);
     } catch (error) {
-      res.status(400).json({ message: "Failed to create entry" });
+      console.error("Error creating entry:", error);
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: 'Validation error', 
+          errors: (error as any).errors 
+        });
+      }
+      res.status(500).json({ 
+        message: "Failed to create entry",
+        error: error instanceof Error ? error.message : String(error)
+      });
     }
   });
 

@@ -248,18 +248,19 @@ export default function SuperAdminPanel() {
                   <TableHead>Nome de Usuário</TableHead>
                   <TableHead>Perfil</TableHead>
                   <TableHead>Data de Criação</TableHead>
+                  <TableHead className="w-24">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       Carregando usuários...
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center">
+                    <TableCell colSpan={5} className="text-center">
                       Nenhum usuário encontrado
                     </TableCell>
                   </TableRow>
@@ -279,6 +280,28 @@ export default function SuperAdminPanel() {
                           'N/A'
                         }
                       </TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(user)}
+                            className="text-primary hover:text-primary/80"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {user.role !== 'super_admin' && (
+                            <Button
+                              variant="ghost"  
+                              size="sm"
+                              onClick={() => handleDelete(user.id)}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -293,6 +316,79 @@ export default function SuperAdminPanel() {
         open={isUserModalOpen} 
         onOpenChange={setIsUserModalOpen}
       />
+
+      {/* Edit User Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuário</DialogTitle>
+            <DialogDescription>
+              Altere as informações do usuário abaixo.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-username">Nome de Usuário</Label>
+              <Input
+                id="edit-username"
+                value={editForm.username}
+                onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-role">Perfil</Label>
+              <Select value={editForm.role} onValueChange={(value) => setEditForm({ ...editForm, role: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o perfil" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="user">Usuário</SelectItem>
+                  <SelectItem value="admin">Administrador</SelectItem>
+                  <SelectItem value="super_admin">Super Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-password">Nova Senha (opcional)</Label>
+              <Input
+                id="edit-password"
+                type="password"
+                value={editForm.password}
+                onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
+                placeholder="Deixe em branco para manter a senha atual"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdateUser} disabled={updateUserMutation.isPending}>
+              {updateUserMutation.isPending ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete User Dialog */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirmar Exclusão</DialogTitle>
+            <DialogDescription>
+              Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={deleteUserMutation.isPending}>
+              {deleteUserMutation.isPending ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

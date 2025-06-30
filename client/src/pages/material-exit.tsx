@@ -378,7 +378,7 @@ export default function MaterialExit() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                  <Select value={selectedMaterial} onValueChange={setSelectedMaterial}>
+                  <Select value={selectedMaterial} onValueChange={handleMaterialChange}>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um material" />
                     </SelectTrigger>
@@ -398,7 +398,7 @@ export default function MaterialExit() {
                     min="1"
                     placeholder="1"
                     value={quantity}
-                    onChange={(e) => setQuantity(e.target.value)}
+                    onChange={(e) => handleQuantityChange(e.target.value)}
                   />
                 </div>
                 <div>
@@ -410,6 +410,53 @@ export default function MaterialExit() {
                   />
                 </div>
               </div>
+
+              {/* Material Lots Display */}
+              {selectedMaterial && selectedMaterialLots.length > 0 && (
+                <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h4 className="text-sm font-medium text-blue-900 mb-3">Lotes Disponíveis</h4>
+                  <div className="space-y-2">
+                    {selectedMaterialLots.map((lot, index) => (
+                      <div key={index} className="flex justify-between items-center bg-white p-2 rounded border">
+                        <div className="text-sm">
+                          <span className="font-medium">Preço: R$ {lot.unitPrice}</span>
+                          <span className="text-gray-600 ml-3">Disponível: {lot.availableQuantity}</span>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {new Date(lot.entryDate).toLocaleDateString('pt-BR')}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* FIFO Simulation Display */}
+              {fifoSimulation && (
+                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h4 className="text-sm font-medium text-green-900 mb-3">Simulação FIFO - Como será processada a saída</h4>
+                  <div className="space-y-2">
+                    {fifoSimulation.lots.map((lot, index) => (
+                      <div key={index} className="flex justify-between items-center bg-white p-2 rounded border">
+                        <div className="text-sm">
+                          <span className="font-medium">R$ {lot.unitPrice}</span>
+                          <span className="text-gray-600 ml-3">× {lot.quantity} unidades</span>
+                        </div>
+                        <div className="text-sm font-medium">
+                          R$ {(parseFloat(lot.unitPrice) * lot.quantity).toFixed(2)}
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex justify-between items-center font-medium">
+                        <span>Valor Total:</span>
+                        <span className="text-green-700">R$ {fifoSimulation.totalValue.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="mt-4">
                 <Button type="button" onClick={addMaterial} className="bg-red-500 hover:bg-red-600">
                   <Plus className="w-4 h-4 mr-2" />

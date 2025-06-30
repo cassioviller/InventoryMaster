@@ -28,8 +28,8 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  ownerId: integer("ownerId").notNull().default(1),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  ownerId: integer("owner_id").notNull().default(1),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 // Suppliers table

@@ -280,20 +280,38 @@ export default function FinancialReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {Array.isArray(filteredAndSortedData) && filteredAndSortedData.map((item: FinancialStockItem) => (
-                <TableRow key={item.id}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.category}</TableCell>
-                  <TableCell>{item.unit}</TableCell>
-                  <TableCell className="text-right">{item.currentStock}</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(item.unitPrice)}
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatCurrency(item.subtotal)}
-                  </TableCell>
-                </TableRow>
-              ))}
+              {Array.isArray(filteredAndSortedData) && filteredAndSortedData.map((item: FinancialStockItem, index: number) => {
+                // Check if this material has multiple price entries
+                const sameNameItems = filteredAndSortedData.filter(otherItem => otherItem.name === item.name);
+                const hasMultiplePrices = sameNameItems.length > 1;
+                const isFirstOfMultiple = hasMultiplePrices && sameNameItems.indexOf(item) === 0;
+                const isLastOfMultiple = hasMultiplePrices && sameNameItems.indexOf(item) === sameNameItems.length - 1;
+                
+                return (
+                  <TableRow 
+                    key={`${item.id}-${item.unitPrice}`}
+                    className={hasMultiplePrices ? "bg-blue-50 border-l-4 border-l-blue-400" : ""}
+                  >
+                    <TableCell className="font-medium">
+                      {item.name}
+                      {hasMultiplePrices && (
+                        <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                          Preço {sameNameItems.indexOf(item) + 1} de {sameNameItems.length}
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>{item.category}</TableCell>
+                    <TableCell>{item.unit}</TableCell>
+                    <TableCell className="text-right">{item.currentStock}</TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(item.unitPrice)}
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatCurrency(item.subtotal)}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         </CardContent>

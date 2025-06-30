@@ -753,31 +753,104 @@ export class DatabaseStorage implements IStorage {
 
   async getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]> {
     const conditions = [];
-    if (materialSearch) {
-      conditions.push(ilike(materials.name, `%${materialSearch}%`));
-    }
-    if (categoryId) {
-      conditions.push(eq(materials.categoryId, categoryId));
-    }
     if (ownerId) {
-      conditions.push(eq(materials.ownerId, ownerId));
+      conditions.push(eq(materialMovements.ownerId, ownerId));
     }
 
-    const materialsData = await db
+    // Get all entry movements with their materials and categories
+    const movementsData = await db
       .select({
-        id: materials.id,
-        name: materials.name,
-        currentStock: materials.currentStock,
-        unitPrice: materials.unitPrice,
+        materialId: materialMovements.materialId,
+        materialName: materials.name,
+        categoryName: categories.name,
+        unit: materials.unit,
+        unitPrice: materialMovements.unitPrice,
+        quantity: materialMovements.quantity,
+        type: materialMovements.type,
       })
-      .from(materials)
-      .where(conditions.length > 0 ? and(...conditions) : undefined);
+      .from(materialMovements)
+      .innerJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(categories, eq(materials.categoryId, categories.id))
+      .where(
+        and(
+          eq(materialMovements.type, 'entry'),
+          conditions.length > 0 ? and(...conditions) : undefined
+        )
+      )
+      .orderBy(materials.name, materialMovements.unitPrice);
 
-    // Calculate total value in JavaScript
-    return materialsData.map(material => ({
-      ...material,
-      totalValue: material.currentStock * parseFloat(material.unitPrice || '0'),
-    }));
+    // Apply material search filter if provided
+    let filteredMovements = movementsData;
+    if (materialSearch) {
+      const searchTerm = materialSearch.toLowerCase();
+      filteredMovements = movementsData.filter(movement => 
+        movement.materialName.toLowerCase().includes(searchTerm) ||
+        (movement.categoryName && movement.categoryName.toLowerCase().includes(searchTerm))
+      );
+    }
+
+    // Apply category filter if provided
+    if (categoryId) {
+      // Get category name for filtering
+      const categoryData = await db
+        .select({ name: categories.name })
+        .from(categories)
+        .where(eq(categories.id, categoryId))
+        .limit(1);
+      
+      if (categoryData.length > 0) {
+        const categoryName = categoryData[0].name;
+        filteredMovements = filteredMovements.filter(movement => 
+          movement.categoryName === categoryName
+        );
+      }
+    }
+
+    // Group by material and unit price to separate different prices
+    const groupedData = new Map<string, {
+      materialId: number;
+      materialName: string;
+      categoryName: string;
+      unit: string;
+      unitPrice: string;
+      totalQuantity: number;
+    }>();
+
+    filteredMovements.forEach(movement => {
+      const key = `${movement.materialId}-${movement.unitPrice}`;
+      
+      if (groupedData.has(key)) {
+        const existing = groupedData.get(key)!;
+        existing.totalQuantity += movement.quantity;
+      } else {
+        groupedData.set(key, {
+          materialId: movement.materialId,
+          materialName: movement.materialName,
+          categoryName: movement.categoryName || 'Sem categoria',
+          unit: movement.unit || 'UN',
+          unitPrice: movement.unitPrice || '0',
+          totalQuantity: movement.quantity,
+        });
+      }
+    });
+
+    // Convert to array and calculate totals
+    const result = Array.from(groupedData.values()).map(item => {
+      const unitPrice = parseFloat(item.unitPrice || '0');
+      const totalValue = item.totalQuantity * unitPrice;
+      
+      return {
+        id: item.materialId,
+        name: item.materialName,
+        category: item.categoryName,
+        unit: item.unit,
+        currentStock: item.totalQuantity,
+        unitPrice: item.unitPrice,
+        totalValue: totalValue,
+      };
+    });
+
+    return result;
   }
 
   async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]> {

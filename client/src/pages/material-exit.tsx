@@ -158,7 +158,7 @@ export default function MaterialExit() {
     setAddedItems(addedItems.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: Omit<CreateExitData, 'items'>) => {
+  const onSubmit = (data: Omit<CreateExit, 'items'>) => {
     if (addedItems.length === 0) {
       toast({
         title: "Nenhum material adicionado",
@@ -168,12 +168,11 @@ export default function MaterialExit() {
       return;
     }
 
-    const exitData: CreateExitData = {
+    const exitData: CreateExit = {
       ...data,
       items: addedItems.map(item => ({
         materialId: item.materialId,
         quantity: item.quantity,
-        purpose: item.purpose,
       })),
     };
 

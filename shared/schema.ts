@@ -14,10 +14,13 @@ export const documentTypeEnum = pgEnum('document_type', ['cpf', 'cnpj']);
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
+  email: text("email"),
   password: text("password").notNull(),
-  role: userRoleEnum("role").notNull().default('user'),
-  ownerId: integer("owner_id").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  name: text("name"),
+  role: text("role").notNull().default('user'),
+  isActive: boolean("isActive").notNull().default(true),
+  ownerId: integer("ownerId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Categories table
@@ -25,8 +28,8 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
   description: text("description"),
-  ownerId: integer("owner_id").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  ownerId: integer("ownerId").notNull().default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Suppliers table
@@ -65,9 +68,9 @@ export const employees = pgTable("employees", {
   department: text("department"),
   email: text("email"),
   phone: text("phone"),
-  isActive: boolean("is_active").notNull().default(true),
-  ownerId: integer("owner_id").notNull().default(1),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isActive: boolean("isActive").notNull().default(true),
+  ownerId: integer("ownerId").notNull().default(1),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
 // Third parties table

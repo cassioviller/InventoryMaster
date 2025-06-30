@@ -421,7 +421,7 @@ export class DatabaseStorage implements IStorage {
       .insert(materials)
       .values({
         ...material,
-        currentStock: material.currentStock || 0,
+        quantity: material.quantity || 0,
       })
       .returning();
     return newMaterial;

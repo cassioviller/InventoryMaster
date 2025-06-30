@@ -435,6 +435,7 @@ export class DatabaseStorage implements IStorage {
     const firstItem = entry.items[0];
     const result = await db.insert(materialMovements).values({
       type: entry.type,
+      date: new Date(),
       userId: userId,
       materialId: firstItem.materialId,
       quantity: firstItem.quantity,
@@ -474,6 +475,7 @@ export class DatabaseStorage implements IStorage {
     const firstItem = exit.items[0];
     const result = await db.insert(materialMovements).values({
       type: exit.type,
+      date: new Date(),
       userId: userId,
       materialId: firstItem.materialId,
       quantity: firstItem.quantity,

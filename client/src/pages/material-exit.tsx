@@ -585,6 +585,16 @@ export default function MaterialExit() {
                           <Badge variant="secondary" className="ml-2">
                             Quantidade: {item.quantity}
                           </Badge>
+                          {item.preferredLotPrice && (
+                            <Badge variant="outline" className="ml-2 border-blue-500 text-blue-700">
+                              Lote R$ {item.preferredLotPrice}
+                            </Badge>
+                          )}
+                          {!item.preferredLotPrice && (
+                            <Badge variant="outline" className="ml-2 border-green-500 text-green-700">
+                              FIFO Automático
+                            </Badge>
+                          )}
                           {item.purpose && (
                             <p className="text-sm text-gray-600 mt-1">Finalidade: {item.purpose}</p>
                           )}

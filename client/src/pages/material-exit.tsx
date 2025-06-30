@@ -19,6 +19,7 @@ interface MaterialExitItem {
   materialName: string;
   quantity: number;
   purpose?: string;
+  preferredLotPrice?: string; // Para indicar se o usuário selecionou um lote específico
 }
 
 interface MaterialLot {
@@ -43,6 +44,7 @@ export default function MaterialExit() {
   const [purpose, setPurpose] = useState('');
   const [selectedMaterialLots, setSelectedMaterialLots] = useState<MaterialLot[]>([]);
   const [fifoSimulation, setFifoSimulation] = useState<FifoSimulation | null>(null);
+  const [selectedLotPrice, setSelectedLotPrice] = useState<string>('');
 
   const form = useForm<Omit<CreateExit, 'items'>>({
     resolver: zodResolver(createExitSchema.omit({ items: true })),
@@ -148,6 +150,7 @@ export default function MaterialExit() {
   const handleMaterialChange = (materialId: string) => {
     setSelectedMaterial(materialId);
     setFifoSimulation(null);
+    setSelectedLotPrice('');
     if (materialId) {
       fetchMaterialLots(parseInt(materialId));
     } else {
@@ -155,11 +158,49 @@ export default function MaterialExit() {
     }
   };
 
+  // Handle lot selection
+  const handleLotSelection = (lotPrice: string) => {
+    setSelectedLotPrice(lotPrice);
+    setFifoSimulation(null);
+    
+    // If we have a quantity and a selected lot, calculate the value for this specific lot
+    if (quantity && parseInt(quantity) > 0) {
+      const selectedLot = selectedMaterialLots.find(lot => lot.unitPrice === lotPrice);
+      if (selectedLot) {
+        const requestedQty = parseInt(quantity);
+        const availableQty = selectedLot.availableQuantity;
+        const finalQty = Math.min(requestedQty, availableQty);
+        
+        setFifoSimulation({
+          lots: [{ unitPrice: lotPrice, quantity: finalQty }],
+          totalValue: parseFloat(lotPrice) * finalQty
+        });
+      }
+    }
+  };
+
   // Handle quantity change
   const handleQuantityChange = (newQuantity: string) => {
     setQuantity(newQuantity);
+    
     if (selectedMaterial && newQuantity && parseInt(newQuantity) > 0) {
-      simulateFifoExit(parseInt(selectedMaterial), parseInt(newQuantity));
+      // If user has selected a specific lot, calculate for that lot only
+      if (selectedLotPrice) {
+        const selectedLot = selectedMaterialLots.find(lot => lot.unitPrice === selectedLotPrice);
+        if (selectedLot) {
+          const requestedQty = parseInt(newQuantity);
+          const availableQty = selectedLot.availableQuantity;
+          const finalQty = Math.min(requestedQty, availableQty);
+          
+          setFifoSimulation({
+            lots: [{ unitPrice: selectedLotPrice, quantity: finalQty }],
+            totalValue: parseFloat(selectedLotPrice) * finalQty
+          });
+        }
+      } else {
+        // Otherwise, use FIFO simulation
+        simulateFifoExit(parseInt(selectedMaterial), parseInt(newQuantity));
+      }
     } else {
       setFifoSimulation(null);
     }
@@ -178,25 +219,57 @@ export default function MaterialExit() {
     const material = materials?.find((m: any) => m.id === parseInt(selectedMaterial));
     if (!material) return;
 
-    if (material.currentStock < parseInt(quantity)) {
-      toast({
-        title: "Estoque insuficiente",
-        description: `Estoque disponível: ${material.currentStock}`,
-        variant: "destructive",
-      });
-      return;
+    const requestedQty = parseInt(quantity);
+
+    // If user selected a specific lot, validate against that lot's available quantity
+    if (selectedLotPrice) {
+      const selectedLot = selectedMaterialLots.find(lot => lot.unitPrice === selectedLotPrice);
+      if (!selectedLot) {
+        toast({
+          title: "Erro no lote",
+          description: "Lote selecionado não encontrado",
+          variant: "destructive",
+        });
+        return;
+      }
+      
+      if (requestedQty > selectedLot.availableQuantity) {
+        toast({
+          title: "Estoque insuficiente no lote",
+          description: `Disponível no lote R$ ${selectedLotPrice}: ${selectedLot.availableQuantity}`,
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // Validate against total stock if no specific lot selected
+      if (material.currentStock < requestedQty) {
+        toast({
+          title: "Estoque insuficiente",
+          description: `Estoque disponível: ${material.currentStock}`,
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     const existingItemIndex = addedItems.findIndex(item => item.materialId === parseInt(selectedMaterial));
     
     if (existingItemIndex >= 0) {
       const updatedItems = [...addedItems];
-      const newQuantity = updatedItems[existingItemIndex].quantity + parseInt(quantity);
+      const newQuantity = updatedItems[existingItemIndex].quantity + requestedQty;
       
-      if (material.currentStock < newQuantity) {
+      // Re-validate combined quantity
+      const stockLimit = selectedLotPrice 
+        ? selectedMaterialLots.find(lot => lot.unitPrice === selectedLotPrice)?.availableQuantity || 0
+        : material.currentStock;
+        
+      if (newQuantity > stockLimit) {
         toast({
           title: "Estoque insuficiente",
-          description: `Estoque disponível: ${material.currentStock}`,
+          description: selectedLotPrice 
+            ? `Disponível no lote R$ ${selectedLotPrice}: ${stockLimit}`
+            : `Estoque disponível: ${stockLimit}`,
           variant: "destructive",
         });
         return;
@@ -209,16 +282,26 @@ export default function MaterialExit() {
       setAddedItems([...addedItems, {
         materialId: parseInt(selectedMaterial),
         materialName: material.name,
-        quantity: parseInt(quantity),
+        quantity: requestedQty,
         purpose: purpose || undefined,
+        preferredLotPrice: selectedLotPrice || undefined,
       }]);
     }
 
+    // Clear form and show success message
     setSelectedMaterial('');
     setQuantity('');
     setPurpose('');
     setSelectedMaterialLots([]);
+    setSelectedLotPrice('');
     setFifoSimulation(null);
+    
+    toast({
+      title: "Material adicionado",
+      description: selectedLotPrice 
+        ? `${material.name} (lote R$ ${selectedLotPrice}) - ${requestedQty} unidades`
+        : `${material.name} (FIFO automático) - ${requestedQty} unidades`,
+    });
   };
 
   const removeItem = (index: number) => {
@@ -414,13 +497,27 @@ export default function MaterialExit() {
               {/* Material Lots Display */}
               {selectedMaterial && selectedMaterialLots.length > 0 && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <h4 className="text-sm font-medium text-blue-900 mb-3">Lotes Disponíveis</h4>
+                  <h4 className="text-sm font-medium text-blue-900 mb-3">
+                    Lotes Disponíveis 
+                    <span className="text-xs text-blue-600 ml-2">(clique para selecionar um lote específico)</span>
+                  </h4>
                   <div className="space-y-2">
                     {selectedMaterialLots.map((lot, index) => (
-                      <div key={index} className="flex justify-between items-center bg-white p-2 rounded border">
+                      <div 
+                        key={index} 
+                        onClick={() => handleLotSelection(lot.unitPrice)}
+                        className={`flex justify-between items-center p-3 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
+                          selectedLotPrice === lot.unitPrice
+                            ? 'bg-blue-100 border-blue-500 shadow-md'
+                            : 'bg-white border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                        }`}
+                      >
                         <div className="text-sm">
                           <span className="font-medium">Preço: R$ {lot.unitPrice}</span>
                           <span className="text-gray-600 ml-3">Disponível: {lot.availableQuantity}</span>
+                          {selectedLotPrice === lot.unitPrice && (
+                            <span className="ml-3 text-blue-600 font-medium">✓ Selecionado</span>
+                          )}
                         </div>
                         <div className="text-xs text-gray-500">
                           {new Date(lot.entryDate).toLocaleDateString('pt-BR')}
@@ -428,6 +525,16 @@ export default function MaterialExit() {
                       </div>
                     ))}
                   </div>
+                  {selectedLotPrice && (
+                    <div className="mt-3 pt-3 border-t border-blue-200">
+                      <button
+                        onClick={() => setSelectedLotPrice('')}
+                        className="text-xs text-blue-600 hover:text-blue-800 underline"
+                      >
+                        Limpar seleção (usar FIFO automático)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 

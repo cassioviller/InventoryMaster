@@ -289,6 +289,7 @@ export const movementItemSchema = z.object({
 
 export const createEntrySchema = z.object({
   type: z.literal("entry"),
+  date: z.string().optional(),
   originType: z.enum(["supplier", "employee_return", "third_party_return"]),
   supplierId: z.number().optional(),
   returnEmployeeId: z.number().optional(),
@@ -299,6 +300,7 @@ export const createEntrySchema = z.object({
 
 export const createExitSchema = z.object({
   type: z.literal("exit"),
+  date: z.string().optional(),
   destinationType: z.enum(["employee", "third_party"]),
   destinationEmployeeId: z.number().optional(),
   destinationThirdPartyId: z.number().optional(),

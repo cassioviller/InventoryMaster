@@ -78,7 +78,7 @@ export default function MaterialEntry() {
   const thirdParties = thirdPartiesData || [];
 
   const createEntryMutation = useMutation({
-    mutationFn: async (data: CreateEntryData) => {
+    mutationFn: async (data: CreateEntry) => {
       console.log("=== ENVIANDO ENTRADA ===");
       console.log("Data:", JSON.stringify(data, null, 2));
       
@@ -164,7 +164,12 @@ export default function MaterialEntry() {
   };
 
   const onSubmit = (data: Omit<CreateEntry, 'items'>) => {
+    console.log("=== BOTÃO CONFIRMAR ENTRADA CLICADO ===");
+    console.log("Form data received:", data);
+    console.log("Added items:", addedItems);
+    
     if (addedItems.length === 0) {
+      console.log("ERROR: No items added");
       toast({
         title: "Nenhum material adicionado",
         description: "Adicione pelo menos um material antes de confirmar a entrada.",
@@ -175,6 +180,7 @@ export default function MaterialEntry() {
 
     const entryData: CreateEntry = {
       ...data,
+      type: "entry",
       items: addedItems.map(item => ({
         materialId: item.materialId,
         quantity: item.quantity,
@@ -182,6 +188,7 @@ export default function MaterialEntry() {
       })),
     };
 
+    console.log("Final entry data:", entryData);
     createEntryMutation.mutate(entryData);
   };
 

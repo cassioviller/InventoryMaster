@@ -100,6 +100,7 @@ export const materialMovements = pgTable("material_movements", {
   destinationEmployeeId: integer("destination_employee_id").references(() => employees.id),
   destinationThirdPartyId: integer("destination_third_party_id").references(() => thirdParties.id),
   notes: text("notes"),
+  ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

@@ -1,9 +1,6 @@
-import { Pool, neonConfig } from '@neondatabase/serverless';
-import { drizzle } from 'drizzle-orm/neon-serverless';
-import ws from "ws";
+import postgres from 'postgres';
+import { drizzle } from 'drizzle-orm/postgres-js';
 import * as schema from "@shared/schema";
-
-neonConfig.webSocketConstructor = ws;
 
 if (!process.env.DATABASE_URL) {
   throw new Error(
@@ -11,13 +8,12 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-// Garantir SSL para Neon
-let databaseUrl = process.env.DATABASE_URL;
-if (databaseUrl.includes('neon.tech') && !databaseUrl.includes('sslmode')) {
-  databaseUrl = databaseUrl + (databaseUrl.includes('?') ? '&' : '?') + 'sslmode=require';
-}
+console.log('🔧 Configurando conexão PostgreSQL:', process.env.DATABASE_URL.replace(/:[^:]*@/, ':***@'));
 
-console.log('🔧 Configurando conexão PostgreSQL:', databaseUrl.replace(/:[^:]*@/, ':***@'));
+// Configuração SSL para Neon
+const client = postgres(process.env.DATABASE_URL, {
+  ssl: process.env.DATABASE_URL.includes('neon.tech') ? 'require' : false,
+  max: 1
+});
 
-export const pool = new Pool({ connectionString: databaseUrl });
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle(client, { schema });

@@ -1,0 +1,308 @@
+Prompt para Implementação da Lógica de Saída de Materiais com Diferentes Preços
+
+Contexto Atual
+
+O sistema InventoryMaster foi atualizado para mostrar materiais com preços diferentes em linhas separadas no relatório financeiro. Agora é necessário implementar a lógica de saída que considere esses diferentes preços unitários.
+
+Situação atual observada:
+
+•
+Relatório financeiro mostra "Martelo - Preço 1 de 2" (15 unidades a R$ 20,00)
+
+•
+Relatório financeiro mostra "Martelo - Preço 2 de 2" (10 unidades a R$ 15,50)
+
+•
+Mouse aparece com apenas um preço (3 unidades a R$ 24,00)
+
+•
+Sistema precisa de lógica para determinar qual lote usar na saída
+
+Problema a Resolver
+
+Quando um usuário faz uma saída de material que possui múltiplos preços (lotes), o sistema precisa:
+
+1.
+Identificar quais lotes estão disponíveis
+
+2.
+Determinar qual lote usar (FIFO, LIFO, ou escolha manual)
+
+3.
+Atualizar corretamente o estoque de cada lote
+
+4.
+Calcular o valor correto da saída baseado no preço do lote utilizado
+
+Implementação Solicitada
+
+1. Modificação na Interface de Saída
+
+Na página de Saída de Material:
+
+•
+Quando o usuário selecionar um material que possui múltiplos preços, mostrar os lotes disponíveis
+
+•
+Exibir uma tabela ou lista com:
+
+•
+Preço unitário de cada lote
+
+•
+Quantidade disponível em cada lote
+
+•
+Data de entrada (para ordenação FIFO)
+
+•
+Valor total de cada lote
+
+
+
+Exemplo de interface:
+
+Plain Text
+
+
+Material: Martelo
+┌─────────────────────────────────────────────────────────┐
+│ Lotes Disponíveis:                                      │
+│ □ Lote 1: R$ 20,00/un - 15 disponíveis (Entrada: 15/06) │
+│ □ Lote 2: R$ 15,50/un - 10 disponíveis (Entrada: 20/06) │
+└─────────────────────────────────────────────────────────┘
+Quantidade a retirar: [___]
+
+
+2. Lógicas de Saída a Implementar
+
+Opção A - FIFO Automático (Recomendado):
+
+•
+Sempre usar o lote mais antigo primeiro
+
+•
+Se a quantidade solicitada for maior que o lote mais antigo, usar múltiplos lotes
+
+•
+Exemplo: Saída de 20 martelos = 15 do lote 1 (R20,00)+5dolote2(R 20,00) + 5 do lote 2 (R
+20,00)+5dolote2(R
+ 15,50)
+
+Opção B - Seleção Manual:
+
+•
+Permitir que o usuário escolha qual lote usar
+
+•
+Checkbox ou radio button para cada lote
+
+•
+Validar se a quantidade selecionada não excede o disponível
+
+Opção C - Híbrida (Mais Flexível):
+
+•
+FIFO por padrão
+
+•
+Opção "Seleção Manual" para casos específicos
+
+3. Modificações no Backend
+
+Estrutura de dados necessária:
+
+TypeScript
+
+
+interface MaterialLot {
+  id: string;
+  materialId: string;
+  unitPrice: number;
+  quantity: number;
+  entryDate: Date;
+  supplierId: string;
+}
+
+interface MaterialExit {
+  id: string;
+  materialId: string;
+  lots: Array<{
+    lotId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+  totalQuantity: number;
+  totalValue: number;
+  exitDate: Date;
+  employeeId: string;
+  destination: string;
+  purpose: string;
+}
+
+
+Métodos a implementar:
+
+1.
+getMaterialLots(materialId: string) - Buscar lotes disponíveis
+
+2.
+validateExitQuantity(materialId: string, quantity: number) - Validar disponibilidade
+
+3.
+processExitFIFO(materialId: string, quantity: number) - Processar saída FIFO
+
+4.
+processExitManual(exits: Array<{lotId: string, quantity: number}>) - Processar saída manual
+
+5.
+updateLotQuantities(lotUpdates: Array<{lotId: string, newQuantity: number}>) - Atualizar estoque
+
+4. Validações Necessárias
+
+Validações de negócio:
+
+•
+Verificar se há estoque suficiente total
+
+•
+Verificar se há estoque suficiente no lote selecionado (seleção manual)
+
+•
+Impedir saída de quantidade negativa
+
+•
+Impedir saída de lotes inexistentes
+
+Validações de interface:
+
+•
+Desabilitar lotes sem estoque
+
+•
+Mostrar mensagem clara quando não há estoque suficiente
+
+•
+Calcular automaticamente o valor total da saída
+
+5. Relatórios e Histórico
+
+Modificar relatórios para incluir:
+
+•
+Histórico de saídas por lote
+
+•
+Rastreabilidade: qual lote foi usado em cada saída
+
+•
+Relatório de movimentação por preço
+
+•
+Custo médio ponderado atualizado
+
+6. Interface de Usuário Melhorada
+
+Feedback visual:
+
+•
+Loading durante processamento
+
+•
+Mensagens de sucesso com detalhes: "Saída realizada: 15 unidades do lote R20,00+5unidadesdoloteR 20,00 + 5 unidades do lote R
+20,00+5unidadesdoloteR
+ 15,50"
+
+•
+Mensagens de erro específicas: "Estoque insuficiente no lote selecionado"
+
+•
+Confirmação antes de processar saídas grandes
+
+Cálculos em tempo real:
+
+•
+Mostrar valor total da saída conforme usuário digita quantidade
+
+•
+Atualizar automaticamente quando mudar seleção de lotes
+
+•
+Mostrar estoque restante após a saída
+
+Implementação Prioritária
+
+1.
+FASE 1: Implementar FIFO automático (mais simples e comum)
+
+2.
+FASE 2: Adicionar interface para mostrar lotes disponíveis
+
+3.
+FASE 3: Implementar seleção manual de lotes
+
+4.
+FASE 4: Melhorar relatórios e rastreabilidade
+
+Resultado Esperado
+
+Após a implementação:
+
+•
+Usuário pode fazer saída de materiais com múltiplos preços
+
+•
+Sistema usa FIFO por padrão ou permite seleção manual
+
+•
+Estoque é atualizado corretamente por lote
+
+•
+Relatórios mostram movimentação detalhada por preço
+
+•
+Interface é intuitiva e fornece feedback claro
+
+Casos de Teste
+
+Teste 1 - FIFO Simples:
+
+•
+Material: Martelo (15 un. a R20,00+10un.aR 20,00 + 10 un. a R
+20,00+10un.aR
+ 15,50)
+
+•
+Saída: 10 unidades
+
+•
+Resultado esperado: 10 unidades do lote R$ 20,00, restam 5 + 10
+
+Teste 2 - FIFO Múltiplos Lotes:
+
+•
+Material: Martelo (15 un. a R20,00+10un.aR 20,00 + 10 un. a R
+20,00+10un.aR
+ 15,50)
+
+•
+Saída: 20 unidades
+
+•
+Resultado esperado: 15 do lote R20,00+5doloteR 20,00 + 5 do lote R
+20,00+5doloteR
+ 15,50, restam 0 + 5
+
+Teste 3 - Estoque Insuficiente:
+
+•
+Material: Mouse (3 un. a R$ 24,00)
+
+•
+Saída: 5 unidades
+
+•
+Resultado esperado: Erro "Estoque insuficiente"
+
+Por favor, implemente essa funcionalidade priorizando a experiência do usuário e a integridade dos dados de estoque.
+

@@ -800,6 +800,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+// Material lots routes for FIFO logic
+app.get("/api/materials/:id/lots", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const materialId = parseInt(req.params.id);
+    const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+    
+    const lots = await storage.getMaterialLots(materialId, ownerId);
+    res.json(lots);
+  } catch (error) {
+    console.error('Error fetching material lots:', error);
+    res.status(500).json({ 
+      message: "Failed to fetch material lots",
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    });
+  }
+});
+
+app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const materialId = parseInt(req.params.id);
+    const { quantity } = req.body;
+    const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+    
+    const fifoResult = await storage.processExitFIFO(materialId, quantity, ownerId);
+    res.json(fifoResult);
+  } catch (error) {
+    console.error('Error simulating exit:', error);
+    res.status(400).json({ 
+      message: error instanceof Error ? error.message : "Failed to simulate exit"
+    });
+  }
+});
+
   app.get("/api/reports/financial-stock", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;

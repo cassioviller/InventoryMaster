@@ -471,41 +471,72 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createExit(exit: CreateExit, userId: number): Promise<MaterialMovement> {
-    // For exits, create one movement record per item
-    const firstItem = exit.items[0];
-    const result = await db.insert(materialMovements).values({
-      type: exit.type,
-      date: new Date(),
-      userId: userId,
-      materialId: firstItem.materialId,
-      quantity: firstItem.quantity,
-      unitPrice: firstItem.unitPrice,
-      destinationType: exit.destinationType,
-      destinationEmployeeId: exit.destinationEmployeeId,
-      destinationThirdPartyId: exit.destinationThirdPartyId,
-      notes: exit.notes,
-      ownerId: userId,
-    }).returning();
-
-    // Update material stock for each item
+    console.log('Creating exit with FIFO logic:', exit);
+    
+    // Process each item in the exit
+    const movements: MaterialMovement[] = [];
+    
     for (const item of exit.items) {
-      // Get current stock first
+      // Get current material to check stock
       const [currentMaterial] = await db
         .select({ currentStock: materials.currentStock })
         .from(materials)
         .where(eq(materials.id, item.materialId));
 
-      if (currentMaterial) {
-        await db
-          .update(materials)
-          .set({
-            currentStock: Math.max(0, currentMaterial.currentStock - item.quantity),
-          })
-          .where(eq(materials.id, item.materialId));
+      if (!currentMaterial) {
+        throw new Error(`Material ${item.materialId} not found`);
       }
+
+      if (currentMaterial.currentStock < item.quantity) {
+        throw new Error(`Insufficient stock for material ${item.materialId}. Available: ${currentMaterial.currentStock}, Requested: ${item.quantity}`);
+      }
+
+      // Use FIFO logic to determine which lots to use
+      const fifoResult = await this.processExitFIFO(item.materialId, item.quantity, userId);
+      
+      console.log('FIFO Result for material', item.materialId, ':', fifoResult);
+
+      // Create exit movements for each lot used
+      for (const lot of fifoResult.lots) {
+        const result = await db.insert(materialMovements).values({
+          type: exit.type,
+          date: new Date(),
+          userId: userId,
+          materialId: item.materialId,
+          quantity: lot.quantity,
+          unitPrice: lot.unitPrice,
+          destinationType: exit.destinationType,
+          destinationEmployeeId: exit.destinationEmployeeId,
+          destinationThirdPartyId: exit.destinationThirdPartyId,
+          notes: exit.notes ? `${exit.notes} (Lote R$ ${lot.unitPrice})` : `Lote R$ ${lot.unitPrice}`,
+          ownerId: userId,
+        }).returning();
+        
+        movements.push(result[0]);
+
+        // Create audit log for each lot
+        await this.createAuditLog({
+          action: 'exit_created',
+          tableName: 'material_movements',
+          recordId: result[0].id,
+          userId: userId,
+          details: `Exit created for material ${item.materialId}, quantity: ${lot.quantity}, price: R$ ${lot.unitPrice} (FIFO)`,
+        });
+      }
+
+      // Update material stock
+      await db
+        .update(materials)
+        .set({
+          currentStock: Math.max(0, currentMaterial.currentStock - item.quantity),
+        })
+        .where(eq(materials.id, item.materialId));
     }
 
-    return result[0];
+    console.log('Exit created successfully with FIFO logic. Total movements:', movements.length);
+    
+    // Return the first movement for compatibility
+    return movements[0];
   }
 
   async getMovements(ownerId?: number): Promise<MovementWithDetails[]> {
@@ -749,6 +780,126 @@ export class DatabaseStorage implements IStorage {
       totalValue: item.quantity * parseFloat(item.unitPrice || '0'),
       destination: item.employee?.name || item.thirdParty?.name || 'N/A'
     }));
+  }
+
+  // Material lots management for FIFO logic
+  async getMaterialLots(materialId: number, ownerId?: number): Promise<any[]> {
+    const conditions = [eq(materialMovements.materialId, materialId), eq(materialMovements.type, 'entry')];
+    if (ownerId) {
+      conditions.push(eq(materialMovements.ownerId, ownerId));
+    }
+
+    const entries = await db
+      .select({
+        id: materialMovements.id,
+        materialId: materialMovements.materialId,
+        unitPrice: materialMovements.unitPrice,
+        quantity: materialMovements.quantity,
+        date: materialMovements.date,
+        supplierId: materialMovements.supplierId,
+      })
+      .from(materialMovements)
+      .where(and(...conditions))
+      .orderBy(materialMovements.date);
+
+    // Group by price and calculate available quantity for each lot
+    const lotMap = new Map<string, {
+      unitPrice: string;
+      totalEntries: number;
+      entryDate: Date;
+      supplierId: number | null;
+      availableQuantity: number;
+    }>();
+
+    // First, aggregate all entries by price
+    entries.forEach(entry => {
+      const key = entry.unitPrice || '0';
+      if (lotMap.has(key)) {
+        const existing = lotMap.get(key)!;
+        existing.totalEntries += entry.quantity;
+      } else {
+        lotMap.set(key, {
+          unitPrice: entry.unitPrice || '0',
+          totalEntries: entry.quantity,
+          entryDate: entry.date,
+          supplierId: entry.supplierId,
+          availableQuantity: entry.quantity
+        });
+      }
+    });
+
+    // Calculate exits to determine available quantity
+    const exits = await db
+      .select({
+        unitPrice: materialMovements.unitPrice,
+        quantity: materialMovements.quantity,
+      })
+      .from(materialMovements)
+      .where(
+        and(
+          eq(materialMovements.materialId, materialId),
+          eq(materialMovements.type, 'exit'),
+          ownerId ? eq(materialMovements.ownerId, ownerId) : undefined
+        )
+      );
+
+    // Subtract exits from available quantities (FIFO order)
+    let remainingExits = exits.reduce((sum, exit) => sum + exit.quantity, 0);
+    const availableLots = Array.from(lotMap.entries())
+      .sort(([,a], [,b]) => a.entryDate.getTime() - b.entryDate.getTime())
+      .map(([unitPrice, lot]) => {
+        let availableQuantity = lot.totalEntries;
+        
+        if (remainingExits > 0) {
+          const usedFromThisLot = Math.min(remainingExits, lot.totalEntries);
+          availableQuantity -= usedFromThisLot;
+          remainingExits -= usedFromThisLot;
+        }
+
+        return {
+          unitPrice,
+          totalEntries: lot.totalEntries,
+          availableQuantity: Math.max(0, availableQuantity),
+          entryDate: lot.entryDate,
+          supplierId: lot.supplierId
+        };
+      })
+      .filter(lot => lot.availableQuantity > 0);
+
+    return availableLots;
+  }
+
+  async processExitFIFO(materialId: number, quantity: number, ownerId?: number): Promise<{
+    lots: Array<{ unitPrice: string; quantity: number; }>;
+    totalValue: number;
+  }> {
+    const availableLots = await this.getMaterialLots(materialId, ownerId);
+    const totalAvailable = availableLots.reduce((sum, lot) => sum + lot.availableQuantity, 0);
+
+    if (totalAvailable < quantity) {
+      throw new Error(`Estoque insuficiente. Disponível: ${totalAvailable}, Solicitado: ${quantity}`);
+    }
+
+    const usedLots: Array<{ unitPrice: string; quantity: number; }> = [];
+    let remainingQuantity = quantity;
+    let totalValue = 0;
+
+    for (const lot of availableLots) {
+      if (remainingQuantity <= 0) break;
+
+      const quantityFromThisLot = Math.min(remainingQuantity, lot.availableQuantity);
+      const unitPrice = parseFloat(lot.unitPrice);
+      
+      usedLots.push({
+        unitPrice: lot.unitPrice,
+        quantity: quantityFromThisLot
+      });
+
+      totalValue += quantityFromThisLot * unitPrice;
+      remainingQuantity -= quantityFromThisLot;
+    }
+
+    return { lots: usedLots, totalValue };
   }
 
   async getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]> {

@@ -318,7 +318,7 @@ export const createEntrySchema = z.object({
   supplierId: z.number().optional(),
   returnEmployeeId: z.number().optional(),
   returnThirdPartyId: z.number().optional(),
-  costCenterId: z.number().min(1, "Centro de custo é obrigatório"),
+  costCenterId: z.number().optional(),
   items: z.array(movementItemSchema).min(1),
   notes: z.string().optional(),
 });

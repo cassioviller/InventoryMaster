@@ -31,6 +31,7 @@ export default function MaterialEntry() {
   const form = useForm<Omit<CreateEntry, 'items'>>({
     resolver: zodResolver(createEntrySchema.omit({ items: true })),
     defaultValues: {
+      type: 'entry',
       date: new Date().toISOString().split('T')[0],
       originType: 'supplier',
     },
@@ -208,6 +209,15 @@ export default function MaterialEntry() {
       <CardContent className="space-y-6">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Hidden type field */}
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <input type="hidden" {...field} value="entry" />
+              )}
+            />
+            
             {/* Date and Origin */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
@@ -431,6 +441,13 @@ export default function MaterialEntry() {
                 type="submit" 
                 className="bg-green-500 hover:bg-green-600"
                 disabled={createEntryMutation.isPending || addedItems.length === 0}
+                onClick={(e) => {
+                  console.log("=== BOTÃO CLICADO DIRETAMENTE ===");
+                  console.log("Event:", e);
+                  console.log("Form errors:", form.formState.errors);
+                  console.log("Form data:", form.getValues());
+                  console.log("Added items:", addedItems);
+                }}
               >
                 {createEntryMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
                 Confirmar Entrada

@@ -701,11 +701,13 @@ export class DatabaseStorage implements IStorage {
     }));
   }
 
-  async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number): Promise<any[]> {
+  async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number, costCenterId?: number): Promise<any[]> {
     const conditions = [];
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     if (type) conditions.push(eq(materialMovements.type, type));
+    if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
+    if (costCenterId) conditions.push(eq(materialMovements.costCenterId, costCenterId));
     
     const movements = await db
       .select({
@@ -723,6 +725,7 @@ export class DatabaseStorage implements IStorage {
         destinationThirdPartyId: materialMovements.destinationThirdPartyId,
         returnEmployeeId: materialMovements.returnEmployeeId,
         returnThirdPartyId: materialMovements.returnThirdPartyId,
+        costCenterId: materialMovements.costCenterId,
         material: {
           id: materials.id,
           name: materials.name,
@@ -739,6 +742,12 @@ export class DatabaseStorage implements IStorage {
         thirdParty: {
           id: thirdParties.id,
           name: thirdParties.name
+        },
+        costCenter: {
+          id: costCenters.id,
+          code: costCenters.code,
+          name: costCenters.name,
+          department: costCenters.department
         }
       })
       .from(materialMovements)
@@ -748,6 +757,7 @@ export class DatabaseStorage implements IStorage {
         eq(materialMovements.destinationEmployeeId, employees.id),
         eq(materialMovements.returnEmployeeId, employees.id)
       ))
+      .leftJoin(costCenters, eq(materialMovements.costCenterId, costCenters.id))
       .leftJoin(thirdParties, or(
         eq(materialMovements.destinationThirdPartyId, thirdParties.id),
         eq(materialMovements.returnThirdPartyId, thirdParties.id)

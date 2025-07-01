@@ -69,7 +69,7 @@ export default function Management() {
         let url = '/api/materials';
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
-        if (selectedCategory) params.append('category', selectedCategory);
+        if (selectedCategory && selectedCategory !== 'all') params.append('category', selectedCategory);
         if (params.toString()) url += '?' + params.toString();
         
         const res = await authenticatedRequest(url);
@@ -792,7 +792,7 @@ export default function Management() {
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
                   {Array.isArray(categoriesData) && categoriesData.map((category) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
@@ -821,37 +821,37 @@ export default function Management() {
 
       {/* Modals */}
       <MaterialModal
-        isOpen={materialModalOpen}
+        open={materialModalOpen}
         onClose={handleModalClose}
         material={editingItem}
       />
 
       <CategoryModal
-        isOpen={categoryModalOpen}
+        open={categoryModalOpen}
         onClose={handleModalClose}
         category={editingItem}
       />
 
       <EmployeeModal
-        isOpen={employeeModalOpen}
+        open={employeeModalOpen}
         onClose={handleModalClose}
         employee={editingItem}
       />
 
       <SupplierModal
-        isOpen={supplierModalOpen}
+        open={supplierModalOpen}
         onClose={handleModalClose}
         supplier={editingItem}
       />
 
       <ThirdPartyModal
-        isOpen={thirdPartyModalOpen}
+        open={thirdPartyModalOpen}
         onClose={handleModalClose}
         thirdParty={editingItem}
       />
 
       <UserModal
-        isOpen={userModalOpen}
+        open={userModalOpen}
         onClose={handleModalClose}
         user={editingItem}
       />

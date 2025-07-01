@@ -82,6 +82,15 @@ export default function MaterialExit() {
     },
   });
 
+  const { data: costCentersData } = useQuery({
+    queryKey: ['/api/cost-centers'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/cost-centers');
+      const data = await res.json();
+      return Array.isArray(data) ? data.filter(center => center.isActive) : [];
+    },
+  });
+
   const materials = materialsData || [];
   const employees = employeesData || [];
   const thirdParties = thirdPartiesData || [];
@@ -454,6 +463,32 @@ export default function MaterialExit() {
                 )}
               />
             )}
+
+            {/* Cost Center Selection */}
+            <FormField
+              control={form.control}
+              name="costCenterId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Centro de Custo *</FormLabel>
+                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um centro de custo" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {costCentersData?.map((costCenter: any) => (
+                        <SelectItem key={costCenter.id} value={costCenter.id.toString()}>
+                          {costCenter.code} - {costCenter.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Material Selection */}
             <div className="border-t border-gray-200 pt-6">

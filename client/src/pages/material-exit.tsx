@@ -82,19 +82,9 @@ export default function MaterialExit() {
     },
   });
 
-  const { data: costCentersData } = useQuery({
-    queryKey: ['/api/cost-centers?status=active'],
-    queryFn: async () => {
-      const res = await authenticatedRequest('/api/cost-centers?status=active');
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
-    },
-  });
-
   const materials = materialsData || [];
   const employees = employeesData || [];
   const thirdParties = thirdPartiesData || [];
-  const costCenters = costCentersData || [];
 
   const createExitMutation = useMutation({
     mutationFn: async (data: CreateExit) => {
@@ -464,32 +454,6 @@ export default function MaterialExit() {
                 )}
               />
             )}
-
-            {/* Cost Center Selection */}
-            <FormField
-              control={form.control}
-              name="costCenterId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Centro de Custo *</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um centro de custo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {costCenters?.map((center: any) => (
-                        <SelectItem key={center.id} value={center.id.toString()}>
-                          {center.code} - {center.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             {/* Material Selection */}
             <div className="border-t border-gray-200 pt-6">

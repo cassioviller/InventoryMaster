@@ -369,16 +369,14 @@ export type MovementWithDetails = MaterialMovement & {
 };
 
 // Cost Center Zod schemas
-export const insertCostCenterSchema = z.object({
+export const insertCostCenterSchema = createInsertSchema(costCenters, {
   code: z.string().min(1, "Código é obrigatório").max(20, "Código deve ter no máximo 20 caracteres"),
   name: z.string().min(1, "Nome é obrigatório").max(100, "Nome deve ter no máximo 100 caracteres"),
-  description: z.string().optional(),
   department: z.string().min(1, "Departamento é obrigatório"),
   responsible: z.string().min(1, "Responsável é obrigatório"),
-  monthlyBudget: z.union([z.string(), z.number()]).optional().transform(val => val ? String(val) : undefined),
-  annualBudget: z.union([z.string(), z.number()]).optional().transform(val => val ? String(val) : undefined),
-  isActive: z.boolean().optional().default(true),
-});
+  monthlyBudget: z.string().optional(),
+  annualBudget: z.string().optional(),
+}).omit({ id: true, createdAt: true, ownerId: true });
 
 export const selectCostCenterSchema = createSelectSchema(costCenters);
 export type CostCenter = z.infer<typeof selectCostCenterSchema>;

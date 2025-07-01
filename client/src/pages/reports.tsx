@@ -262,7 +262,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os tipos" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os tipos</SelectItem>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
                   <SelectItem value="entry">Entradas</SelectItem>
                   <SelectItem value="exit">Saídas</SelectItem>
                   <SelectItem value="return">Devoluções</SelectItem>
@@ -278,7 +278,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os centros" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os centros</SelectItem>
+                  <SelectItem value="all">Todos os centros</SelectItem>
                   {Array.isArray(costCenters) && costCenters.map((center: any) => (
                     <SelectItem key={center.id} value={center.id.toString()}>
                       {center.code} - {center.name}
@@ -296,7 +296,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os fornecedores" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os fornecedores</SelectItem>
+                  <SelectItem value="all">Todos os fornecedores</SelectItem>
                   {Array.isArray(suppliers) && suppliers.map((supplier: any) => (
                     <SelectItem key={supplier.id} value={supplier.id.toString()}>
                       {supplier.name}
@@ -314,7 +314,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todos os materiais" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os materiais</SelectItem>
+                  <SelectItem value="all">Todos os materiais</SelectItem>
                   {Array.isArray(materials) && materials.map((material: any) => (
                     <SelectItem key={material.id} value={material.id.toString()}>
                       {material.name}
@@ -332,7 +332,7 @@ export default function Reports() {
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
                   {Array.isArray(categories) && categories.map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}

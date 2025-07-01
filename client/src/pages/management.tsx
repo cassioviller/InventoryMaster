@@ -37,7 +37,6 @@ const getTabItems = (canCreateUsers: boolean) => {
     { id: 'employees', label: 'Funcionários' },
     { id: 'suppliers', label: 'Fornecedores' },
     { id: 'third-parties', label: 'Terceiros' },
-    { id: 'cost-centers', label: 'Centros de Custo' },
   ];
   
   if (canCreateUsers) {

@@ -5,7 +5,8 @@ import {
   Settings, 
   BarChart3,
   DollarSign,
-  Building2
+  Building2,
+  FileText
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { cn } from '@/lib/utils';
@@ -43,9 +44,14 @@ const navItems = [
     icon: DollarSign,
   },
   {
-    path: '/cost-center-reports',
-    label: 'Centro de Custo',
+    path: '/cost-centers',
+    label: 'Centros de Custo',
     icon: Building2,
+  },
+  {
+    path: '/cost-center-reports',
+    label: 'Relatórios por Centro',
+    icon: FileText,
   },
 ];
 

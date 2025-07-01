@@ -467,6 +467,7 @@ export class DatabaseStorage implements IStorage {
       supplierId: entry.supplierId,
       returnEmployeeId: entry.returnEmployeeId,
       returnThirdPartyId: entry.returnThirdPartyId,
+      costCenterId: entry.costCenterId,
       notes: entry.notes,
       ownerId: userId,
     }).returning();

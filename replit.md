@@ -94,7 +94,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (01/07/2025 - 14:02)
+## Status Atual (01/07/2025 - 14:15)
 **SISTEMA COMPLETO TESTADO E VALIDADO - CENÁRIO REAL IMPLEMENTADO**:
 - ✅ **CENÁRIO "SERRALHERIA PREMIUM" CRIADO E TESTADO**:
   - Usuário: serralheria_premium/serralheria123 (admin)
@@ -119,6 +119,14 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
   - Devoluções aumentam estoque mas não alteram valores de entrada
   - Centro de custo obrigatório em saídas
   - Relatórios com dados completos e precisos
+
+- ✅ **CORREÇÕES CRÍTICAS DOS RELATÓRIOS APLICADAS (01/07/2025 - 14:15)**:
+  - **Tipo de devolução corrigido**: Devoluções agora aparecem como "Devolução" em vez de "Entrada"
+  - **Campos de origem/destino corrigidos**: Nomes dos responsáveis sendo exibidos corretamente
+  - **Data corrigida**: Campo `date` sendo usado como prioridade sobre `createdAt`
+  - **Relatório financeiro corrigido**: Estoque atual (incluindo devoluções) com valores baseados apenas em entradas de fornecedores
+  - **Novos campos implementados**: `displayType`, `originDestination`, `responsiblePerson` no backend
+  - **Frontend atualizado**: Tabela de movimentações gerais usando novos campos corrigidos
 
 - ✅ **RELATÓRIOS VALIDADOS E FUNCIONAIS**:
   - Relatório Geral: Data, valores, centro de custo, detalhes completos

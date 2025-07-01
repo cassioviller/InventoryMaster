@@ -30,5 +30,11 @@ echo "Postgres pronto!"
 # Executar migrações
 npm run db:push
 
+# Executar correção específica do schema em produção
+if [ "$NODE_ENV" = "production" ]; then
+  echo "🔧 Aplicando correções específicas do schema de produção..."
+  node fix-production-schema.js
+fi
+
 # Iniciar aplicação
 exec "$@"

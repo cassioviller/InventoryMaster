@@ -532,6 +532,7 @@ export class DatabaseStorage implements IStorage {
           destinationType: exit.destinationType,
           destinationEmployeeId: exit.destinationEmployeeId,
           destinationThirdPartyId: exit.destinationThirdPartyId,
+          costCenterId: exit.costCenterId,
           notes: exit.notes ? `${exit.notes} (Lote R$ ${lot.unitPrice})` : `Lote R$ ${lot.unitPrice}`,
           ownerId: userId,
         }).returning();

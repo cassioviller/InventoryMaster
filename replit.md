@@ -94,17 +94,20 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (01/07/2025 - 15:00)
-**TODAS AS CORREÇÕES SOLICITADAS IMPLEMENTADAS COM SUCESSO**:
-- ✅ **TOTAL GERAL REMOVIDO**: Card roxo "Total Geral" removido dos relatórios (layout agora com 3 colunas)
-- ✅ **ERRO SELECTITEM COMPLETAMENTE RESOLVIDO**: 
-  - financial-report.tsx corrigido: SelectItem value="" alterado para value="all"
-  - handleFilterChange corrigida para converter "all" → string vazia
-  - reports.tsx já estava corrigido anteriormente
-- ✅ **AUTENTICAÇÃO FINANCEIRA CORRIGIDA**: Headers Authorization Bearer implementados em financial-report.tsx
-- ✅ **API FINANCEIRA TESTADA**: Endpoint /api/reports/financial-stock funcionando (dados de lotes retornados)
-- ✅ **TESTE3 POPULADO**: Dados básicos criados via API para validação
-- ✅ **SISTEMA ESTÁVEL**: Todas as páginas de relatórios carregando sem erros SelectItem
+## Status Atual (01/07/2025 - 15:06)
+**RELATÓRIO FINANCEIRO REESTRUTURADO CONFORME SOLICITADO**:
+- ✅ **ESTRUTURA LINEARIZADA**: Relatório financeiro agora exibe tabela simples com uma linha por lote
+- ✅ **REMOVIDO AGRUPAMENTO**: Eliminados módulos separados por material - agora tudo em tabela única
+- ✅ **NOVA ESTRUTURA**: Cada lote do martelo (ou qualquer material) aparece como linha separada
+- ✅ **COLUNAS DEFINIDAS**: Material | Categoria | Lote/Preço | Estoque | Preço Unitário | Valor Total
+- ✅ **TRANSFORMAÇÃO DE DADOS**: Função flattenedData() criada para converter dados hierárquicos em lista plana
+- ✅ **EXPORTAÇÕES ATUALIZADAS**: PDF e Excel adaptados para nova estrutura linearizada
+- ✅ **API TESTADA**: Endpoint financial-stock retornando dados corretos com lotes detalhados
+
+**CORREÇÕES ANTERIORES MANTIDAS**:
+- ✅ Total Geral roxo removido dos relatórios (3 colunas)
+- ✅ Erro SelectItem resolvido em todas as páginas
+- ✅ Autenticação funcionando corretamente
 
 ## Status Anterior (01/07/2025 - 14:45)
 **SISTEMA COMPLETO TESTADO E VALIDADO - CENÁRIO REAL IMPLEMENTADO**:

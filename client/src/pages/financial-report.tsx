@@ -132,13 +132,13 @@ export default function FinancialReport() {
       doc.setFontSize(10);
       doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 30);
 
-      if (Array.isArray(reportData)) {
+      if (flatData.length > 0) {
         const headers = ['Material', 'Categoria', 'Lote', 'Estoque', 'Preço Unit.', 'Valor Total'];
-        const rows = reportData.map((item: any) => [
-          item.name || '-',
+        const rows = flatData.map((item: any) => [
+          item.materialName || '-',
           item.category || '-',
           item.lotInfo || '-',
-          `${item.currentStock || 0} ${item.unit || ''}`,
+          `${item.quantity || 0} ${item.unit || ''}`,
           formatCurrency(item.unitPrice || 0),
           formatCurrency(item.totalValue || 0)
         ]);
@@ -170,14 +170,14 @@ export default function FinancialReport() {
     try {
       const XLSX = await import('xlsx');
       
-      if (Array.isArray(reportData)) {
+      if (flatData.length > 0) {
         const ws_data = [
           ['Material', 'Categoria', 'Lote', 'Estoque', 'Preço Unit.', 'Valor Total'],
-          ...reportData.map((item: any) => [
-            item.name || '-',
+          ...flatData.map((item: any) => [
+            item.materialName || '-',
             item.category || '-',
             item.lotInfo || '-',
-            `${item.currentStock || 0} ${item.unit || ''}`,
+            `${item.quantity || 0} ${item.unit || ''}`,
             item.unitPrice || 0,
             item.totalValue || 0
           ])
@@ -320,65 +320,50 @@ export default function FinancialReport() {
             <div className="flex justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
+          ) : flatData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Material</TableHead>
+                    <TableHead>Categoria</TableHead>
+                    <TableHead>Lote/Preço</TableHead>
+                    <TableHead>Estoque</TableHead>
+                    <TableHead>Preço Unitário</TableHead>
+                    <TableHead>Valor Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {flatData.map((item: any, index: number) => (
+                    <TableRow key={index}>
+                      <TableCell className="font-medium">{item.materialName}</TableCell>
+                      <TableCell>{item.category || '-'}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {item.lotInfo}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {item.quantity} {item.unit || ''}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {formatCurrency(item.unitPrice || 0)}
+                      </TableCell>
+                      <TableCell className="font-bold text-green-600">
+                        {formatCurrency(item.totalValue || 0)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
-            <div className="space-y-4">
-              {Object.entries(groupedData).map(([materialName, lots]) => (
-                <div key={materialName} className="border rounded-lg p-4">
-                  <h3 className="font-semibold text-lg mb-3">{materialName}</h3>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Categoria</TableHead>
-                          <TableHead>Lote/Preço</TableHead>
-                          <TableHead>Estoque</TableHead>
-                          <TableHead>Preço Unitário</TableHead>
-                          <TableHead>Valor Total</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {lots.map((lot: any, index: number) => (
-                          <TableRow key={index}>
-                            <TableCell>{lot.category || '-'}</TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {lot.lotInfo || 'Lote único'}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {lot.currentStock} {lot.unit || ''}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {formatCurrency(lot.unitPrice || 0)}
-                            </TableCell>
-                            <TableCell className="font-bold text-green-600">
-                              {formatCurrency(lot.totalValue || 0)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                        {/* Material Total */}
-                        <TableRow className="bg-muted/50">
-                          <TableCell colSpan={3} className="font-medium">
-                            Total {materialName}:
-                          </TableCell>
-                          <TableCell></TableCell>
-                          <TableCell className="font-bold text-green-700">
-                            {formatCurrency(
-                              lots.reduce((sum, lot) => sum + (lot.totalValue || 0), 0)
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      </TableBody>
-                    </Table>
-                  </div>
-                </div>
-              ))}
-              
-              {Object.keys(groupedData).length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-muted-foreground">Nenhum dado financeiro encontrado</p>
-                </div>
-              )}
+            <div className="text-center py-8">
+              <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Nenhum material encontrado</h3>
+              <p className="text-muted-foreground">
+                Não há materiais em estoque com os filtros aplicados.
+              </p>
             </div>
           )}
         </CardContent>

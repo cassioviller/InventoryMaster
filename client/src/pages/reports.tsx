@@ -851,6 +851,8 @@ export default function Reports() {
                         <TableHead>Tipo</TableHead>
                         <TableHead>Material</TableHead>
                         <TableHead>Quantidade</TableHead>
+                        <TableHead>Valor Total</TableHead>
+                        <TableHead>Centro de Custo</TableHead>
                         <TableHead>Origem/Destino</TableHead>
                         <TableHead>Responsável</TableHead>
                       </>
@@ -909,14 +911,18 @@ export default function Reports() {
                       )}
                       {activeReport === 'movements' && (
                         <>
-                          <TableCell>{formatDate(item.movement?.date || item.date)}</TableCell>
+                          <TableCell>{formatDate(item.date || item.movement?.date)}</TableCell>
                           <TableCell>
-                            <Badge variant={(item.movement?.type || item.type) === 'entry' ? 'default' : 'secondary'}>
-                              {(item.movement?.type || item.type) === 'entry' ? 'Entrada' : 'Saída'}
+                            <Badge variant={(item.type || item.movement?.type) === 'entry' ? 'default' : 'secondary'}>
+                              {(item.type || item.movement?.type) === 'entry' ? 'Entrada' : 'Saída'}
                             </Badge>
                           </TableCell>
                           <TableCell>{item.material?.name || '-'}</TableCell>
-                          <TableCell>{item.items?.quantity || 0} {item.material?.unit || ''}</TableCell>
+                          <TableCell>{item.quantity || item.items?.quantity || 0} {item.material?.unit || ''}</TableCell>
+                          <TableCell>R$ {parseFloat(item.totalValue || item.unitPrice || '0').toFixed(2)}</TableCell>
+                          <TableCell>
+                            {item.costCenter ? `${item.costCenter.code} - ${item.costCenter.name}` : '-'}
+                          </TableCell>
                           <TableCell>
                             {item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-'}
                           </TableCell>

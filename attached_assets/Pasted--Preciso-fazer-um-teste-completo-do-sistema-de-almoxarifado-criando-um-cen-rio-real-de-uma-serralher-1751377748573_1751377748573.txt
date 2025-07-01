@@ -1,0 +1,57 @@
+"Preciso fazer um teste completo do sistema de almoxarifado criando um cenário real de uma serralheria de alto padrão. Execute todas as etapas em sequência:
+ETAPA 1: CRIAR PERFIL DA EMPRESA
+Criar usuário: 'serralheria_premium' / senha: 'ferro2024' / nome: 'João Silva' / role: 'admin'
+Configurar empresa: 'Serralheria Premium Ltda'
+ETAPA 2: CADASTRAR CATEGORIAS
+Perfis de Alumínio
+Chapas de Aço
+Ferragens e Acessórios
+Vidros Temperados
+Ferramentas e Equipamentos
+ETAPA 3: CADASTRAR FORNECEDORES
+Alcoa Alumínio (CNPJ: 12.345.678/0001-90, Tel: 11-3456-7890)
+Usiminas Aços (CNPJ: 98.765.432/0001-10, Tel: 11-9876-5432)
+Ferragens Premium (CNPJ: 55.444.333/0001-22, Tel: 11-5555-4444)
+ETAPA 4: CADASTRAR FUNCIONÁRIOS
+Carlos Montador (Departamento: Produção, Email: carlos@serralheria.com)
+Ana Soldadora (Departamento: Produção, Email: ana@serralheria.com)
+Pedro Acabamento (Departamento: Acabamento, Email: pedro@serralheria.com)
+ETAPA 5: CADASTRAR MATERIAIS COM VALORES
+Perfil U 50x25x2mm (Categoria: Perfis, Estoque mín: 50, Preço: R$ 25,50/metro)
+Chapa Aço 1020 3mm (Categoria: Chapas, Estoque mín: 20, Preço: R$ 180,00/m²)
+Dobradiça Inox Premium (Categoria: Ferragens, Estoque mín: 100, Preço: R$ 45,00/unidade)
+Vidro Temperado 8mm (Categoria: Vidros, Estoque mín: 10, Preço: R$ 120,00/m²)
+Eletrodo 6013 2,5mm (Categoria: Ferramentas, Estoque mín: 200, Preço: R$ 2,80/unidade)
+ETAPA 6: MOVIMENTAÇÕES DE ENTRADA
+Entrada 1: Alcoa - 100 metros Perfil U (Valor: R$ 2.550,00)
+Entrada 2: Usiminas - 50 m² Chapa Aço (Valor: R$ 9.000,00)
+Entrada 3: Ferragens Premium - 200 Dobradiças (Valor: R$ 9.000,00)
+Entrada 4: Ferragens Premium - 500 Eletrodos (Valor: R$ 1.400,00)
+ETAPA 7: MOVIMENTAÇÕES DE SAÍDA
+Saída 1: Carlos - 30 metros Perfil U (Projeto: Portão Residencial)
+Saída 2: Ana - 15 m² Chapa Aço (Projeto: Estrutura Comercial)
+Saída 3: Pedro - 50 Dobradiças (Projeto: Esquadrias)
+Saída 4: Ana - 100 Eletrodos (Projeto: Soldas Gerais)
+ETAPA 8: MOVIMENTAÇÕES DE DEVOLUÇÃO
+Devolução 1: Carlos devolveu 5 metros Perfil U (sobra do projeto)
+Devolução 2: Pedro devolveu 10 Dobradiças (não utilizadas)
+ETAPA 9: VERIFICAR RELATÓRIOS
+Gerar e validar todos os relatórios:
+Relatório de Estoque: Verificar saldos corretos
+Perfil U: 75 metros (100 entrada - 30 saída + 5 devolução)
+Chapa Aço: 35 m² (50 - 15)
+Dobradiças: 160 unidades (200 - 50 + 10)
+Eletrodos: 400 unidades (500 - 100)
+Relatório Financeiro: Verificar valores
+Valor total em estoque considerando devoluções
+Não contabilizar devolução como nova entrada financeira
+Mostrar custo dos materiais consumidos
+Relatório de Movimentações: Verificar tipos
+Entradas com valores corretos
+Saídas com responsáveis
+Devoluções identificadas corretamente
+ETAPA 10: VALIDAÇÃO FINAL
+Confirmar que todos os cálculos estão corretos
+Verificar se devoluções não duplicam valores financeiros
+Testar filtros e buscas nos relatórios
+Validar que o sistema está funcionando perfeitamente

@@ -829,8 +829,9 @@ export class DatabaseStorage implements IStorage {
 
   async getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number, costCenterId?: number): Promise<any[]> {
     const conditions = [];
-    if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
-    if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
+    // Use date field instead of createdAt for filtering
+    if (startDate) conditions.push(gte(materialMovements.date, startDate));
+    if (endDate) conditions.push(lte(materialMovements.date, endDate));
     if (type) conditions.push(eq(materialMovements.type, type));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
     if (costCenterId) conditions.push(eq(materialMovements.costCenterId, costCenterId));
@@ -839,6 +840,7 @@ export class DatabaseStorage implements IStorage {
       .select({
         id: materialMovements.id,
         type: materialMovements.type,
+        date: materialMovements.date, // Include movement date
         quantity: materialMovements.quantity,
         unitPrice: materialMovements.unitPrice,
         notes: materialMovements.notes,
@@ -889,9 +891,13 @@ export class DatabaseStorage implements IStorage {
         eq(materialMovements.returnThirdPartyId, thirdParties.id)
       ))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(materialMovements.createdAt));
+      .orderBy(desc(materialMovements.date)); // Order by movement date
 
-    return movements;
+    // Add calculated total value to each movement
+    return movements.map(movement => ({
+      ...movement,
+      totalValue: movement.quantity * parseFloat(movement.unitPrice || '0')
+    }));
   }
 
   async getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {

@@ -49,17 +49,30 @@ export default function Reports() {
         if (value) params.append(key, value);
       });
       
-      const response = await fetch(`/api/reports/general-movements-enhanced?${params}`);
+      const response = await fetch(`/api/reports/general-movements-enhanced?${params}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch report data');
       return response.json();
     }
   });
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   // Fetch lookup data for filters
   const { data: categories } = useQuery({
     queryKey: ['/api/categories'],
     queryFn: async () => {
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories', {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch categories');
       return response.json();
     }
@@ -68,7 +81,9 @@ export default function Reports() {
   const { data: suppliers } = useQuery({
     queryKey: ['/api/suppliers'],
     queryFn: async () => {
-      const response = await fetch('/api/suppliers');
+      const response = await fetch('/api/suppliers', {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch suppliers');
       return response.json();
     }
@@ -77,7 +92,9 @@ export default function Reports() {
   const { data: costCenters } = useQuery({
     queryKey: ['/api/cost-centers'],
     queryFn: async () => {
-      const response = await fetch('/api/cost-centers');
+      const response = await fetch('/api/cost-centers', {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch cost centers');
       return response.json();
     }
@@ -86,7 +103,9 @@ export default function Reports() {
   const { data: materials } = useQuery({
     queryKey: ['/api/materials'],
     queryFn: async () => {
-      const response = await fetch('/api/materials');
+      const response = await fetch('/api/materials', {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch materials');
       return response.json();
     }
@@ -94,7 +113,9 @@ export default function Reports() {
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    // Convert "all" to empty string for API compatibility
+    const filterValue = value === 'all' ? '' : value;
+    setFilters(prev => ({ ...prev, [key]: filterValue }));
   };
 
   // Clear all filters

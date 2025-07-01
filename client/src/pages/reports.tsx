@@ -913,8 +913,11 @@ export default function Reports() {
                         <>
                           <TableCell>{formatDate(item.date || item.movement?.date)}</TableCell>
                           <TableCell>
-                            <Badge variant={(item.type || item.movement?.type) === 'entry' ? 'default' : 'secondary'}>
-                              {(item.type || item.movement?.type) === 'entry' ? 'Entrada' : 'Saída'}
+                            <Badge variant={
+                              item.displayType === 'Devolução' ? 'outline' :
+                              (item.type || item.movement?.type) === 'entry' ? 'default' : 'secondary'
+                            }>
+                              {item.displayType || ((item.type || item.movement?.type) === 'entry' ? 'Entrada' : 'Saída')}
                             </Badge>
                           </TableCell>
                           <TableCell>{item.material?.name || '-'}</TableCell>
@@ -924,9 +927,9 @@ export default function Reports() {
                             {item.costCenter ? `${item.costCenter.code} - ${item.costCenter.name}` : '-'}
                           </TableCell>
                           <TableCell>
-                            {item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-'}
+                            {item.originDestination || item.supplier?.name || item.employee?.name || item.thirdParty?.name || '-'}
                           </TableCell>
-                          <TableCell>{item.user?.username || '-'}</TableCell>
+                          <TableCell>{item.responsiblePerson || item.user?.username || '-'}</TableCell>
                         </>
                       )}
                       {activeReport === 'consumption' && (

@@ -24,11 +24,10 @@ import { EmployeeModal } from '@/components/modals/employee-modal';
 import { SupplierModal } from '@/components/modals/supplier-modal';
 import { ThirdPartyModal } from '@/components/modals/third-party-modal';
 import { UserModal } from '@/components/modals/user-modal';
-import { CostCenterModal } from '@/components/modals/cost-center-modal';
 import { useAuth } from '@/hooks/use-auth';
-import type { Material, Category, Employee, Supplier, ThirdParty, User, CostCenter } from '@shared/schema';
+import type { Material, Category, Employee, Supplier, ThirdParty, User } from '@shared/schema';
 
-type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users' | 'cost-centers';
+type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users';
 
 const getTabItems = (canCreateUsers: boolean) => {
   const baseItems = [
@@ -57,12 +56,12 @@ export default function Management() {
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [thirdPartyModalOpen, setThirdPartyModalOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
-  const [costCenterModalOpen, setCostCenterModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
   
   const { toast } = useToast();
   const tabItems = getTabItems(canCreateUsers);
 
+  // Query data for each tab
   const { data: materialsData, isLoading: materialsLoading } = useQuery({
     queryKey: ['/api/materials', searchQuery, selectedCategory],
     queryFn: async () => {
@@ -70,7 +69,7 @@ export default function Management() {
         let url = '/api/materials';
         const params = new URLSearchParams();
         if (searchQuery) params.append('search', searchQuery);
-        if (selectedCategory && selectedCategory !== 'all') params.append('categoryId', selectedCategory);
+        if (selectedCategory) params.append('category', selectedCategory);
         if (params.toString()) url += '?' + params.toString();
         
         const res = await authenticatedRequest(url);
@@ -81,14 +80,17 @@ export default function Management() {
         return [];
       }
     },
-    enabled: !!localStorage.getItem('token'),
+    enabled: activeTab === 'materials' && !!localStorage.getItem('token'),
   });
 
-  const { data: categoriesData } = useQuery({
-    queryKey: ['/api/categories'],
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['/api/categories', searchQuery],
     queryFn: async () => {
       try {
-        const res = await authenticatedRequest('/api/categories');
+        let url = '/api/categories';
+        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
+        
+        const res = await authenticatedRequest(url);
         const data = await res.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
@@ -96,11 +98,8 @@ export default function Management() {
         return [];
       }
     },
-    enabled: !!localStorage.getItem('token'),
+    enabled: activeTab === 'categories' && !!localStorage.getItem('token'),
   });
-
-  const materials = materialsData || [];
-  const categories = categoriesData || [];
 
   const { data: employeesData, isLoading: employeesLoading } = useQuery({
     queryKey: ['/api/employees', searchQuery],
@@ -149,7 +148,7 @@ export default function Management() {
         const data = await res.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
-        console.error('Error fetching third parties:', error);
+        console.error('Error fetching third-parties:', error);
         return [];
       }
     },
@@ -174,29 +173,12 @@ export default function Management() {
     enabled: activeTab === 'users' && canCreateUsers && !!localStorage.getItem('token'),
   });
 
-  const { data: costCentersData, isLoading: costCentersLoading } = useQuery({
-    queryKey: ['/api/cost-centers', searchQuery],
-    queryFn: async () => {
-      try {
-        let url = '/api/cost-centers';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-        
-        const res = await authenticatedRequest(url);
-        const data = await res.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching cost centers:', error);
-        return [];
-      }
-    },
-    enabled: activeTab === 'cost-centers' && !!localStorage.getItem('token'),
-  });
-
+  const materials = materialsData || [];
+  const categories = categoriesData || [];
   const employees = employeesData || [];
   const suppliers = suppliersData || [];
   const thirdParties = thirdPartiesData || [];
   const users = usersData || [];
-  const costCenters = costCentersData || [];
 
   const getStatusBadge = (currentStock: number, minimumStock: number) => {
     if (currentStock === 0) {
@@ -229,9 +211,6 @@ export default function Management() {
       case 'users':
         setUserModalOpen(true);
         break;
-      case 'cost-centers':
-        setCostCenterModalOpen(true);
-        break;
     }
   };
 
@@ -256,9 +235,6 @@ export default function Management() {
       case 'users':
         setUserModalOpen(true);
         break;
-      case 'cost-centers':
-        setCostCenterModalOpen(true);
-        break;
     }
   };
 
@@ -270,137 +246,114 @@ export default function Management() {
     setSupplierModalOpen(false);
     setThirdPartyModalOpen(false);
     setUserModalOpen(false);
-    setCostCenterModalOpen(false);
   };
 
   const handleDelete = async (id: number, type: string) => {
-    if (!confirm(`Tem certeza que deseja excluir este ${type}?`)) return;
-    
     try {
-      const endpoint = type === 'third-party' ? 'third-parties' : 
-                      type === 'category' ? 'categories' :
-                      type === 'material' ? 'materials' :
-                      type === 'user' ? 'users' : 
-                      type === 'cost-center' ? 'cost-centers' : `${type}s`;
-      
-      await apiRequest(`/api/${endpoint}/${id}`, 'DELETE');
-      
-      // Invalidate relevant queries to refresh data
-      if (type === 'employee') {
-        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      } else if (type === 'supplier') {
-        queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
-      } else if (type === 'third-party') {
-        queryClient.invalidateQueries({ queryKey: ['/api/third-parties'] });
-      } else if (type === 'category') {
-        queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
-      } else if (type === 'material') {
-        queryClient.invalidateQueries({ queryKey: ['/api/materials'] });
-      } else if (type === 'user') {
-        queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      } else if (type === 'cost-center') {
-        queryClient.invalidateQueries({ queryKey: ['/api/cost-centers'] });
-      }
-      
-      toast({
-        title: "Sucesso",
-        description: `${type} excluído com sucesso`,
+      const endpoint = type === 'third-party' ? 'third-parties' : `${type}s`;
+      await apiRequest(`/api/${endpoint}/${id}`, {
+        method: 'DELETE',
       });
-    } catch (error) {
+
       toast({
-        title: "Erro",
-        description: `Erro ao excluir ${type}`,
-        variant: "destructive",
+        title: 'Sucesso',
+        description: `${type === 'material' ? 'Material' : 
+                      type === 'category' ? 'Categoria' : 
+                      type === 'employee' ? 'Funcionário' : 
+                      type === 'supplier' ? 'Fornecedor' : 
+                      type === 'third-party' ? 'Terceiro' : 
+                      'Usuário'} excluído com sucesso.`,
+      });
+
+      // Invalidate cache for the specific entity type
+      if (type === 'third-party') {
+        queryClient.invalidateQueries({ queryKey: ['/api/third-parties'] });
+      } else {
+        queryClient.invalidateQueries({ queryKey: [`/api/${type}s`] });
+      }
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: 'Erro',
+        description: 'Erro ao excluir item. Tente novamente.',
+        variant: 'destructive',
       });
     }
   };
 
-  const renderContent = () => {
+  const renderTabContent = () => {
     switch (activeTab) {
       case 'materials':
         if (materialsLoading) {
           return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           );
         }
 
         return (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar materiais..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="w-full sm:w-64">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {Array.isArray(categories) && categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
+          <div className="space-y-4">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Material</TableHead>
+                    <TableHead>Nome</TableHead>
                     <TableHead>Categoria</TableHead>
                     <TableHead>Estoque Atual</TableHead>
                     <TableHead>Estoque Mínimo</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
+                    <TableHead>Unidade</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(materials) && materials.map((material) => (
-                    <TableRow key={material.id}>
-                      <TableCell className="font-medium">{material.name}</TableCell>
-                      <TableCell>{material.category.name}</TableCell>
-                      <TableCell>{material.currentStock}</TableCell>
-                      <TableCell>{material.minimumStock}</TableCell>
-                      <TableCell>
-                        {getStatusBadge(material.currentStock, material.minimumStock)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(material)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(material.id, 'material')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {materialsLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : materials?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        Nenhum material encontrado
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    Array.isArray(materials) && materials.map((material) => (
+                      <TableRow key={material.id}>
+                        <TableCell className="font-medium">{material.name}</TableCell>
+                        <TableCell>{material.category?.name || '-'}</TableCell>
+                        <TableCell>{material.currentStock}</TableCell>
+                        <TableCell>{material.minimumStock}</TableCell>
+                        <TableCell>
+                          {getStatusBadge(material.currentStock, material.minimumStock)}
+                        </TableCell>
+                        <TableCell>{material.unit}</TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(material)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(material.id, 'material')}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -408,67 +361,88 @@ export default function Management() {
         );
 
       case 'categories':
+        if (categoriesLoading) {
+          return (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          );
+        }
+
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories?.map((category) => (
-              <Card key={category.id} className="bg-gray-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">{category.name}</h4>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {materials?.filter(m => m.categoryId === category.id).length || 0} materiais
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(category)}
-                        className="text-primary hover:text-primary/80"
-                      >
-                        <Edit className="h-3 w-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(category.id, 'category')}
-                        className="text-red-500 hover:text-red-600"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className="space-y-4">
+            <div className="rounded-md border">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {categoriesLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      </TableCell>
+                    </TableRow>
+                  ) : categories?.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                        Nenhuma categoria encontrada
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    Array.isArray(categories) && categories.map((category) => (
+                      <TableRow key={category.id}>
+                        <TableCell className="font-medium">{category.name}</TableCell>
+                        <TableCell>{category.description || '-'}</TableCell>
+                        <TableCell>
+                          {new Date(category.createdAt).toLocaleDateString('pt-BR')}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(category)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(category.id, 'category')}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         );
 
       case 'employees':
         if (employeesLoading) {
           return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           );
         }
 
         return (
-          <div className="space-y-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar funcionários..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
+          <div className="space-y-4">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -476,43 +450,57 @@ export default function Management() {
                     <TableHead>Departamento</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Telefone</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(employees) && employees.length > 0 ? employees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{employee.department}</TableCell>
-                      <TableCell>{employee.email}</TableCell>
-                      <TableCell>{employee.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(employee)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(employee.id, 'employee')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {employeesLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  )) : (
+                  ) : employees?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         Nenhum funcionário encontrado
                       </TableCell>
                     </TableRow>
+                  ) : (
+                    Array.isArray(employees) && employees.map((employee) => (
+                      <TableRow key={employee.id}>
+                        <TableCell className="font-medium">{employee.name}</TableCell>
+                        <TableCell>{employee.department || '-'}</TableCell>
+                        <TableCell>{employee.email || '-'}</TableCell>
+                        <TableCell>{employee.phone || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={employee.isActive ? "default" : "secondary"}>
+                            {employee.isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(employee)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(employee.id, 'employee')}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -523,27 +511,15 @@ export default function Management() {
       case 'suppliers':
         if (suppliersLoading) {
           return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           );
         }
 
         return (
-          <div className="space-y-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar fornecedores..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
+          <div className="space-y-4">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -551,47 +527,57 @@ export default function Management() {
                     <TableHead>CNPJ</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Telefone</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(suppliers) && suppliers.length > 0 ? suppliers.map((supplier) => (
-                    <TableRow 
-                      key={supplier.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleEdit(supplier)}
-                    >
-                      <TableCell className="font-medium">{supplier.name}</TableCell>
-                      <TableCell>{supplier.cnpj}</TableCell>
-                      <TableCell>{supplier.email}</TableCell>
-                      <TableCell>{supplier.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(supplier)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(supplier.id, 'supplier')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {suppliersLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  )) : (
+                  ) : suppliers?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         Nenhum fornecedor encontrado
                       </TableCell>
                     </TableRow>
+                  ) : (
+                    Array.isArray(suppliers) && suppliers.map((supplier) => (
+                      <TableRow key={supplier.id}>
+                        <TableCell className="font-medium">{supplier.name}</TableCell>
+                        <TableCell>{supplier.cnpj || '-'}</TableCell>
+                        <TableCell>{supplier.email || '-'}</TableCell>
+                        <TableCell>{supplier.phone || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={supplier.isActive ? "default" : "secondary"}>
+                            {supplier.isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(supplier)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(supplier.id, 'supplier')}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -602,73 +588,73 @@ export default function Management() {
       case 'third-parties':
         if (thirdPartiesLoading) {
           return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           );
         }
 
         return (
-          <div className="space-y-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar terceiros..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
+          <div className="space-y-4">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome</TableHead>
                     <TableHead>Documento</TableHead>
-                    <TableHead>Tipo</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>Telefone</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {Array.isArray(thirdParties) && thirdParties.length > 0 ? thirdParties.map((thirdParty) => (
-                    <TableRow key={thirdParty.id}>
-                      <TableCell className="font-medium">{thirdParty.name}</TableCell>
-                      <TableCell>{thirdParty.document}</TableCell>
-                      <TableCell>{thirdParty.documentType}</TableCell>
-                      <TableCell>{thirdParty.email}</TableCell>
-                      <TableCell>{thirdParty.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(thirdParty)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(thirdParty.id, 'third-party')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                  {thirdPartiesLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="text-center py-4">
+                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
-                  )) : (
+                  ) : thirdParties?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
                         Nenhum terceiro encontrado
                       </TableCell>
                     </TableRow>
+                  ) : (
+                    Array.isArray(thirdParties) && thirdParties.map((thirdParty) => (
+                      <TableRow key={thirdParty.id}>
+                        <TableCell className="font-medium">{thirdParty.name}</TableCell>
+                        <TableCell>{thirdParty.document || '-'}</TableCell>
+                        <TableCell>{thirdParty.email || '-'}</TableCell>
+                        <TableCell>{thirdParty.phone || '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant={thirdParty.isActive ? "default" : "secondary"}>
+                            {thirdParty.isActive ? 'Ativo' : 'Inativo'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(thirdParty)}
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(thirdParty.id, 'third-party')}
+                              className="text-red-500 hover:text-red-600"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -677,32 +663,36 @@ export default function Management() {
         );
 
       case 'users':
-        if (!canCreateUsers) return null;
-        
+        if (usersLoading) {
+          return (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          );
+        }
+
         return (
           <div className="space-y-4">
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nome de Usuário</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead>Ações</TableHead>
+                    <TableHead>Função</TableHead>
+                    <TableHead>Criado em</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {usersLoading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
+                      <TableCell colSpan={4} className="text-center py-4">
                         <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                       </TableCell>
                     </TableRow>
                   ) : users?.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      <TableCell colSpan={4} className="text-center py-8 text-gray-500">
                         Nenhum usuário encontrado
                       </TableCell>
                     </TableRow>
@@ -710,22 +700,20 @@ export default function Management() {
                     Array.isArray(users) && users.map((user) => (
                       <TableRow key={user.id}>
                         <TableCell className="font-medium">{user.username}</TableCell>
-                        <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                            {user.role === 'admin' ? 'Administrador' : 'Usuário'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.isActive ? 'default' : 'destructive'}>
-                            {user.isActive ? 'Ativo' : 'Inativo'}
+                          <Badge variant={
+                            user.role === 'super_admin' ? 'destructive' :
+                            user.role === 'admin' ? 'default' : 'secondary'
+                          }>
+                            {user.role === 'super_admin' ? 'Super Admin' :
+                             user.role === 'admin' ? 'Administrador' : 'Usuário'}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           {new Date(user.createdAt).toLocaleDateString('pt-BR')}
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
+                          <div className="flex justify-end space-x-2">
                             <Button
                               variant="ghost"
                               size="sm"
@@ -753,200 +741,119 @@ export default function Management() {
           </div>
         );
 
-      case 'cost-centers':
-        if (costCentersLoading) {
-          return (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          );
-        }
-
-        return (
-          <div className="space-y-4">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Departamento</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead>Orçamento Mensal</TableHead>
-                    <TableHead>Orçamento Anual</TableHead>
-                    <TableHead>Criado em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {costCentersLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ) : costCenters?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                        Nenhum centro de custo encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    Array.isArray(costCenters) && costCenters.map((costCenter) => (
-                      <TableRow key={costCenter.id}>
-                        <TableCell className="font-medium">{costCenter.code}</TableCell>
-                        <TableCell>{costCenter.name}</TableCell>
-                        <TableCell>{costCenter.department}</TableCell>
-                        <TableCell>{costCenter.responsible}</TableCell>
-                        <TableCell>
-                          {costCenter.monthlyBudget 
-                            ? `R$ ${parseFloat(costCenter.monthlyBudget.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {costCenter.annualBudget 
-                            ? `R$ ${parseFloat(costCenter.annualBudget.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {new Date(costCenter.createdAt).toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(costCenter)}
-                              className="text-primary hover:text-primary/80"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(costCenter.id, 'cost-center')}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        );
-
       default:
         return null;
     }
   };
 
   return (
-    <div>
+    <div className="container mx-auto p-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Cadastros</h1>
+          <p className="text-muted-foreground">
+            Gerencie materiais, categorias, funcionários, fornecedores e terceiros
+          </p>
+        </div>
+        <Settings className="h-8 w-8 text-muted-foreground" />
+      </div>
+
       <Card>
-        <div className="border-b border-gray-200">
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-8 h-8 bg-primary text-white rounded">
-                <Settings className="w-4 h-4" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Gestão de Cadastros</h2>
-                <p className="text-sm text-gray-600">Gerencie materiais, categorias, funcionários e fornecedores</p>
-              </div>
+        <CardContent className="p-6">
+          {/* Tab Navigation */}
+          <div className="flex space-x-1 mb-6">
+            {tabItems.map((tab) => (
+              <Button
+                key={tab.id}
+                variant={activeTab === tab.id ? 'default' : 'ghost'}
+                onClick={() => setActiveTab(tab.id as ActiveTab)}
+                className="px-4 py-2"
+              >
+                {tab.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Search and Filters */}
+          <div className="flex items-center gap-4 mb-6">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
             </div>
-            <Button onClick={handleCreate} className="bg-primary hover:bg-primary/90">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo {tabItems.find(t => t.id === activeTab)?.label.slice(0, -1)}
+            
+            {activeTab === 'materials' && (
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Todas as categorias" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">Todas as categorias</SelectItem>
+                  {Array.isArray(categoriesData) && categoriesData.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <Button onClick={handleCreate} className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Novo{' '}
+              {activeTab === 'materials' ? 'Material' :
+               activeTab === 'categories' ? 'Categoria' :
+               activeTab === 'employees' ? 'Funcionário' :
+               activeTab === 'suppliers' ? 'Fornecedor' :
+               activeTab === 'third-parties' ? 'Terceiro' :
+               'Usuário'}
             </Button>
           </div>
-          
-          {/* Sub Navigation */}
-          <div className="px-6">
-            <nav className="flex space-x-8">
-              {tabItems.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setSearchQuery('');
-                    setSelectedCategory('');
-                  }}
-                  className={cn(
-                    "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
-                    activeTab === tab.id
-                      ? "border-primary text-primary"
-                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                  )}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </nav>
-          </div>
-        </div>
 
-        <CardContent className="p-6">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">
-                {tabItems.find(t => t.id === activeTab)?.label}
-              </h3>
-            </div>
-            {renderContent()}
-          </div>
+          {/* Tab Content */}
+          {renderTabContent()}
         </CardContent>
       </Card>
 
       {/* Modals */}
       <MaterialModal
-        open={materialModalOpen}
-        onOpenChange={setMaterialModalOpen}
+        isOpen={materialModalOpen}
+        onClose={handleModalClose}
         material={editingItem}
-        onClose={handleModalClose}
       />
+
       <CategoryModal
-        open={categoryModalOpen}
-        onOpenChange={setCategoryModalOpen}
+        isOpen={categoryModalOpen}
+        onClose={handleModalClose}
         category={editingItem}
-        onClose={handleModalClose}
       />
+
       <EmployeeModal
-        open={employeeModalOpen}
-        onOpenChange={setEmployeeModalOpen}
+        isOpen={employeeModalOpen}
+        onClose={handleModalClose}
         employee={editingItem}
-        onClose={handleModalClose}
       />
+
       <SupplierModal
-        open={supplierModalOpen}
-        onOpenChange={setSupplierModalOpen}
+        isOpen={supplierModalOpen}
+        onClose={handleModalClose}
         supplier={editingItem}
-        onClose={handleModalClose}
       />
+
       <ThirdPartyModal
-        open={thirdPartyModalOpen}
-        onOpenChange={setThirdPartyModalOpen}
+        isOpen={thirdPartyModalOpen}
+        onClose={handleModalClose}
         thirdParty={editingItem}
-        onClose={handleModalClose}
       />
-      {canCreateUsers && (
-        <UserModal
-          open={userModalOpen}
-          onOpenChange={setUserModalOpen}
-          editingUser={editingItem}
-        />
-      )}
-      <CostCenterModal
-        open={costCenterModalOpen}
-        onOpenChange={setCostCenterModalOpen}
-        costCenter={editingItem}
+
+      <UserModal
+        isOpen={userModalOpen}
         onClose={handleModalClose}
+        user={editingItem}
       />
     </div>
   );

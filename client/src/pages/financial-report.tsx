@@ -70,12 +70,47 @@ export default function FinancialReport() {
     setFilters(prev => ({ ...prev, [key]: filterValue }));
   };
 
+  // Transform data to flat list of lots
+  const flattenedData = () => {
+    if (!Array.isArray(reportData)) return [];
+    
+    const flattened: any[] = [];
+    reportData.forEach((material: any) => {
+      if (Array.isArray(material.lots)) {
+        material.lots.forEach((lot: any) => {
+          flattened.push({
+            materialName: material.name,
+            category: material.category,
+            unit: material.unit,
+            unitPrice: lot.unitPrice,
+            quantity: lot.quantity,
+            totalValue: lot.totalValue || (lot.unitPrice * lot.quantity),
+            lotInfo: lot.lotInfo || 'Lote único'
+          });
+        });
+      } else {
+        // For materials without lots array
+        flattened.push({
+          materialName: material.name,
+          category: material.category,
+          unit: material.unit,
+          unitPrice: material.unitPrice,
+          quantity: material.currentStock,
+          totalValue: material.totalValue,
+          lotInfo: material.lotInfo || 'Lote único'
+        });
+      }
+    });
+    
+    return flattened;
+  };
+
+  const flatData = flattenedData();
+
   // Calculate totals
   const calculateTotals = () => {
-    if (!Array.isArray(reportData)) return { totalValue: 0, totalItems: 0 };
-    
-    const totalValue = reportData.reduce((sum, item) => sum + (item.totalValue || 0), 0);
-    const totalItems = reportData.length;
+    const totalValue = flatData.reduce((sum, item) => sum + (item.totalValue || 0), 0);
+    const totalItems = flatData.length;
     
     return { totalValue, totalItems };
   };

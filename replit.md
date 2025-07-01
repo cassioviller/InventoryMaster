@@ -94,7 +94,15 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (01/07/2025 - 15:06)
+## Status Atual (01/07/2025 - 15:25)
+**PROBLEMA DE ORDENAÇÃO DE MOVIMENTAÇÕES CORRIGIDO COMPLETAMENTE**:
+- ✅ **BUG IDENTIFICADO E RESOLVIDO**: Entradas criadas com data string (ex: "2025-07-01") eram processadas como meia-noite UTC (00:00:00), causando ordenação inconsistente no relatório de movimentações
+- ✅ **CORREÇÃO IMPLEMENTADA EM createEntry()**: Campo `date` agora sempre usa `new Date()` (timestamp atual) em vez de processar data fornecida pelo frontend
+- ✅ **ORDENAÇÃO DUPLA APLICADA**: Relatórios agora ordenam por `date DESC, createdAt DESC` garantindo ordem cronológica consistente
+- ✅ **VALIDAÇÃO CONFIRMADA**: Material "DISCO DE CORTE 7" agora aparece corretamente tanto no relatório financeiro (1 material) quanto no relatório de movimentações (4 entradas)
+- ✅ **SISTEMA DE ENTRADAS NORMALIZADO**: Todas as novas entradas usam timestamp atual, eliminando problemas de ordenação por data
+
+## Status Anterior (01/07/2025 - 15:06)
 **RELATÓRIO FINANCEIRO REESTRUTURADO CONFORME SOLICITADO**:
 - ✅ **ESTRUTURA LINEARIZADA**: Relatório financeiro agora exibe tabela simples com uma linha por lote
 - ✅ **REMOVIDO AGRUPAMENTO**: Eliminados módulos separados por material - agora tudo em tabela única

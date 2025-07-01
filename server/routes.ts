@@ -676,6 +676,90 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Employee return endpoint
+  app.post("/api/movements/employee-return", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      console.log("=== EMPLOYEE RETURN REQUEST ===");
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      
+      const returnData = createEntrySchema.extend({
+        isReturn: z.boolean().default(true),
+        returnReason: z.string().optional(),
+        materialCondition: z.string().default('good'),
+      }).parse(req.body);
+      
+      console.log("Parsed return data:", returnData);
+      
+      // Criar entrada como devolução
+      const movement = await storage.createEmployeeReturn(returnData, req.user!.id);
+      console.log("Employee return created successfully:", movement);
+      
+      res.status(201).json(movement);
+    } catch (error) {
+      console.error("Error creating employee return:", error);
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: 'Validation error', 
+          errors: (error as any).errors 
+        });
+      }
+      res.status(500).json({ 
+        message: "Failed to create employee return",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Third party return endpoint
+  app.post("/api/movements/third-party-return", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      console.log("=== THIRD PARTY RETURN REQUEST ===");
+      console.log("Request body:", JSON.stringify(req.body, null, 2));
+      
+      const returnData = createEntrySchema.extend({
+        isReturn: z.boolean().default(true),
+        returnReason: z.string().optional(),
+        materialCondition: z.string().default('good'),
+      }).parse(req.body);
+      
+      console.log("Parsed return data:", returnData);
+      
+      // Criar entrada como devolução
+      const movement = await storage.createThirdPartyReturn(returnData, req.user!.id);
+      console.log("Third party return created successfully:", movement);
+      
+      res.status(201).json(movement);
+    } catch (error) {
+      console.error("Error creating third party return:", error);
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ 
+          message: 'Validation error', 
+          errors: (error as any).errors 
+        });
+      }
+      res.status(500).json({ 
+        message: "Failed to create third party return",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
+  // Get material lots (for return interface)
+  app.get("/api/materials/:id/lots", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const materialId = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      const lots = await storage.getMaterialLots(materialId, ownerId);
+      res.json(lots);
+    } catch (error) {
+      console.error("Error fetching material lots:", error);
+      res.status(500).json({ 
+        message: "Failed to fetch material lots",
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
+  });
+
   // Reports routes
   app.get("/api/reports/employee-movement", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {

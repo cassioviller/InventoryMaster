@@ -60,6 +60,8 @@ export interface IStorage {
   // Movement methods
   createEntry(entry: CreateEntry, userId: number): Promise<MaterialMovement>;
   createExit(exit: CreateExit, userId: number): Promise<MaterialMovement>;
+  createEmployeeReturn(returnData: any, userId: number): Promise<MaterialMovement>;
+  createThirdPartyReturn(returnData: any, userId: number): Promise<MaterialMovement>;
   getMovements(ownerId?: number): Promise<MovementWithDetails[]>;
 
   // Dashboard methods

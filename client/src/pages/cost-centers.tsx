@@ -174,12 +174,14 @@ export default function CostCentersPage() {
   };
 
   // Filter cost centers
-  const filteredCenters = (costCenters as CostCenter[]).filter((center) => {
+  const filteredCenters = Array.isArray(costCenters) ? (costCenters as CostCenter[]).filter((center) => {
+    if (!center || typeof center !== 'object') return false;
+    
     const matchesSearch = 
-      center.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      center.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      center.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      center.responsible.toLowerCase().includes(searchTerm.toLowerCase());
+      (center.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (center.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (center.department || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (center.responsible || '').toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || 
       (statusFilter === "active" && center.isActive) ||
@@ -188,7 +190,7 @@ export default function CostCentersPage() {
     const matchesDepartment = departmentFilter === "all" || center.department === departmentFilter;
     
     return matchesSearch && matchesStatus && matchesDepartment;
-  });
+  }) : [];
 
   const formatCurrency = (value?: string) => {
     if (!value) return "-";
@@ -414,7 +416,7 @@ export default function CostCentersPage() {
       {/* Results Summary */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-gray-600">
-          Mostrando {filteredCenters.length} de {costCenters.length} centros de custo
+          Mostrando {filteredCenters.length} de {Array.isArray(costCenters) ? costCenters.length : 0} centros de custo
         </p>
       </div>
 

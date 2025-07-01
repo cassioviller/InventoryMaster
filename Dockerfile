@@ -20,8 +20,18 @@ RUN chmod +x docker-entrypoint.sh
 # Executar o build da aplicação
 RUN npm run build
 
+# Definir variáveis de ambiente com valores padrão
+ENV DATABASE_URL=${DATABASE_URL:-postgres://almoxa:almoxa@viajey_almoxa:5432/almoxa?sslmode=disable}
+ENV NODE_ENV=${NODE_ENV:-production}
+ENV PORT=${PORT:-80}
+ENV SESSION_SECRET=${SESSION_SECRET:-almoxarifado-secret-2024}
+
+# Health check para verificar se a aplicação está funcionando
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:${PORT}/health || exit 1
+
 # Expor a porta utilizada pelo aplicativo
-EXPOSE 5000
+EXPOSE 80
 
 
 

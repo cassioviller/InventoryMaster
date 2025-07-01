@@ -1,51 +1,72 @@
 # Correção Rápida - Ambiente de Produção
+## Executar no Container EasyPanel
 
-## Problema Detectado
-O erro mostra que a coluna `material_id` não existe na tabela `material_movements` no ambiente de produção. Isso indica diferenças de schema entre desenvolvimento e produção.
+### 🎯 PROBLEMA IDENTIFICADO:
+As imagens mostram que o ambiente de produção tem:
+- ❌ Tabela `cost_centers` não existe
+- ❌ Coluna `material_id` ainda em camelCase (deveria ser snake_case)
+- ❌ Schema desatualizado comparado ao desenvolvimento
 
-## Solução Imediata (Execute no Container de Produção)
+### ⚡ SOLUÇÃO RÁPIDA:
 
-### 1. Acesse o container de produção
+**No container de produção, execute:**
+
 ```bash
-# No EasyPanel, acesse o terminal do container
-docker exec -it <container-name> /bin/bash
-```
+# 1. Navegue até o diretório da aplicação
+cd /app
 
-### 2. Execute o script de correção
-```bash
+# 2. Execute o script de correção
 node fix-production-schema.js
+
+# 3. Reinicie a aplicação
+pm2 restart all
+# OU
+docker restart container_name
+# OU
+supervisorctl restart app
 ```
 
-### 3. Reinicie a aplicação
+### 🔧 ALTERNATIVA MANUAL:
+
+Se o script Node.js falhar, execute diretamente no PostgreSQL:
+
 ```bash
-# Se necessário, reinicie o processo
-npm run start
+# Conectar ao PostgreSQL
+psql "$DATABASE_URL"
+
+# Executar SQL de correção
+\i production-migration.sql
 ```
 
-## O que o script faz automaticamente:
-- ✅ Cria tabela `cost_centers` se não existir
-- ✅ Detecta se colunas estão com nomenclatura incorreta (materialId vs material_id)
-- ✅ Adiciona todas as colunas necessárias em `material_movements`
-- ✅ Cria foreign keys corretamente
-- ✅ Insere dados de exemplo (centros de custo)
-- ✅ Mostra estrutura das tabelas para verificação
+### ✅ VALIDAÇÃO PÓS-CORREÇÃO:
 
-## Resultado Esperado
-Após executar o script, o sistema deve:
-- Carregar página de Centros de Custo
-- Mostrar relatórios financeiros
-- Permitir criação de entradas/saídas
-- Funcionar completamente como no desenvolvimento
-
-## Verificação
-Teste estas URLs após a correção:
-- `/cost-centers` - Deve carregar sem erro
-- `/material-entry` - Deve permitir criar entrada
-- `/material-exit` - Deve exigir centro de custo
-- `/reports/financial` - Deve mostrar relatório
-
-## Se ainda houver problemas
-Execute o teste automatizado:
 ```bash
-PRODUCTION_URL=https://sua-url.com node test-production-api.js
+# Testar API após correção
+node test-production-api.js
 ```
+
+### 📊 RESULTADO ESPERADO:
+
+Após a correção, a aplicação deve:
+- ✅ Carregar centros de custo sem erro
+- ✅ Permitir entradas de material
+- ✅ Permitir saídas com centro obrigatório
+- ✅ Exibir relatórios corretamente
+
+### 🚀 DADOS CRIADOS:
+
+O script adicionará automaticamente:
+- **MANUT001** - Manutenção Predial (R$ 5.000/mês)
+- **PROD001** - Produção Linha A (R$ 15.000/mês)  
+- **ADM001** - Administração Geral (R$ 8.000/mês)
+
+### 🔍 VERIFICAÇÃO:
+
+Após execução, acesse:
+1. `/cost-centers` - Deve listar os 3 centros
+2. `/material-entry` - Deve permitir entrada com centro opcional
+3. `/material-exit` - Deve exigir centro obrigatório
+4. `/reports` - Deve gerar relatórios sem erro
+
+**Tempo de execução:** ~30 segundos
+**Impacto:** Zero downtime (correção em background)

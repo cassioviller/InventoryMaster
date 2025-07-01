@@ -1,0 +1,493 @@
+# Sistema de Devoluções - Especificação Completa
+
+## Visão Geral
+
+Implementar um sistema robusto de devoluções que permita funcionários devolverem materiais ao estoque, mantendo integridade financeira, rastreabilidade completa e controle adequado, sem distorcer relatórios ou criar inconsistências.
+
+## PARTE 1: LÓGICA FUNDAMENTAL
+
+### Problema Principal
+Quando funcionário devolve material através de "Entrada de Material > Origem: Devolução de Funcionário", isso não deve ser contabilizado como compra real, pois distorce relatórios financeiros.
+
+### Solução Implementada
+- **Flag de identificação**: `is_return = true` para devoluções
+- **Integração a lotes existentes**: Não criar novos lotes com valor zero
+- **Relatórios separados**: Distinguir compras de devoluções
+- **Controle de estoque**: Aumentar quantidade sem impacto financeiro
+
+## PARTE 2: LÓGICA DE MÚLTIPLOS PREÇOS
+
+### Cenário: Material com Preço Único
+**Comportamento:**
+- Sistema identifica automaticamente o lote existente
+- Campo "Valor Unitário" fica somente leitura
+- Devolução vai automaticamente para o lote correto
+- Interface simples e direta
+
+**Exemplo:**
+```
+Material: Mouse
+Lote existente: 3 unidades × R$ 24,00
+Devolução: 2 unidades
+Resultado: 5 unidades × R$ 24,00 (mesmo lote)
+```
+
+### Cenário: Material com Múltiplos Preços
+**Comportamento:**
+- Sistema mostra seletor de lotes disponíveis
+- Usuário escolhe em qual lote fazer a devolução
+- Campo "Valor Unitário" atualiza automaticamente
+- Validação de quantidade por lote
+
+**Exemplo:**
+```
+Material: Martelo
+Lotes disponíveis:
+○ Preço 1 de 2: R$ 20,00 (15 unidades em estoque)
+○ Preço 2 de 2: R$ 15,50 (10 unidades em estoque)
+
+Usuário seleciona: Preço 1 de 2
+Devolução: 3 unidades
+Resultado: 18 unidades × R$ 20,00
+```
+
+## PARTE 3: INTERFACE DETALHADA
+
+### Interface para Preço Único
+```
+Entrada de Material - Devolução
+
+Data: [01/07/2025]
+Origem: [Devolução de Funcionário ▼]
+Funcionário: [João Silva ▼]
+
+Adicionar Materiais:
+Material: [Mouse ▼]
+Quantidade: [2]
+Valor Unitário (R$): [24,00] (somente leitura)
+ℹ️ Valor baseado no preço cadastrado do material
+
+[+ Adicionar à Lista]
+```
+
+### Interface para Múltiplos Preços
+```
+Entrada de Material - Devolução
+
+Data: [01/07/2025]
+Origem: [Devolução de Funcionário ▼]
+Funcionário: [João Silva ▼]
+
+Adicionar Materiais:
+Material: [Martelo ▼]
+
+Lote para Devolução: *
+○ Preço 1 de 2: R$ 20,00 (15 unidades disponíveis)
+   Última entrada: 15/06/2025 - Fornecedor Teste 1
+○ Preço 2 de 2: R$ 15,50 (10 unidades disponíveis)
+   Última entrada: 20/06/2025 - Fornecedor Teste 2
+
+Quantidade: [3]
+Valor Unitário (R$): [20,00] (baseado no lote selecionado)
+Valor Total: [60,00] (calculado automaticamente)
+
+[+ Adicionar à Lista]
+```
+
+### Materiais Adicionados
+```
+Materiais para Devolução:
+┌─────────────────────────────────────────────────────────────┐
+│ Mouse    | 2 un. | R$ 24,00 | R$ 48,00 | [Remover]        │
+│ Martelo  | 3 un. | R$ 20,00 | R$ 60,00 | [Remover]        │
+└─────────────────────────────────────────────────────────────┘
+
+Total da Devolução: R$ 108,00 (valor de referência)
+
+[Confirmar Entrada]
+```
+
+## PARTE 4: VALIDAÇÕES E REGRAS DE NEGÓCIO
+
+### Validações Básicas
+1. **Funcionário obrigatório**: Deve estar cadastrado e ativo
+2. **Material obrigatório**: Deve existir no sistema
+3. **Quantidade positiva**: Maior que zero
+4. **Lote obrigatório**: Para materiais com múltiplos preços
+5. **Data válida**: Não pode ser futura
+
+### Validações de Estoque
+1. **Lote ativo**: Apenas lotes com estoque > 0 podem receber devoluções
+2. **Quantidade do lote**: Devolução não pode exceder capacidade máxima (se houver)
+3. **Material ativo**: Apenas materiais ativos podem ser devolvidos
+
+### Validações de Controle (Opcionais)
+1. **Histórico do funcionário**: Alertar se devolução excede retiradas
+2. **Período de devolução**: Limite de tempo para devolver (ex: 30 dias)
+3. **Estado do material**: Classificar como bom, danificado, etc.
+
+### Regras de Negócio
+1. **Devoluções não geram custo**: `is_return = true`
+2. **Integração a lotes**: Não criar lotes novos
+3. **Rastreabilidade**: Manter histórico completo
+4. **Centro de custo**: Opcional para devoluções
+
+## PARTE 5: CASOS ESPECIAIS
+
+### Caso 1: Material Danificado
+**Cenário**: Funcionário devolve material danificado
+**Solução**: 
+- Campo adicional "Estado do Material"
+- Opções: Bom, Danificado, Perdido
+- Material danificado pode ir para estoque separado
+
+### Caso 2: Devolução Parcial
+**Cenário**: Funcionário retirou 5, devolve apenas 2
+**Solução**:
+- Permitir devolução parcial
+- Atualizar saldo do funcionário
+- Manter histórico de pendências
+
+### Caso 3: Devolução Excedente
+**Cenário**: Funcionário devolve mais do que retirou
+**Solução**:
+- Mostrar alerta: "Funcionário está devolvendo mais do que retirou"
+- Permitir continuar com justificativa
+- Registrar como exceção para auditoria
+
+### Caso 4: Material de Terceiros
+**Cenário**: Funcionário devolve material que não saiu do estoque
+**Solução**:
+- Campo "Origem da Devolução"
+- Opções: "Retirada anterior", "Material próprio", "Encontrado"
+- Tratamento diferenciado por origem
+
+### Caso 5: Transferência Entre Funcionários
+**Cenário**: João retirou, mas Pedro está devolvendo
+**Solução**:
+- Campo "Funcionário Original" (opcional)
+- Permitir devolução por funcionário diferente
+- Manter rastreabilidade completa
+
+## PARTE 6: HISTÓRICO E RASTREABILIDADE
+
+### Histórico por Funcionário
+```
+Funcionário: João Silva
+
+Histórico de Movimentações:
+┌─────────────────────────────────────────────────────────────┐
+│ Data     │ Tipo      │ Material │ Qtd │ Saldo │ Observação  │
+│ 15/06/25 │ Retirada  │ Martelo  │ -3  │ 3     │ Manutenção  │
+│ 20/06/25 │ Retirada  │ Martelo  │ -2  │ 5     │ Projeto X   │
+│ 25/06/25 │ Devolução │ Martelo  │ +1  │ 4     │ Sobrou      │
+│ 01/07/25 │ Devolução │ Martelo  │ +3  │ 1     │ Concluído   │
+└─────────────────────────────────────────────────────────────┘
+
+Saldo Atual: 1 martelo pendente de devolução
+```
+
+### Rastreabilidade de Lotes
+```
+Material: Martelo - Lote R$ 20,00
+
+Histórico do Lote:
+┌─────────────────────────────────────────────────────────────┐
+│ Data     │ Tipo      │ Qtd │ Estoque │ Responsável │ Obs    │
+│ 15/06/25 │ Compra    │ +15 │ 15      │ Sistema     │ Forn.1 │
+│ 18/06/25 │ Saída     │ -3  │ 12      │ João Silva  │ Manut. │
+│ 20/06/25 │ Saída     │ -2  │ 10      │ João Silva  │ Proj.X │
+│ 25/06/25 │ Devolução │ +1  │ 11      │ João Silva  │ Sobrou │
+│ 01/07/25 │ Devolução │ +3  │ 14      │ João Silva  │ Concl. │
+└─────────────────────────────────────────────────────────────┘
+
+Estoque Atual: 14 unidades
+```
+
+## PARTE 7: RELATÓRIOS MODIFICADOS
+
+### Relatório Financeiro do Estoque
+**ANTES (Problema):**
+```
+Martelo - Preço 1 de 3: 15 un. × R$ 20,00 = R$ 300,00
+Martelo - Preço 2 de 3: 10 un. × R$ 15,50 = R$ 155,00
+Martelo - Preço 3 de 3: 4 un. × R$ 0,00 = R$ 0,00 ❌
+```
+
+**DEPOIS (Corrigido):**
+```
+Martelo - Preço 1 de 2: 18 un. × R$ 20,00 = R$ 360,00 ✅
+Martelo - Preço 2 de 2: 10 un. × R$ 15,50 = R$ 155,00
+
+Total do Estoque: R$ 515,00 (baseado apenas em compras)
+```
+
+### Relatório de Movimentações Gerais
+```
+┌──────────────────────────────────────────────────────────────────────────────┐
+│ Data │ Tipo      │ Material │ Qtd │ V.Unit │ V.Total │ Origem/Destino │ Resp. │
+│ 15/06│ Compra    │ Martelo  │ 15  │ 20,00  │ 300,00  │ Fornecedor 1   │ Admin │
+│ 18/06│ Saída     │ Martelo  │ 3   │ 20,00  │ 60,00   │ João Silva     │ Admin │
+│ 25/06│ Devolução │ Martelo  │ 1   │ 20,00  │ 20,00   │ João Silva     │ Admin │
+│ 01/07│ Devolução │ Martelo  │ 3   │ 20,00  │ 60,00   │ João Silva     │ Admin │
+└──────────────────────────────────────────────────────────────────────────────┘
+
+TOTAIS DO PERÍODO:
+Compras: R$ 300,00
+Saídas: R$ 60,00
+Devoluções: R$ 80,00 (informativo)
+Saldo Líquido: R$ 240,00 (compras - saídas)
+```
+
+### Relatório de Devoluções
+```
+Relatório de Devoluções - Julho/2025
+
+Por Funcionário:
+┌─────────────────────────────────────────────────────────────┐
+│ Funcionário    │ Material │ Qtd │ Valor   │ Data    │ Estado │
+│ João Silva     │ Martelo  │ 1   │ R$ 20,00│ 25/06   │ Bom    │
+│ João Silva     │ Martelo  │ 3   │ R$ 60,00│ 01/07   │ Bom    │
+│ Maria Santos   │ Mouse    │ 2   │ R$ 48,00│ 02/07   │ Bom    │
+└─────────────────────────────────────────────────────────────┘
+
+Por Material:
+┌─────────────────────────────────────────────────────────────┐
+│ Material │ Qtd Total │ Valor Total │ Funcionários │ Estado  │
+│ Martelo  │ 4         │ R$ 80,00    │ 1            │ 100% Bom│
+│ Mouse    │ 2         │ R$ 48,00    │ 1            │ 100% Bom│
+└─────────────────────────────────────────────────────────────┘
+
+RESUMO:
+Total de Devoluções: 6 unidades
+Valor de Referência: R$ 128,00
+Funcionários Envolvidos: 2
+Taxa de Devolução: 15% (devoluções/saídas)
+```
+
+## PARTE 8: IMPLEMENTAÇÃO TÉCNICA
+
+### Estrutura de Dados
+```sql
+-- Modificar tabela movements
+ALTER TABLE movements ADD COLUMN is_return BOOLEAN DEFAULT FALSE;
+ALTER TABLE movements ADD COLUMN return_reason VARCHAR(255);
+ALTER TABLE movements ADD COLUMN material_condition ENUM('bom', 'danificado', 'perdido') DEFAULT 'bom';
+ALTER TABLE movements ADD COLUMN original_employee_id VARCHAR(36);
+
+-- Índices para performance
+CREATE INDEX idx_movements_return ON movements(is_return);
+CREATE INDEX idx_movements_employee_material ON movements(employee_id, material_id);
+```
+
+### Lógica de Processamento
+```javascript
+function processarDevolucao(dados) {
+    // 1. Validações básicas
+    validarFuncionario(dados.funcionarioId);
+    validarMaterial(dados.materialId);
+    validarQuantidade(dados.quantidade);
+    
+    // 2. Verificar lotes disponíveis
+    const lotes = buscarLotesDoMaterial(dados.materialId);
+    
+    if (lotes.length === 0) {
+        throw new Error("Material não possui lotes para devolução");
+    }
+    
+    // 3. Determinar lote de destino
+    let loteDestino;
+    if (lotes.length === 1) {
+        loteDestino = lotes[0];
+    } else {
+        if (!dados.loteId) {
+            throw new Error("Selecione um lote para devolução");
+        }
+        loteDestino = lotes.find(l => l.id === dados.loteId);
+    }
+    
+    // 4. Validar histórico (opcional)
+    if (VALIDAR_HISTORICO) {
+        const saldoFuncionario = calcularSaldoFuncionario(
+            dados.funcionarioId, 
+            dados.materialId
+        );
+        
+        if (dados.quantidade > saldoFuncionario) {
+            // Mostrar alerta mas permitir continuar
+            dados.excecao = true;
+            dados.motivoExcecao = "Devolução excede retiradas";
+        }
+    }
+    
+    // 5. Processar devolução
+    const movimentacao = {
+        tipo: 'entrada',
+        isReturn: true,
+        materialId: dados.materialId,
+        quantidade: dados.quantidade,
+        valorUnitario: loteDestino.precoUnitario,
+        valorTotal: dados.quantidade * loteDestino.precoUnitario,
+        funcionarioId: dados.funcionarioId,
+        origem: 'Devolução de Funcionário',
+        observacoes: dados.observacoes,
+        estadoMaterial: dados.estadoMaterial || 'bom',
+        data: dados.data
+    };
+    
+    // 6. Atualizar estoque
+    atualizarEstoqueLote(loteDestino.id, dados.quantidade);
+    
+    // 7. Registrar movimentação
+    return criarMovimentacao(movimentacao);
+}
+```
+
+### Interface Dinâmica
+```javascript
+function aoSelecionarMaterial(materialId) {
+    const lotes = buscarLotesDoMaterial(materialId);
+    const container = document.getElementById('lote-container');
+    
+    if (lotes.length === 1) {
+        // Material com preço único
+        container.innerHTML = '';
+        document.getElementById('valor-unitario').value = lotes[0].precoUnitario;
+        document.getElementById('valor-unitario').disabled = true;
+        
+    } else if (lotes.length > 1) {
+        // Material com múltiplos preços
+        let html = '<label>Lote para Devolução: *</label>';
+        lotes.forEach(lote => {
+            html += `
+                <div class="lote-option">
+                    <input type="radio" name="lote" value="${lote.id}" 
+                           onchange="atualizarValor(${lote.precoUnitario})">
+                    <label>
+                        Preço ${lote.ordem} de ${lotes.length}: 
+                        R$ ${lote.precoUnitario.toFixed(2)} 
+                        (${lote.quantidade} unidades disponíveis)
+                        <small>Última entrada: ${formatarData(lote.ultimaEntrada)}</small>
+                    </label>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        document.getElementById('valor-unitario').disabled = true;
+    }
+}
+
+function atualizarValor(precoUnitario) {
+    document.getElementById('valor-unitario').value = precoUnitario;
+    calcularValorTotal();
+}
+
+function calcularValorTotal() {
+    const quantidade = parseFloat(document.getElementById('quantidade').value) || 0;
+    const valorUnitario = parseFloat(document.getElementById('valor-unitario').value) || 0;
+    const valorTotal = quantidade * valorUnitario;
+    
+    document.getElementById('valor-total').value = valorTotal.toFixed(2);
+}
+```
+
+## PARTE 9: TESTES E VALIDAÇÃO
+
+### Cenários de Teste
+
+#### Teste 1: Devolução com Preço Único
+```
+Dados:
+- Material: Mouse (1 lote: R$ 24,00)
+- Funcionário: João Silva
+- Quantidade: 2
+
+Resultado Esperado:
+- Valor unitário: R$ 24,00 (automático)
+- Estoque atualizado: +2 unidades no lote existente
+- Movimentação marcada como devolução
+```
+
+#### Teste 2: Devolução com Múltiplos Preços
+```
+Dados:
+- Material: Martelo (2 lotes: R$ 20,00 e R$ 15,50)
+- Lote selecionado: R$ 20,00
+- Funcionário: João Silva
+- Quantidade: 3
+
+Resultado Esperado:
+- Valor unitário: R$ 20,00 (baseado na seleção)
+- Estoque atualizado: +3 unidades no lote R$ 20,00
+- Lote R$ 15,50 inalterado
+```
+
+#### Teste 3: Validação de Histórico
+```
+Dados:
+- Funcionário retirou: 2 martelos
+- Funcionário tenta devolver: 5 martelos
+
+Resultado Esperado:
+- Alerta: "Funcionário está devolvendo mais do que retirou"
+- Opção de continuar com justificativa
+- Registro como exceção
+```
+
+#### Teste 4: Material Danificado
+```
+Dados:
+- Material: Martelo
+- Estado: Danificado
+- Quantidade: 1
+
+Resultado Esperado:
+- Devolução processada normalmente
+- Estado registrado como "danificado"
+- Possível separação em estoque especial
+```
+
+### Validações de Integridade
+1. **Relatório financeiro**: Verificar se não há lotes com valor zero
+2. **Estoque**: Confirmar que quantidades estão corretas
+3. **Movimentações**: Validar que devoluções estão marcadas corretamente
+4. **Histórico**: Verificar rastreabilidade completa
+
+## PARTE 10: MELHORIAS FUTURAS
+
+### Funcionalidades Avançadas
+1. **Devolução em lote**: Permitir devolver múltiplos materiais simultaneamente
+2. **Agendamento**: Agendar devoluções futuras
+3. **Notificações**: Alertar sobre devoluções pendentes
+4. **Aprovação**: Workflow de aprovação para devoluções especiais
+
+### Relatórios Avançados
+1. **Dashboard de devoluções**: Métricas em tempo real
+2. **Análise de padrões**: Identificar materiais mais devolvidos
+3. **Eficiência por funcionário**: Ranking de devoluções
+4. **Previsão**: Estimar devoluções futuras
+
+### Integrações
+1. **Sistema de qualidade**: Avaliar estado dos materiais
+2. **Gestão de projetos**: Vincular devoluções a projetos
+3. **Controle de acesso**: Permissões específicas para devoluções
+4. **Auditoria**: Log completo de todas as operações
+
+## RESULTADO FINAL ESPERADO
+
+Após implementação completa:
+
+✅ **Sistema robusto de devoluções** funcionando perfeitamente
+✅ **Múltiplos preços** tratados corretamente com seleção de lote
+✅ **Relatórios financeiros** sem distorções
+✅ **Rastreabilidade completa** de todas as movimentações
+✅ **Validações adequadas** para diferentes cenários
+✅ **Interface intuitiva** para usuários
+✅ **Controle de estoque** preciso e confiável
+✅ **Casos especiais** tratados adequadamente
+✅ **Histórico detalhado** para auditoria
+✅ **Flexibilidade** para diferentes necessidades operacionais
+
+Este sistema de devoluções será uma base sólida para operações eficientes e controle adequado do inventário.
+

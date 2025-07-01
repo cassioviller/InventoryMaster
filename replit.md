@@ -94,7 +94,7 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (01/07/2025 - 14:15)
+## Status Atual (01/07/2025 - 14:45)
 **SISTEMA COMPLETO TESTADO E VALIDADO - CENÁRIO REAL IMPLEMENTADO**:
 - ✅ **CENÁRIO "SERRALHERIA PREMIUM" CRIADO E TESTADO**:
   - Usuário: serralheria_premium/serralheria123 (admin)
@@ -120,13 +120,34 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
   - Centro de custo obrigatório em saídas
   - Relatórios com dados completos e precisos
 
-- ✅ **CORREÇÕES CRÍTICAS DOS RELATÓRIOS APLICADAS (01/07/2025 - 14:15)**:
-  - **Tipo de devolução corrigido**: Devoluções agora aparecem como "Devolução" em vez de "Entrada"
-  - **Campos de origem/destino corrigidos**: Nomes dos responsáveis sendo exibidos corretamente
-  - **Data corrigida**: Campo `date` sendo usado como prioridade sobre `createdAt`
-  - **Relatório financeiro corrigido**: Estoque atual (incluindo devoluções) com valores baseados apenas em entradas de fornecedores
-  - **Novos campos implementados**: `displayType`, `originDestination`, `responsiblePerson` no backend
-  - **Frontend atualizado**: Tabela de movimentações gerais usando novos campos corrigidos
+- ✅ **REVISÃO COMPLETA DOS RELATÓRIOS FINALIZADA (01/07/2025 - 14:45)**:
+
+  **🔧 RELATÓRIO FINANCEIRO - LÓGICA DE LOTES IMPLEMENTADA**:
+  - **Separação por preços de entrada**: Materiais agora exibem lotes separados por preço (ex: 207 unidades a R$ 10 + 20 unidades a R$ 2)
+  - **FIFO preservado**: Valores calculados corretamente baseados na ordem de entrada dos fornecedores
+  - **Devoluções tratadas corretamente**: Aumentam estoque físico mas mantêm valores originais dos lotes
+  - **Interface aprimorada**: Relatório exibe cada lote com quantidade, preço unitário e valor total separados
+  - **Endpoint `/api/reports/financial-stock` atualizado**: Retorna estrutura `lots` com detalhamento por preço
+
+  **📊 MOVIMENTAÇÕES GERAIS - FILTROS AVANÇADOS E TOTALIZADORES**:
+  - **Interface simplificada**: Removidos relatórios desnecessários, foco em "Movimentações Gerais"
+  - **Filtros avançados implementados**: Data início/fim, tipo (entrada/saída/devolução), centro de custo, fornecedor, material, categoria
+  - **Totalizadores automáticos**: Total de entradas, saídas, devoluções e geral
+  - **Novo endpoint `/api/reports/general-movements-enhanced`**: Retorna dados + totalizadores
+  - **Exportação completa**: PDF e Excel incluem todos os filtros e totalizadores
+  - **Campo valor total**: Incluído em todas as movimentações
+
+  **🔄 CORREÇÕES DE TIPOS E CAMPOS**:
+  - **Tipo de devolução corrigido**: Devoluções aparecem como "Devolução" em vez de "Entrada/Saída"
+  - **Campos de origem/destino**: Nomes dos responsáveis exibidos corretamente
+  - **Data prioritária**: Campo `date` usado como prioridade sobre `createdAt`
+  - **Novos campos**: `displayType`, `originDestination`, `responsiblePerson` implementados
+
+  **✅ VALIDAÇÕES REALIZADAS**:
+  - API `/api/reports/general-movements-enhanced` testada: R$ 10.401 em entradas
+  - API `/api/reports/financial-stock` testada: Lotes separados funcionando (ex: "2 lote(s)" - 13m a R$ 25,50 + 1m a R$ 12,30)
+  - Filtro de devoluções testado: R$ 139,80 em devoluções identificadas corretamente
+  - Interface responsiva e exportações PDF/Excel funcionais
 
 - ✅ **RELATÓRIOS VALIDADOS E FUNCIONAIS**:
   - Relatório Geral: Data, valores, centro de custo, detalhes completos

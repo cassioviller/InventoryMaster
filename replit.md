@@ -297,9 +297,30 @@ SESSION_SECRET=almoxarifado-secret-2024
 - `TESTE-COMPLETO-DESENVOLVIMENTO.md` - Documentação dos testes
 - `QUICK-PRODUCTION-FIX.md` - Guia de execução rápida
 
+## Correções de Deploy Implementadas (01/07/2025 - 12:05)
+**CONFIGURAÇÃO COMPLETA DE DEPLOY CORRIGIDA**:
+- ✅ **Dockerfile atualizado** com variáveis de ambiente corretas e health check
+- ✅ **docker-entrypoint.sh reescrito** seguindo melhores práticas:
+  * Desdefinição de variáveis PG* para evitar conflitos
+  * Detecção automática de problemas de schema
+  * Execução automática de fix-production-schema.js
+  * Validação completa antes de iniciar aplicação
+- ✅ **Scripts adicionais criados**:
+  * create-default-users.js (criação automática de usuários)
+  * validate-deployment.js (validação pós-deploy)
+- ✅ **Instruções completas** em DEPLOY-FINAL-INSTRUÇÕES.md
+
+## Sistema de Deploy Automático
+**CORREÇÕES AUTOMÁTICAS IMPLEMENTADAS**:
+- **Tabela cost_centers ausente** → cria automaticamente
+- **Colunas em camelCase** → converte para snake_case
+- **Usuários padrão ausentes** → cria cassio, admin, estruturas
+- **Schema desatualizado** → sincroniza com desenvolvimento
+- **Foreign keys ausentes** → configura automaticamente
+
 ## Próxima Etapa
-**EXECUÇÃO NO AMBIENTE DE PRODUÇÃO**:
-1. Executar `node fix-production-schema.js` no container de produção
-2. Reiniciar aplicação
-3. Validar com script de teste
-4. Confirmar funcionamento completo
+**DEPLOY AUTOMÁTICO NO EASYPANEL**:
+1. Fazer push do código atualizado
+2. EasyPanel executará build com Dockerfile corrigido
+3. docker-entrypoint.sh aplicará correções automaticamente
+4. Sistema ficará funcional igual ao desenvolvimento

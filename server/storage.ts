@@ -892,7 +892,7 @@ export class DatabaseStorage implements IStorage {
         eq(materialMovements.returnThirdPartyId, thirdParties.id)
       ))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(materialMovements.date)); // Order by movement date
+      .orderBy(desc(materialMovements.date), desc(materialMovements.createdAt)); // Order by movement date, then creation time
 
     // Add calculated total value and proper origin/destination to each movement
     return movements.map(movement => {

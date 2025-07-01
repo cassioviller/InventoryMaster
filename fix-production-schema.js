@@ -3,7 +3,8 @@
  * Execute este script no ambiente de produção para sincronizar o schema
  */
 
-const { Pool } = require('pg');
+import pkg from 'pg';
+const { Pool } = pkg;
 
 async function fixProductionSchema() {
   const pool = new Pool({
@@ -200,7 +201,7 @@ async function fixProductionSchema() {
 }
 
 // Executar apenas se chamado diretamente
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   fixProductionSchema()
     .then(() => {
       console.log('✅ Processo concluído');
@@ -212,4 +213,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { fixProductionSchema };
+export { fixProductionSchema };

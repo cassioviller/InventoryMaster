@@ -133,11 +133,10 @@ export default function FinancialReport() {
       doc.text(`Gerado em: ${format(new Date(), 'dd/MM/yyyy HH:mm', { locale: ptBR })}`, 20, 30);
 
       if (flatData.length > 0) {
-        const headers = ['Material', 'Categoria', 'Lote', 'Estoque', 'Preço Unit.', 'Valor Total'];
+        const headers = ['Material', 'Categoria', 'Estoque', 'Preço Unit.', 'Valor Total'];
         const rows = flatData.map((item: any) => [
           item.materialName || '-',
           item.category || '-',
-          item.lotInfo || '-',
           `${item.quantity || 0} ${item.unit || ''}`,
           formatCurrency(item.unitPrice || 0),
           formatCurrency(item.totalValue || 0)
@@ -172,11 +171,10 @@ export default function FinancialReport() {
       
       if (flatData.length > 0) {
         const ws_data = [
-          ['Material', 'Categoria', 'Lote', 'Estoque', 'Preço Unit.', 'Valor Total'],
+          ['Material', 'Categoria', 'Estoque', 'Preço Unit.', 'Valor Total'],
           ...flatData.map((item: any) => [
             item.materialName || '-',
             item.category || '-',
-            item.lotInfo || '-',
             `${item.quantity || 0} ${item.unit || ''}`,
             item.unitPrice || 0,
             item.totalValue || 0
@@ -327,7 +325,6 @@ export default function FinancialReport() {
                   <TableRow>
                     <TableHead>Material</TableHead>
                     <TableHead>Categoria</TableHead>
-                    <TableHead>Lote/Preço</TableHead>
                     <TableHead>Estoque</TableHead>
                     <TableHead>Preço Unitário</TableHead>
                     <TableHead>Valor Total</TableHead>
@@ -338,11 +335,6 @@ export default function FinancialReport() {
                     <TableRow key={index}>
                       <TableCell className="font-medium">{item.materialName}</TableCell>
                       <TableCell>{item.category || '-'}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">
-                          {item.lotInfo}
-                        </Badge>
-                      </TableCell>
                       <TableCell>
                         {item.quantity} {item.unit || ''}
                       </TableCell>

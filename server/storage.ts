@@ -893,11 +893,50 @@ export class DatabaseStorage implements IStorage {
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(materialMovements.date)); // Order by movement date
 
-    // Add calculated total value to each movement
-    return movements.map(movement => ({
-      ...movement,
-      totalValue: movement.quantity * parseFloat(movement.unitPrice || '0')
-    }));
+    // Add calculated total value and proper origin/destination to each movement
+    return movements.map(movement => {
+      let originDestination = '';
+      let responsiblePerson = '';
+      let displayType = movement.type === 'entry' ? 'Entrada' : 'Saída';
+
+      // Determine origin/destination and responsible person based on movement type and origin/destination type
+      if (movement.type === 'entry') {
+        if (movement.originType === 'supplier' && movement.supplier) {
+          originDestination = movement.supplier.name;
+          responsiblePerson = '-';
+        } else if (movement.originType === 'employee_return' && movement.employee) {
+          originDestination = movement.employee.name;
+          responsiblePerson = movement.employee.name;
+          displayType = 'Devolução';
+        } else if (movement.originType === 'third_party_return' && movement.thirdParty) {
+          originDestination = movement.thirdParty.name;
+          responsiblePerson = movement.thirdParty.name;
+          displayType = 'Devolução';
+        } else {
+          originDestination = 'N/A';
+          responsiblePerson = '-';
+        }
+      } else if (movement.type === 'exit') {
+        if (movement.destinationType === 'employee' && movement.employee) {
+          originDestination = movement.employee.name;
+          responsiblePerson = movement.employee.name;
+        } else if (movement.destinationType === 'third_party' && movement.thirdParty) {
+          originDestination = movement.thirdParty.name;
+          responsiblePerson = movement.thirdParty.name;
+        } else {
+          originDestination = 'N/A';
+          responsiblePerson = '-';
+        }
+      }
+
+      return {
+        ...movement,
+        totalValue: movement.quantity * parseFloat(movement.unitPrice || '0'),
+        originDestination,
+        responsiblePerson,
+        displayType
+      };
+    });
   }
 
   async getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {
@@ -1109,105 +1148,102 @@ export class DatabaseStorage implements IStorage {
   async getFinancialStockReport(ownerId?: number, materialSearch?: string, categoryId?: number): Promise<any[]> {
     const conditions = [];
     if (ownerId) {
-      conditions.push(eq(materialMovements.ownerId, ownerId));
+      conditions.push(eq(materials.ownerId, ownerId));
     }
 
-    // Get only supplier entries (exclude returns from financial calculation)
-    const movementsData = await db
+    // Get current stock from materials table and calculate financial value based on supplier entries only
+    const materialsData = await db
       .select({
-        materialId: materialMovements.materialId,
-        materialName: materials.name,
+        id: materials.id,
+        name: materials.name,
+        categoryId: materials.categoryId,
         categoryName: categories.name,
         unit: materials.unit,
-        unitPrice: materialMovements.unitPrice,
-        quantity: materialMovements.quantity,
-        type: materialMovements.type,
-        originType: materialMovements.originType,
+        currentStock: materials.currentStock,
+        unitPrice: materials.unitPrice
       })
-      .from(materialMovements)
-      .innerJoin(materials, eq(materialMovements.materialId, materials.id))
+      .from(materials)
       .leftJoin(categories, eq(materials.categoryId, categories.id))
-      .where(
-        and(
-          eq(materialMovements.type, 'entry'),
-          eq(materialMovements.originType, 'supplier'), // Only supplier entries for financial calculation
-          conditions.length > 0 ? and(...conditions) : undefined
-        )
-      )
-      .orderBy(materials.name, materialMovements.unitPrice);
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(materials.name);
 
     // Apply material search filter if provided
-    let filteredMovements = movementsData;
+    let filteredMaterials = materialsData;
     if (materialSearch) {
       const searchTerm = materialSearch.toLowerCase();
-      filteredMovements = movementsData.filter(movement => 
-        movement.materialName.toLowerCase().includes(searchTerm) ||
-        (movement.categoryName && movement.categoryName.toLowerCase().includes(searchTerm))
+      filteredMaterials = materialsData.filter(material => 
+        material.name.toLowerCase().includes(searchTerm) ||
+        (material.categoryName && material.categoryName.toLowerCase().includes(searchTerm))
       );
     }
 
     // Apply category filter if provided
     if (categoryId) {
-      // Get category name for filtering
-      const categoryData = await db
-        .select({ name: categories.name })
-        .from(categories)
-        .where(eq(categories.id, categoryId))
-        .limit(1);
-      
-      if (categoryData.length > 0) {
-        const categoryName = categoryData[0].name;
-        filteredMovements = filteredMovements.filter(movement => 
-          movement.categoryName === categoryName
-        );
-      }
+      filteredMaterials = filteredMaterials.filter(material => 
+        material.categoryId === categoryId
+      );
     }
 
-    // Group by material and unit price to separate different prices
-    const groupedData = new Map<string, {
-      materialId: number;
-      materialName: string;
-      categoryName: string;
-      unit: string;
-      unitPrice: string;
-      totalQuantity: number;
-    }>();
+    // For each material, get the financial value based on FIFO (first supplier entries)
+    const result = await Promise.all(filteredMaterials.map(async (material) => {
+      // Get supplier entries for this material for financial calculation (FIFO)
+      const supplierEntries = await db
+        .select({
+          unitPrice: materialMovements.unitPrice,
+          quantity: materialMovements.quantity,
+          date: materialMovements.date
+        })
+        .from(materialMovements)
+        .where(
+          and(
+            eq(materialMovements.materialId, material.id),
+            eq(materialMovements.type, 'entry'),
+            eq(materialMovements.originType, 'supplier'),
+            ownerId ? eq(materialMovements.ownerId, ownerId) : undefined
+          )
+        )
+        .orderBy(materialMovements.date); // FIFO order
 
-    filteredMovements.forEach(movement => {
-      const key = `${movement.materialId}-${movement.unitPrice}`;
-      
-      if (groupedData.has(key)) {
-        const existing = groupedData.get(key)!;
-        existing.totalQuantity += movement.quantity;
-      } else {
-        groupedData.set(key, {
-          materialId: movement.materialId,
-          materialName: movement.materialName,
-          categoryName: movement.categoryName || 'Sem categoria',
-          unit: movement.unit || 'UN',
-          unitPrice: movement.unitPrice || '0',
-          totalQuantity: movement.quantity,
-        });
+      // Calculate financial value using FIFO logic
+      let remainingStock = material.currentStock;
+      let totalFinancialValue = 0;
+      let weightedUnitPrice = '0.00';
+
+      if (supplierEntries.length > 0 && remainingStock > 0) {
+        let totalCost = 0;
+        let totalQuantityUsed = 0;
+
+        for (const entry of supplierEntries) {
+          if (remainingStock <= 0) break;
+          
+          const quantityToUse = Math.min(remainingStock, entry.quantity);
+          const unitPrice = parseFloat(entry.unitPrice || '0');
+          const costForThisLot = quantityToUse * unitPrice;
+          
+          totalCost += costForThisLot;
+          totalQuantityUsed += quantityToUse;
+          remainingStock -= quantityToUse;
+        }
+
+        if (totalQuantityUsed > 0) {
+          weightedUnitPrice = (totalCost / totalQuantityUsed).toFixed(2);
+          totalFinancialValue = totalCost;
+        }
       }
-    });
 
-    // Convert to array and calculate totals
-    const result = Array.from(groupedData.values()).map(item => {
-      const unitPrice = parseFloat(item.unitPrice || '0');
-      const totalValue = item.totalQuantity * unitPrice;
-      
       return {
-        id: item.materialId,
-        name: item.materialName,
-        category: item.categoryName,
-        unit: item.unit,
-        currentStock: item.totalQuantity,
-        unitPrice: item.unitPrice,
-        totalValue: totalValue,
+        id: material.id,
+        name: material.name,
+        category: material.categoryName || 'Sem categoria',
+        unit: material.unit || 'UN',
+        currentStock: material.currentStock,
+        unitPrice: weightedUnitPrice,
+        totalValue: totalFinancialValue,
       };
-    });
+    }));
 
-    return result;
+    // Filter out materials with zero stock if desired
+    return result.filter(item => item.currentStock > 0);
   }
 
   async getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]> {

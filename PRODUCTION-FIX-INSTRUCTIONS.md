@@ -7,11 +7,16 @@ O ambiente de produção não possui as tabelas e colunas mais recentes, especif
 
 ## Solução Rápida
 
-### Opção 1: Script Automático (Recomendado)
+### Opção 1: Script Automático Melhorado (Recomendado)
 Execute no terminal do container de produção:
 ```bash
 node fix-production-schema.js
 ```
+Este script agora:
+- Detecta e corrige inconsistências de nomenclatura (materialId → material_id)
+- Adiciona todas as colunas necessárias automaticamente
+- Cria foreign keys corretamente
+- Mostra estrutura da tabela para debug
 
 ### Opção 2: SQL Manual
 Conecte-se ao PostgreSQL de produção e execute:
@@ -24,6 +29,12 @@ psql -d $DATABASE_URL -f production-migration.sql
 1. Certifique-se que `docker-entrypoint.sh` contém as correções
 2. Faça redeploy da aplicação no EasyPanel
 3. O script de correção será executado automaticamente
+
+### Opção 4: Teste da API
+Após correção, teste o funcionamento:
+```bash
+PRODUCTION_URL=https://sua-url-producao.com node test-production-api.js
+```
 
 ## Verificação Pós-Correção
 Após executar qualquer uma das opções, verifique:

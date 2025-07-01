@@ -34,24 +34,81 @@ async function fixProductionSchema() {
       );
     `);
 
-    // 2. Verificar se a coluna cost_center_id existe em material_movements
-    console.log('📝 Verificando coluna cost_center_id...');
-    const columnCheck = await client.query(`
-      SELECT column_name 
+    // 2. Verificar estrutura da tabela material_movements
+    console.log('📝 Verificando estrutura da tabela material_movements...');
+    const tableStructure = await client.query(`
+      SELECT column_name, data_type, is_nullable
       FROM information_schema.columns 
-      WHERE table_name = 'material_movements' 
-      AND column_name = 'cost_center_id';
+      WHERE table_name = 'material_movements'
+      ORDER BY ordinal_position;
     `);
 
-    if (columnCheck.rows.length === 0) {
-      console.log('➕ Adicionando coluna cost_center_id...');
-      await client.query(`
-        ALTER TABLE material_movements 
-        ADD COLUMN cost_center_id INTEGER REFERENCES cost_centers(id);
-      `);
+    console.log('📋 Estrutura atual da tabela material_movements:');
+    tableStructure.rows.forEach(row => {
+      console.log(`  - ${row.column_name}: ${row.data_type} ${row.is_nullable === 'NO' ? 'NOT NULL' : 'NULL'}`);
+    });
+
+    // 3. Verificar se material_id existe (pode estar como materialId em algumas versões)
+    const hasMaterialId = tableStructure.rows.some(row => row.column_name === 'material_id');
+    const hasMaterialIdCamel = tableStructure.rows.some(row => row.column_name === 'materialId');
+    
+    if (!hasMaterialId && hasMaterialIdCamel) {
+      console.log('🔄 Renomeando materialId para material_id...');
+      await client.query(`ALTER TABLE material_movements RENAME COLUMN "materialId" TO material_id;`);
     }
 
-    // 3. Inserir centros de custo padrão se não existirem
+    // 4. Verificar outras colunas essenciais e adicionar se necessário
+    const requiredColumns = {
+      'user_id': 'INTEGER NOT NULL',
+      'material_id': 'INTEGER NOT NULL',
+      'type': 'TEXT NOT NULL',
+      'quantity': 'INTEGER NOT NULL',
+      'unit_price': 'TEXT',
+      'date': 'TIMESTAMP DEFAULT NOW() NOT NULL',
+      'origin_type': 'TEXT',
+      'supplier_id': 'INTEGER',
+      'destination_type': 'TEXT',
+      'destination_employee_id': 'INTEGER',
+      'destination_third_party_id': 'INTEGER',
+      'return_employee_id': 'INTEGER',
+      'return_third_party_id': 'INTEGER',
+      'notes': 'TEXT',
+      'cost_center_id': 'INTEGER',
+      'owner_id': 'INTEGER NOT NULL DEFAULT 1',
+      'created_at': 'TIMESTAMP DEFAULT NOW() NOT NULL'
+    };
+
+    for (const [columnName, columnDef] of Object.entries(requiredColumns)) {
+      const hasColumn = tableStructure.rows.some(row => row.column_name === columnName);
+      if (!hasColumn) {
+        console.log(`➕ Adicionando coluna ${columnName}...`);
+        await client.query(`ALTER TABLE material_movements ADD COLUMN ${columnName} ${columnDef};`);
+      }
+    }
+
+    // 5. Verificar se a coluna cost_center_id tem a referência correta
+    const foreignKeys = await client.query(`
+      SELECT constraint_name
+      FROM information_schema.table_constraints 
+      WHERE table_name = 'material_movements' 
+      AND constraint_type = 'FOREIGN KEY'
+      AND constraint_name LIKE '%cost_center%';
+    `);
+
+    if (foreignKeys.rows.length === 0) {
+      console.log('🔗 Adicionando foreign key para cost_center_id...');
+      try {
+        await client.query(`
+          ALTER TABLE material_movements 
+          ADD CONSTRAINT fk_material_movements_cost_center 
+          FOREIGN KEY (cost_center_id) REFERENCES cost_centers(id);
+        `);
+      } catch (error) {
+        console.log('ℹ️ Foreign key já existe ou não pôde ser adicionada:', error.message);
+      }
+    }
+
+    // 6. Inserir centros de custo padrão se não existirem
     console.log('📝 Inserindo centros de custo padrão...');
     const costCenters = [
       {
@@ -105,7 +162,7 @@ async function fixProductionSchema() {
       }
     }
 
-    // 4. Verificar se as tabelas existem e mostrar contagem
+    // 7. Verificar se as tabelas existem e mostrar contagem
     const costCenterCount = await client.query('SELECT COUNT(*) FROM cost_centers');
     console.log(`✅ Tabela cost_centers: ${costCenterCount.rows[0].count} registros`);
 

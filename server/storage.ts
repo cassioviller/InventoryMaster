@@ -610,6 +610,116 @@ export class DatabaseStorage implements IStorage {
     return result as MovementWithDetails[];
   }
 
+  async createEmployeeReturn(returnData: any, userId: number): Promise<MaterialMovement> {
+    console.log("=== CREATE EMPLOYEE RETURN ===");
+    console.log("Return data:", returnData);
+    
+    // Processar cada item da devolução
+    const createdMovements = [];
+    for (const item of returnData.items) {
+      console.log(`Processing item: ${item.materialId}, qty: ${item.quantity}`);
+      
+      // Atualizar estoque do material
+      const [material] = await db
+        .select()
+        .from(materials)
+        .where(eq(materials.id, item.materialId));
+      
+      if (!material) {
+        throw new Error(`Material with ID ${item.materialId} not found`);
+      }
+      
+      const newStock = material.currentStock + item.quantity;
+      console.log(`Updating stock for material ${item.materialId}: ${material.currentStock} -> ${newStock}`);
+      
+      await db
+        .update(materials)
+        .set({ currentStock: newStock })
+        .where(eq(materials.id, item.materialId));
+      
+      // Criar registro de movimento
+      const [movement] = await db
+        .insert(materialMovements)
+        .values({
+          type: 'entry',
+          date: new Date(returnData.date),
+          userId: userId,
+          materialId: item.materialId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          originType: 'employee_return',
+          returnEmployeeId: returnData.employeeId,
+          isReturn: true,
+          returnReason: item.reason,
+          materialCondition: item.condition,
+          notes: returnData.notes,
+          costCenterId: returnData.costCenterId,
+          ownerId: userId,
+        })
+        .returning();
+      
+      createdMovements.push(movement);
+    }
+    
+    console.log(`Created ${createdMovements.length} return movements`);
+    return createdMovements[0];
+  }
+
+  async createThirdPartyReturn(returnData: any, userId: number): Promise<MaterialMovement> {
+    console.log("=== CREATE THIRD PARTY RETURN ===");
+    console.log("Return data:", returnData);
+    
+    // Processar cada item da devolução
+    const createdMovements = [];
+    for (const item of returnData.items) {
+      console.log(`Processing item: ${item.materialId}, qty: ${item.quantity}`);
+      
+      // Atualizar estoque do material
+      const [material] = await db
+        .select()
+        .from(materials)
+        .where(eq(materials.id, item.materialId));
+      
+      if (!material) {
+        throw new Error(`Material with ID ${item.materialId} not found`);
+      }
+      
+      const newStock = material.currentStock + item.quantity;
+      console.log(`Updating stock for material ${item.materialId}: ${material.currentStock} -> ${newStock}`);
+      
+      await db
+        .update(materials)
+        .set({ currentStock: newStock })
+        .where(eq(materials.id, item.materialId));
+      
+      // Criar registro de movimento
+      const [movement] = await db
+        .insert(materialMovements)
+        .values({
+          type: 'entry',
+          date: new Date(returnData.date),
+          userId: userId,
+          materialId: item.materialId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+          originType: 'third_party_return',
+          returnThirdPartyId: returnData.thirdPartyId,
+          isReturn: true,
+          returnReason: item.reason,
+          materialCondition: item.condition,
+          notes: returnData.notes,
+          costCenterId: returnData.costCenterId,
+          ownerId: userId,
+        })
+        .returning();
+      
+      createdMovements.push(movement);
+    }
+    
+    console.log(`Created ${createdMovements.length} return movements`);
+    return createdMovements[0];
+  }
+
   // Dashboard methods
   async getDashboardStats(ownerId?: number): Promise<{
     totalMaterials: number;

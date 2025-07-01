@@ -682,13 +682,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("=== EMPLOYEE RETURN REQUEST ===");
       console.log("Request body:", JSON.stringify(req.body, null, 2));
       
-      const returnData = createEntrySchema.extend({
-        isReturn: z.boolean().default(true),
-        returnReason: z.string().optional(),
-        materialCondition: z.string().default('good'),
-      }).parse(req.body);
+      const returnData = req.body;
       
-      console.log("Parsed return data:", returnData);
+      console.log("Return data:", returnData);
       
       // Criar entrada como devolução
       const movement = await storage.createEmployeeReturn(returnData, req.user!.id);
@@ -697,12 +693,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(movement);
     } catch (error) {
       console.error("Error creating employee return:", error);
-      if (error instanceof Error && error.name === 'ZodError') {
-        return res.status(400).json({ 
-          message: 'Validation error', 
-          errors: (error as any).errors 
-        });
-      }
       res.status(500).json({ 
         message: "Failed to create employee return",
         error: error instanceof Error ? error.message : String(error)
@@ -716,13 +706,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("=== THIRD PARTY RETURN REQUEST ===");
       console.log("Request body:", JSON.stringify(req.body, null, 2));
       
-      const returnData = createEntrySchema.extend({
-        isReturn: z.boolean().default(true),
-        returnReason: z.string().optional(),
-        materialCondition: z.string().default('good'),
-      }).parse(req.body);
+      const returnData = req.body;
       
-      console.log("Parsed return data:", returnData);
+      console.log("Return data:", returnData);
       
       // Criar entrada como devolução
       const movement = await storage.createThirdPartyReturn(returnData, req.user!.id);
@@ -731,12 +717,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(movement);
     } catch (error) {
       console.error("Error creating third party return:", error);
-      if (error instanceof Error && error.name === 'ZodError') {
-        return res.status(400).json({ 
-          message: 'Validation error', 
-          errors: (error as any).errors 
-        });
-      }
       res.status(500).json({ 
         message: "Failed to create third party return",
         error: error instanceof Error ? error.message : String(error)

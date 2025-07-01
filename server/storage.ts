@@ -1016,6 +1016,45 @@ export class DatabaseStorage implements IStorage {
     return availableLots;
   }
 
+  // Método específico para devoluções - incluir informações do fornecedor
+  async getMaterialLotsForReturn(materialId: number, ownerId?: number): Promise<Array<{
+    unitPrice: string;
+    totalEntries: number;
+    availableQuantity: number;
+    entryDate: Date;
+    supplierId: number | null;
+    supplierName?: string;
+    lastEntryDate: Date;
+  }>> {
+    // Buscar lotes disponíveis
+    const availableLots = await this.getMaterialLots(materialId, ownerId);
+    
+    // Enriquecer com informações do fornecedor
+    const enrichedLots = [];
+    for (const lot of availableLots) {
+      let supplierName = null;
+      if (lot.supplierId) {
+        try {
+          const [supplier] = await db
+            .select({ name: suppliers.name })
+            .from(suppliers)
+            .where(eq(suppliers.id, lot.supplierId));
+          supplierName = supplier?.name;
+        } catch (error) {
+          console.log('Could not fetch supplier name:', error);
+        }
+      }
+      
+      enrichedLots.push({
+        ...lot,
+        supplierName,
+        lastEntryDate: lot.entryDate
+      });
+    }
+    
+    return enrichedLots.sort((a, b) => b.lastEntryDate.getTime() - a.lastEntryDate.getTime());
+  }
+
   async processExitFIFO(materialId: number, quantity: number, ownerId?: number): Promise<{
     lots: Array<{ unitPrice: string; quantity: number; }>;
     totalValue: number;

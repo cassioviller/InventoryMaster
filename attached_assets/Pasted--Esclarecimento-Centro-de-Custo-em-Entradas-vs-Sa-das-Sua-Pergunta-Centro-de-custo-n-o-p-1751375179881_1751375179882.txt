@@ -1,0 +1,132 @@
+# Esclarecimento: Centro de Custo em Entradas vs Saídas
+
+## Sua Pergunta
+
+"Centro de custo não precisa ter na entrada né? Porque já tenho o estoque para fazer esse controle, ou precisa? Porque no relatório o Replit criou com entrada. Preciso colocar o campo na entrada de material ou retirar isso do relatório?"
+
+## RESPOSTA: VOCÊ ESTÁ CORRETO!
+
+**Centro de custo NÃO deve aparecer em entradas de material.**
+
+## Análise da Lógica
+
+### ENTRADA DE MATERIAL (Compras)
+- **O que é**: Compra de fornecedores
+- **Finalidade**: Abastecer estoque
+- **Custo**: Pago ao fornecedor
+- **Centro de custo**: **NÃO SE APLICA**
+- **Motivo**: Ainda não foi consumido por nenhum centro
+
+### SAÍDA DE MATERIAL (Consumo)
+- **O que é**: Entrega a funcionários/setores
+- **Finalidade**: Consumo operacional
+- **Custo**: Debitado do orçamento do centro
+- **Centro de custo**: **OBRIGATÓRIO**
+- **Motivo**: Centro que está consumindo o material
+
+## Evidência na Sua Imagem
+
+Vejo no relatório que o Replit implementou corretamente:
+- **Entradas** (Mouse, Cimento): Centro de Custo = "-" (vazio) ✅
+- **Saída** (Capacete): Centro de Custo = "MANUT001" ✅
+
+## Lógica Correta
+
+### Fluxo do Material
+```
+1. COMPRA (Entrada)
+   Fornecedor → Estoque
+   Centro de Custo: N/A
+   
+2. ESTOQUE
+   Material disponível
+   Centro de Custo: N/A
+   
+3. CONSUMO (Saída)
+   Estoque → Centro de Custo
+   Centro de Custo: OBRIGATÓRIO
+```
+
+### Analogia Prática
+- **Entrada**: Empresa compra 100 parafusos (vai para estoque geral)
+- **Estoque**: 100 parafusos disponíveis (sem dono específico)
+- **Saída**: Manutenção pega 10 parafusos (debita do orçamento da Manutenção)
+
+## Correção Necessária
+
+### MANTER Como Está
+- **Entrada de Material**: SEM campo centro de custo
+- **Saída de Material**: COM campo centro de custo obrigatório
+- **Relatório**: Mostrar centro apenas para saídas
+
+### AJUSTAR Relatório (Se Necessário)
+Se o relatório estiver mostrando coluna "Centro de Custo" para entradas:
+- **Opção 1**: Remover coluna para entradas
+- **Opção 2**: Mostrar "-" ou "N/A" para entradas
+- **Opção 3**: Separar relatório: "Compras" e "Consumos"
+
+## Implementação Recomendada
+
+### Entrada de Material
+```
+Campos:
+- Data
+- Origem (Fornecedor/Devolução)
+- Funcionário (responsável pela entrada)
+- Materiais (Material, Quantidade, Valor Unitário)
+
+SEM Centro de Custo ❌
+```
+
+### Saída de Material
+```
+Campos:
+- Data
+- Destino
+- Funcionário (quem está retirando)
+- Centro de Custo (OBRIGATÓRIO) ✅
+- Materiais (Material, Quantidade, Finalidade)
+```
+
+### Relatório de Movimentações
+```
+| Data | Tipo | Material | Qtd | Centro Custo | Origem/Destino |
+|------|------|----------|-----|--------------|----------------|
+| 01/07| Entrada | Mouse | 3 | -           | Fornecedor 1   |
+| 01/07| Saída   | Mouse | 1 | MANUT001    | João Silva     |
+```
+
+## Casos Especiais
+
+### Devolução de Funcionário
+- **Tipo**: Entrada (retorna ao estoque)
+- **Centro de custo**: Pode mostrar o centro que devolveu (informativo)
+- **Lógica**: Material volta para estoque geral
+
+### Transferência Entre Centros
+- **Saída**: Centro A entrega material
+- **Entrada**: Centro B recebe material
+- **Ambos**: Têm centro de custo definido
+
+## Conclusão
+
+### VOCÊ ESTÁ CERTO:
+✅ **Entrada de material NÃO precisa de centro de custo**
+✅ **Estoque é neutro** (sem dono específico)
+✅ **Apenas saída consome orçamento** de centro
+
+### AÇÃO RECOMENDADA:
+- **Manter entrada SEM centro de custo**
+- **Manter saída COM centro de custo obrigatório**
+- **Ajustar relatório** para mostrar "-" em entradas
+
+### LÓGICA DE NEGÓCIO:
+- **Compra**: Investe em estoque (sem centro específico)
+- **Consumo**: Debita do orçamento do centro
+- **Controle**: Centro de custo apenas onde há consumo real
+
+## Prompt para Correção
+
+Se o Replit implementou centro de custo em entradas, corrija assim:
+
+**"Remover campo Centro de Custo da página Entrada de Material. Centro de custo deve aparecer APENAS na Saída de Material, pois entrada é compra para estoque geral (sem centro específico) e saída é consumo que debita do orçamento do centro. No relatório, mostrar '-' ou deixar vazio para entradas."**

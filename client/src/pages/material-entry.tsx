@@ -18,6 +18,17 @@ interface MaterialItem {
   materialName: string;
   quantity: number;
   unitPrice: number;
+  selectedLotPrice?: string; // Para devoluções com múltiplos lotes
+}
+
+interface ReturnLot {
+  unitPrice: string;
+  totalEntries: number;
+  availableQuantity: number;
+  entryDate: Date;
+  supplierId: number | null;
+  supplierName?: string;
+  lastEntryDate: Date;
 }
 
 export default function MaterialEntry() {
@@ -27,6 +38,9 @@ export default function MaterialEntry() {
   const [selectedMaterial, setSelectedMaterial] = useState('');
   const [quantity, setQuantity] = useState('');
   const [unitPrice, setUnitPrice] = useState('');
+  const [availableReturnLots, setAvailableReturnLots] = useState<ReturnLot[]>([]);
+  const [selectedReturnLot, setSelectedReturnLot] = useState('');
+  const [isLoadingLots, setIsLoadingLots] = useState(false);
 
   const form = useForm<Omit<CreateEntry, 'items'>>({
     resolver: zodResolver(createEntrySchema.omit({ items: true })),
@@ -124,6 +138,54 @@ export default function MaterialEntry() {
   });
 
   const originType = form.watch('originType');
+
+  // Função para buscar lotes de devolução
+  const fetchReturnLots = async (materialId: number) => {
+    if (originType !== 'employee_return' && originType !== 'third_party_return') {
+      return;
+    }
+
+    setIsLoadingLots(true);
+    try {
+      const res = await authenticatedRequest(`/api/materials/${materialId}/return-lots`);
+      const lots = await res.json();
+      setAvailableReturnLots(Array.isArray(lots) ? lots : []);
+      
+      // Se há apenas um lote, seleciona automaticamente
+      if (lots.length === 1) {
+        setSelectedReturnLot(lots[0].unitPrice);
+        setUnitPrice(lots[0].unitPrice);
+      } else {
+        setSelectedReturnLot('');
+        setUnitPrice('');
+      }
+    } catch (error) {
+      console.error('Error fetching return lots:', error);
+      setAvailableReturnLots([]);
+      setSelectedReturnLot('');
+      setUnitPrice('');
+    } finally {
+      setIsLoadingLots(false);
+    }
+  };
+
+  // Handler para mudança de material
+  const handleMaterialChange = (materialId: string) => {
+    setSelectedMaterial(materialId);
+    setAvailableReturnLots([]);
+    setSelectedReturnLot('');
+    setUnitPrice('');
+    
+    if (materialId && (originType === 'employee_return' || originType === 'third_party_return')) {
+      fetchReturnLots(parseInt(materialId));
+    }
+  };
+
+  // Handler para mudança de lote de devolução
+  const handleReturnLotChange = (lotPrice: string) => {
+    setSelectedReturnLot(lotPrice);
+    setUnitPrice(lotPrice);
+  };
 
   const addMaterial = () => {
     if (!selectedMaterial || !quantity || parseInt(quantity) <= 0 || !unitPrice || parseFloat(unitPrice) <= 0) {

@@ -883,6 +883,23 @@ app.get("/api/materials/:id/lots", authenticateToken, async (req: AuthenticatedR
   }
 });
 
+// Endpoint específico para devoluções - busca lotes disponíveis
+app.get("/api/materials/:id/return-lots", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const materialId = parseInt(req.params.id);
+    const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+    
+    const lots = await storage.getMaterialLotsForReturn(materialId, ownerId);
+    res.json(lots);
+  } catch (error) {
+    console.error('Error fetching return lots:', error);
+    res.status(500).json({ 
+      message: "Failed to fetch return lots",
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    });
+  }
+});
+
 app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
     const materialId = parseInt(req.params.id);

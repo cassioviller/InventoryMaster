@@ -13,7 +13,7 @@ import MaterialEntry from "@/pages/material-entry";
 import MaterialExit from "@/pages/material-exit";
 import Management from "@/pages/management";
 import Reports from "@/pages/reports";
-import FinancialReports from "@/pages/financial-reports";
+import FinancialReport from "@/pages/financial-report";
 import CostCenters from "@/pages/cost-centers";
 import CostCenterReports from "@/pages/cost-center-reports";
 import EmployeeReturn from "@/pages/employee-return";
@@ -102,7 +102,7 @@ function Router() {
       <Route path="/financial-reports">
         <ProtectedRoute>
           <AuthenticatedLayout>
-            <FinancialReports />
+            <FinancialReport />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>
@@ -135,6 +135,14 @@ function Router() {
         <ProtectedRoute>
           <AuthenticatedLayout>
             <ThirdPartyReturn />
+          </AuthenticatedLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/financial-report">
+        <ProtectedRoute>
+          <AuthenticatedLayout>
+            <FinancialReport />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>

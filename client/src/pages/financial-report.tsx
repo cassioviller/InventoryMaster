@@ -26,6 +26,14 @@ export default function FinancialReport() {
     }).format(numValue || 0);
   };
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   // Fetch financial stock data
   const { data: reportData, isLoading, refetch } = useQuery({
     queryKey: ['/api/reports/financial-stock', filters],
@@ -35,7 +43,9 @@ export default function FinancialReport() {
         if (value) params.append(key, value);
       });
       
-      const response = await fetch(`/api/reports/financial-stock?${params}`);
+      const response = await fetch(`/api/reports/financial-stock?${params}`, {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch financial report data');
       return response.json();
     }
@@ -45,7 +55,9 @@ export default function FinancialReport() {
   const { data: categories } = useQuery({
     queryKey: ['/api/categories'],
     queryFn: async () => {
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories', {
+        headers: getAuthHeaders()
+      });
       if (!response.ok) throw new Error('Failed to fetch categories');
       return response.json();
     }
@@ -53,7 +65,9 @@ export default function FinancialReport() {
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    // Convert "all" to empty string for API compatibility
+    const filterValue = value === 'all' ? '' : value;
+    setFilters(prev => ({ ...prev, [key]: filterValue }));
   };
 
   // Calculate totals
@@ -200,7 +214,7 @@ export default function FinancialReport() {
                   <SelectValue placeholder="Todas as categorias" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as categorias</SelectItem>
+                  <SelectItem value="all">Todas as categorias</SelectItem>
                   {Array.isArray(categories) && categories.map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}

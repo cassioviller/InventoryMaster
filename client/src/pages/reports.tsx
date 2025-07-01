@@ -312,7 +312,7 @@ export default function Reports() {
 
       {/* Totals Summary */}
       {reportData?.totals && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
@@ -347,19 +347,6 @@ export default function Reports() {
                   <p className="text-sm font-medium text-blue-600">Total Devoluções</p>
                   <p className="text-2xl font-bold text-blue-700">
                     {formatCurrency(reportData.totals.totalReturns || 0)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-2">
-                <FileText className="h-4 w-4 text-purple-600" />
-                <div>
-                  <p className="text-sm font-medium text-purple-600">Total Geral</p>
-                  <p className="text-2xl font-bold text-purple-700">
-                    {formatCurrency(reportData.totals.totalGeneral || 0)}
                   </p>
                 </div>
               </div>

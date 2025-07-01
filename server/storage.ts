@@ -456,44 +456,101 @@ export class DatabaseStorage implements IStorage {
 
   // Movement methods
   async createEntry(entry: CreateEntry, userId: number): Promise<MaterialMovement> {
-    // For entries, create one movement record per item
-    const firstItem = entry.items[0];
-    const result = await db.insert(materialMovements).values({
-      type: entry.type,
-      date: new Date(),
-      userId: userId,
-      materialId: firstItem.materialId,
-      quantity: firstItem.quantity,
-      unitPrice: firstItem.unitPrice,
-      originType: entry.originType,
-      supplierId: entry.supplierId,
-      returnEmployeeId: entry.returnEmployeeId,
-      returnThirdPartyId: entry.returnThirdPartyId,
-      costCenterId: entry.costCenterId,
-      notes: entry.notes,
-      ownerId: userId,
-    }).returning();
-
-    // Update material stock for each item
+    console.log('=== CREATE ENTRY WITH RETURN LOGIC ===');
+    console.log('Entry data:', entry);
+    
+    // Determinar se é devolução
+    const isReturn = entry.originType === 'employee_return' || entry.originType === 'third_party_return';
+    console.log('Is return:', isReturn);
+    
+    // Create one movement record per item with proper handling for returns
+    const movements: MaterialMovement[] = [];
+    
     for (const item of entry.items) {
-      // Get current stock first
+      console.log(`Processing item: materialId=${item.materialId}, quantity=${item.quantity}, unitPrice=${item.unitPrice}`);
+      
+      let finalUnitPrice = item.unitPrice;
+      let notes = entry.notes;
+      
+      // Para devoluções, integrar ao lote existente e não criar novo preço
+      if (isReturn) {
+        // Buscar lotes disponíveis para este material
+        const availableLots = await this.getMaterialLots(item.materialId, userId);
+        console.log('Available lots for return:', availableLots);
+        
+        if (availableLots.length === 1) {
+          // Lote único - usar o preço existente
+          finalUnitPrice = availableLots[0].unitPrice;
+          notes = `${notes || ''} (Devolução - integrada ao lote R$ ${finalUnitPrice})`.trim();
+        } else if (availableLots.length > 1) {
+          // Múltiplos lotes - usar o preço fornecido (já validado no frontend)
+          const targetLot = availableLots.find(lot => lot.unitPrice === item.unitPrice);
+          if (targetLot) {
+            notes = `${notes || ''} (Devolução - integrada ao lote R$ ${finalUnitPrice})`.trim();
+          }
+        }
+      }
+      
+      const result = await db.insert(materialMovements).values({
+        type: entry.type,
+        date: new Date(entry.date || new Date()),
+        userId: userId,
+        materialId: item.materialId,
+        quantity: item.quantity,
+        unitPrice: finalUnitPrice,
+        originType: entry.originType,
+        supplierId: entry.supplierId,
+        returnEmployeeId: entry.returnEmployeeId,
+        returnThirdPartyId: entry.returnThirdPartyId,
+        costCenterId: entry.costCenterId,
+        notes: notes,
+        ownerId: userId,
+        // Campos específicos para devoluções
+        isReturn: isReturn,
+        materialCondition: 'good', // Default - pode ser expandido no futuro
+        returnReason: isReturn ? 'material_return' : undefined,
+      }).returning();
+      
+      movements.push(result[0]);
+      
+      // Update material stock
       const [currentMaterial] = await db
-        .select({ currentStock: materials.currentStock })
+        .select({ currentStock: materials.currentStock, unitPrice: materials.unitPrice })
         .from(materials)
         .where(eq(materials.id, item.materialId));
 
       if (currentMaterial) {
+        const newStock = currentMaterial.currentStock + item.quantity;
+        console.log(`Updating stock for material ${item.materialId}: ${currentMaterial.currentStock} -> ${newStock}`);
+        
+        // Para compras de fornecedor, atualizar o preço unitário do material
+        // Para devoluções, manter o preço existente
+        const updateData: any = {
+          currentStock: newStock,
+        };
+        
+        if (!isReturn && entry.originType === 'supplier') {
+          updateData.unitPrice = finalUnitPrice;
+        }
+        
         await db
           .update(materials)
-          .set({
-            currentStock: currentMaterial.currentStock + item.quantity,
-            unitPrice: item.unitPrice || undefined,
-          })
+          .set(updateData)
           .where(eq(materials.id, item.materialId));
       }
+      
+      // Create audit log
+      await this.createAuditLog({
+        action: isReturn ? 'return_created' : 'entry_created',
+        tableName: 'material_movements',
+        recordId: result[0].id,
+        userId: userId,
+        details: `${isReturn ? 'Return' : 'Entry'} created for material ${item.materialId}, quantity: ${item.quantity}, price: R$ ${finalUnitPrice}`,
+      });
     }
 
-    return result[0];
+    console.log('Entry processing completed. Created movements:', movements.length);
+    return movements[0]; // Return first movement for compatibility
   }
 
   async createExit(exit: CreateExit, userId: number): Promise<MaterialMovement> {

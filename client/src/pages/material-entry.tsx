@@ -197,29 +197,86 @@ export default function MaterialEntry() {
       return;
     }
 
+    // Validações específicas para devoluções
+    if (originType === 'employee_return' || originType === 'third_party_return') {
+      if (availableReturnLots.length === 0) {
+        toast({
+          title: "Material inválido para devolução",
+          description: "Este material não possui lotes disponíveis para devolução.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (availableReturnLots.length > 1 && !selectedReturnLot) {
+        toast({
+          title: "Selecione um lote",
+          description: "Para materiais com múltiplos preços, selecione o lote para devolução.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Validar quantidade contra o lote selecionado
+      const targetLot = availableReturnLots.length === 1 
+        ? availableReturnLots[0] 
+        : availableReturnLots.find(lot => lot.unitPrice === selectedReturnLot);
+      
+      if (targetLot && parseInt(quantity) > targetLot.availableQuantity) {
+        toast({
+          title: "Quantidade excede lote",
+          description: `Disponível no lote R$ ${targetLot.unitPrice}: ${targetLot.availableQuantity} unidades.`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     const material = materials?.find((m: any) => m.id === parseInt(selectedMaterial));
     if (!material) return;
 
-    const existingItemIndex = addedItems.findIndex(item => item.materialId === parseInt(selectedMaterial));
+    const existingItemIndex = addedItems.findIndex(item => 
+      item.materialId === parseInt(selectedMaterial) && 
+      item.selectedLotPrice === selectedReturnLot
+    );
     
     if (existingItemIndex >= 0) {
       const updatedItems = [...addedItems];
       updatedItems[existingItemIndex].quantity += parseInt(quantity);
-      // Atualiza o preço unitário para o mais recente
       updatedItems[existingItemIndex].unitPrice = parseFloat(unitPrice);
       setAddedItems(updatedItems);
     } else {
-      setAddedItems([...addedItems, {
+      const newItem: MaterialItem = {
         materialId: parseInt(selectedMaterial),
         materialName: material.name,
         quantity: parseInt(quantity),
         unitPrice: parseFloat(unitPrice),
-      }]);
+      };
+
+      // Adicionar informação do lote para devoluções
+      if (originType === 'employee_return' || originType === 'third_party_return') {
+        newItem.selectedLotPrice = selectedReturnLot || availableReturnLots[0]?.unitPrice;
+      }
+
+      setAddedItems([...addedItems, newItem]);
     }
 
+    // Limpar campos
     setSelectedMaterial('');
     setQuantity('');
     setUnitPrice('');
+    setAvailableReturnLots([]);
+    setSelectedReturnLot('');
+
+    // Feedback específico por tipo
+    const action = originType === 'employee_return' || originType === 'third_party_return' 
+      ? 'devolução adicionada' 
+      : 'material adicionado';
+    
+    toast({
+      title: `${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      description: `${material.name} - ${quantity} unidades`,
+    });
   };
 
   const removeItem = (index: number) => {
@@ -404,22 +461,80 @@ export default function MaterialEntry() {
             {/* Material Selection */}
             <div className="border-t border-gray-200 pt-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Materiais</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                  <Select value={selectedMaterial} onValueChange={setSelectedMaterial}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {materials?.map((material: any) => (
-                        <SelectItem key={material.id} value={material.id.toString()}>
-                          {material.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              
+              {/* Material Selection */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                <Select value={selectedMaterial} onValueChange={handleMaterialChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um material" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {materials?.map((material: any) => (
+                      <SelectItem key={material.id} value={material.id.toString()}>
+                        {material.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Lotes de Devolução - mostrar apenas para devoluções */}
+              {(originType === 'employee_return' || originType === 'third_party_return') && selectedMaterial && (
+                <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  {isLoadingLots ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm text-gray-600">Carregando lotes disponíveis...</span>
+                    </div>
+                  ) : availableReturnLots.length === 0 ? (
+                    <div className="text-sm text-red-600">
+                      ⚠️ Este material não possui lotes disponíveis para devolução.
+                    </div>
+                  ) : availableReturnLots.length === 1 ? (
+                    <div className="text-sm text-green-700">
+                      ✅ <strong>Lote único detectado:</strong> R$ {availableReturnLots[0].unitPrice} 
+                      {availableReturnLots[0].supplierName && ` (${availableReturnLots[0].supplierName})`}
+                      <br />
+                      <span className="text-xs text-gray-600">
+                        Disponível: {availableReturnLots[0].availableQuantity} unidades
+                      </span>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Lote para Devolução *
+                      </label>
+                      <div className="space-y-2">
+                        {availableReturnLots.map((lot, index) => (
+                          <label key={lot.unitPrice} className="flex items-start space-x-3 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="returnLot"
+                              value={lot.unitPrice}
+                              checked={selectedReturnLot === lot.unitPrice}
+                              onChange={(e) => handleReturnLotChange(e.target.value)}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <div className="text-sm font-medium text-gray-900">
+                                Preço {index + 1} de {availableReturnLots.length}: R$ {lot.unitPrice}
+                                <span className="text-gray-600"> ({lot.availableQuantity} unidades disponíveis)</span>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                Última entrada: {new Date(lot.lastEntryDate).toLocaleDateString('pt-BR')}
+                                {lot.supplierName && ` - ${lot.supplierName}`}
+                              </div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
                   <Input
@@ -431,7 +546,12 @@ export default function MaterialEntry() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Valor Unitário (R$)</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Valor Unitário (R$)
+                    {(originType === 'employee_return' || originType === 'third_party_return') && availableReturnLots.length > 0 && (
+                      <span className="text-xs text-gray-500 ml-1">(baseado no lote selecionado)</span>
+                    )}
+                  </label>
                   <Input
                     type="number"
                     min="0.01"
@@ -439,9 +559,27 @@ export default function MaterialEntry() {
                     placeholder="0.00"
                     value={unitPrice}
                     onChange={(e) => setUnitPrice(e.target.value)}
+                    readOnly={(originType === 'employee_return' || originType === 'third_party_return') && availableReturnLots.length > 0}
+                    className={(originType === 'employee_return' || originType === 'third_party_return') && availableReturnLots.length > 0 ? 'bg-gray-100' : ''}
                   />
+                  {(originType === 'employee_return' || originType === 'third_party_return') && availableReturnLots.length > 0 && (
+                    <p className="text-xs text-blue-600 mt-1">
+                      ℹ️ Valor baseado no lote cadastrado do material
+                    </p>
+                  )}
                 </div>
               </div>
+              
+              {quantity && unitPrice && parseFloat(unitPrice) > 0 && parseInt(quantity) > 0 && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="text-sm font-medium text-gray-700">
+                    Valor Total: <span className="text-green-600">R$ {(parseInt(quantity) * parseFloat(unitPrice)).toFixed(2).replace('.', ',')}</span>
+                    {(originType === 'employee_return' || originType === 'third_party_return') && (
+                      <span className="text-xs text-gray-500 ml-2">(valor de referência)</span>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="mt-4">
                 <Button type="button" onClick={addMaterial} className="bg-green-500 hover:bg-green-600">
                   <Plus className="w-4 h-4 mr-2" />
@@ -470,6 +608,11 @@ export default function MaterialEntry() {
                             <Badge variant="default">
                               Total: R$ {(item.quantity * item.unitPrice).toFixed(2)}
                             </Badge>
+                            {item.selectedLotPrice && (
+                              <Badge variant="secondary" className="text-blue-700 bg-blue-100">
+                                Lote R$ {item.selectedLotPrice}
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         <Button
@@ -487,9 +630,17 @@ export default function MaterialEntry() {
                   {/* Total Summary */}
                   <div className="mt-4 pt-4 border-t border-gray-300">
                     <div className="flex justify-between items-center">
-                      <span className="text-lg font-semibold text-gray-900">Total Geral:</span>
+                      <span className="text-lg font-semibold text-gray-900">
+                        {(originType === 'employee_return' || originType === 'third_party_return') 
+                          ? 'Total da Devolução:' 
+                          : 'Total Geral:'
+                        }
+                      </span>
                       <span className="text-xl font-bold text-green-600">
                         R$ {addedItems.reduce((total, item) => total + (item.quantity * item.unitPrice), 0).toFixed(2)}
+                        {(originType === 'employee_return' || originType === 'third_party_return') && (
+                          <span className="text-sm text-gray-500 ml-2">(valor de referência)</span>
+                        )}
                       </span>
                     </div>
                   </div>

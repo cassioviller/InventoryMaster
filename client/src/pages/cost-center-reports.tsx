@@ -120,7 +120,7 @@ export default function CostCenterReports() {
                 <SelectValue placeholder="Selecionar centro" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os centros</SelectItem>
+                <SelectItem value="all">Todos os centros</SelectItem>
                 {costCenters.map((center: any) => (
                   <SelectItem key={center.id} value={center.id.toString()}>
                     {center.code} - {center.name}

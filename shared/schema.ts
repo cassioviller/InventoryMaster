@@ -118,11 +118,6 @@ export const materialMovements = pgTable("material_movements", {
   costCenterId: integer("cost_center_id").references(() => costCenters.id),
   ownerId: integer("owner_id").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-  // Campos para sistema de devoluções
-  isReturn: boolean("is_return").default(false),
-  returnReason: text("return_reason"),
-  materialCondition: text("material_condition").default("good"), // 'good', 'damaged', 'lost'
-  originalMovementId: integer("original_movement_id"), // Referência à movimentação original
 });
 
 // Audit logs table - aligned with database

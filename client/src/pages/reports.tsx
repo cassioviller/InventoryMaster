@@ -613,54 +613,7 @@ export default function Reports() {
         </Card>
       </div>
 
-      {/* Devoluções Section */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-4 flex items-center">
-          <RefreshCw className="h-5 w-5 mr-2 text-blue-500" />
-          Sistema de Devoluções
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="h-full border-blue-200 hover:border-blue-300 transition-colors">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-2">
-                <User className="h-5 w-5 text-blue-500" />
-                <CardTitle className="text-lg">Devolução de Funcionário</CardTitle>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Registrar devolução de materiais por funcionários da empresa
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 flex items-end">
-              <a href="/employee-return" className="w-full">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Registrar Devolução
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
 
-          <Card className="h-full border-green-200 hover:border-green-300 transition-colors">
-            <CardHeader className="pb-3">
-              <div className="flex items-center space-x-2">
-                <Truck className="h-5 w-5 text-green-500" />
-                <CardTitle className="text-lg">Devolução de Terceiro</CardTitle>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Registrar devolução de materiais por empresas terceirizadas
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 flex items-end">
-              <a href="/third-party-return" className="w-full">
-                <Button className="w-full bg-green-600 hover:bg-green-700">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Registrar Devolução
-                </Button>
-              </a>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
 
       {/* Filters */}
       <Card>

@@ -94,7 +94,21 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (01/07/2025 - 12:57)
+## Status Atual (01/07/2025 - 13:41)
+**ERRO DE PRODUÇÃO RESOLVIDO - CADASTROS DE ENTRADA E SAÍDA FUNCIONANDO**:
+- ✅ **ERRO PostgreSQL "is_return does not exist" CORRIGIDO**:
+  - Removidas colunas inexistentes do schema (is_return, return_reason, material_condition, original_movement_id)
+  - Schema alinhado com banco de produção existente
+  - Métodos createEntry e createExit simplificados e funcionais
+- ✅ **MÓDULO "Sistema de Devoluções" REMOVIDO DOS RELATÓRIOS**:
+  - Seção desnecessária removida da página de relatórios
+  - Interface de relatórios mais limpa e focada
+- ✅ **APIS DE ENTRADA E SAÍDA TESTADAS E FUNCIONANDO**:
+  - POST /api/movements/entry: Status 201 ✓ (teste realizado)
+  - POST /api/movements/exit: Status 201 ✓ (teste realizado)
+  - Estoque sendo atualizado corretamente
+  - Sistema FIFO funcionando perfeitamente
+
 **PROBLEMAS CRÍTICOS DE PRODUÇÃO CORRIGIDOS - SISTEMA TOTALMENTE FUNCIONAL**:
 - ✅ **ERRO "toUpperCase is not a function" CORRIGIDO EM TODOS OS ARQUIVOS**:
   - client/src/lib/queryClient.ts: método de validação com verificação nula

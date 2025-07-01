@@ -82,10 +82,11 @@ export default function CostCentersPage() {
     mutationFn: async (data: CostCenterFormData) => {
       const method = editingCenter ? "PUT" : "POST";
       const url = editingCenter ? `/api/cost-centers/${editingCenter.id}` : "/api/cost-centers";
-      return apiRequest(url, {
-        method,
-        body: JSON.stringify(data),
-      });
+      if (method === "POST") {
+        return apiRequest(url, JSON.stringify(data));
+      } else {
+        return apiRequest(url, JSON.stringify(data));
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-centers"] });
@@ -239,7 +240,7 @@ export default function CostCentersPage() {
                   <Input
                     id="code"
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    onChange={(e) => setFormData({ ...formData, code: (e.target.value || '').toUpperCase() })}
                     placeholder="Ex: MANUT001"
                     className="uppercase"
                     maxLength={20}

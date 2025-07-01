@@ -26,7 +26,7 @@ import { ThirdPartyModal } from '@/components/modals/third-party-modal';
 import { UserModal } from '@/components/modals/user-modal';
 
 import { useAuth } from '@/hooks/use-auth';
-import type { Material, Category, Employee, Supplier, ThirdParty, User, CostCenter } from '@shared/schema';
+import type { Material, Category, Employee, Supplier, ThirdParty, User } from '@shared/schema';
 
 type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users';
 
@@ -99,17 +99,11 @@ export default function Management() {
     enabled: !!localStorage.getItem('token'),
   });
 
-  const materials = materialsData || [];
-  const categories = categoriesData || [];
-
   const { data: employeesData, isLoading: employeesLoading } = useQuery({
-    queryKey: ['/api/employees', searchQuery],
+    queryKey: ['/api/employees'],
     queryFn: async () => {
       try {
-        let url = '/api/employees';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-        
-        const res = await authenticatedRequest(url);
+        const res = await authenticatedRequest('/api/employees');
         const data = await res.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
@@ -117,17 +111,14 @@ export default function Management() {
         return [];
       }
     },
-    enabled: activeTab === 'employees' && !!localStorage.getItem('token'),
+    enabled: !!localStorage.getItem('token'),
   });
 
   const { data: suppliersData, isLoading: suppliersLoading } = useQuery({
-    queryKey: ['/api/suppliers', searchQuery],
+    queryKey: ['/api/suppliers'],
     queryFn: async () => {
       try {
-        let url = '/api/suppliers';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-        
-        const res = await authenticatedRequest(url);
+        const res = await authenticatedRequest('/api/suppliers');
         const data = await res.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
@@ -135,17 +126,14 @@ export default function Management() {
         return [];
       }
     },
-    enabled: activeTab === 'suppliers' && !!localStorage.getItem('token'),
+    enabled: !!localStorage.getItem('token'),
   });
 
   const { data: thirdPartiesData, isLoading: thirdPartiesLoading } = useQuery({
-    queryKey: ['/api/third-parties', searchQuery],
+    queryKey: ['/api/third-parties'],
     queryFn: async () => {
       try {
-        let url = '/api/third-parties';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-        
-        const res = await authenticatedRequest(url);
+        const res = await authenticatedRequest('/api/third-parties');
         const data = await res.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
@@ -153,17 +141,14 @@ export default function Management() {
         return [];
       }
     },
-    enabled: activeTab === 'third-parties' && !!localStorage.getItem('token'),
+    enabled: !!localStorage.getItem('token'),
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ['/api/users', searchQuery],
+    queryKey: ['/api/users'],
     queryFn: async () => {
       try {
-        let url = '/api/users';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-        
-        const res = await authenticatedRequest(url);
+        const res = await authenticatedRequest('/api/users');
         const data = await res.json();
         return Array.isArray(data) ? data : [];
       } catch (error) {
@@ -171,23 +156,15 @@ export default function Management() {
         return [];
       }
     },
-    enabled: activeTab === 'users' && canCreateUsers && !!localStorage.getItem('token'),
+    enabled: !!localStorage.getItem('token') && canCreateUsers,
   });
 
+  const materials = materialsData || [];
+  const categories = categoriesData || [];
   const employees = employeesData || [];
   const suppliers = suppliersData || [];
   const thirdParties = thirdPartiesData || [];
   const users = usersData || [];
-
-  const getStatusBadge = (currentStock: number, minimumStock: number) => {
-    if (currentStock === 0) {
-      return <Badge variant="destructive">Crítico</Badge>;
-    } else if (currentStock <= minimumStock) {
-      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">Baixo</Badge>;
-    } else {
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Normal</Badge>;
-    }
-  };
 
   const handleEdit = (item: any) => {
     setEditingItem(item);
@@ -209,9 +186,6 @@ export default function Management() {
         break;
       case 'users':
         setUserModalOpen(true);
-        break;
-      case 'cost-centers':
-        setCostCenterModalOpen(true);
         break;
     }
   };
@@ -237,9 +211,6 @@ export default function Management() {
       case 'users':
         setUserModalOpen(true);
         break;
-      case 'cost-centers':
-        setCostCenterModalOpen(true);
-        break;
     }
   };
 
@@ -251,576 +222,389 @@ export default function Management() {
     setSupplierModalOpen(false);
     setThirdPartyModalOpen(false);
     setUserModalOpen(false);
-    setCostCenterModalOpen(false);
   };
 
   const handleDelete = async (id: number, type: string) => {
     if (!confirm(`Tem certeza que deseja excluir este ${type}?`)) return;
     
     try {
-      const endpoint = type === 'third-party' ? 'third-parties' : 
-                      type === 'category' ? 'categories' :
-                      type === 'material' ? 'materials' :
-                      type === 'user' ? 'users' : 
-                      type === 'cost-center' ? 'cost-centers' : `${type}s`;
+      let endpoint = '';
+      let queryKey = '';
       
-      await apiRequest(`/api/${endpoint}/${id}`, 'DELETE');
-      
-      // Invalidate relevant queries to refresh data
-      if (type === 'employee') {
-        queryClient.invalidateQueries({ queryKey: ['/api/employees'] });
-      } else if (type === 'supplier') {
-        queryClient.invalidateQueries({ queryKey: ['/api/suppliers'] });
-      } else if (type === 'third-party') {
-        queryClient.invalidateQueries({ queryKey: ['/api/third-parties'] });
-      } else if (type === 'category') {
-        queryClient.invalidateQueries({ queryKey: ['/api/categories'] });
-      } else if (type === 'material') {
-        queryClient.invalidateQueries({ queryKey: ['/api/materials'] });
-      } else if (type === 'user') {
-        queryClient.invalidateQueries({ queryKey: ['/api/users'] });
-      } else if (type === 'cost-center') {
-        queryClient.invalidateQueries({ queryKey: ['/api/cost-centers'] });
+      switch (activeTab) {
+        case 'materials':
+          endpoint = `/api/materials/${id}`;
+          queryKey = '/api/materials';
+          break;
+        case 'categories':
+          endpoint = `/api/categories/${id}`;
+          queryKey = '/api/categories';
+          break;
+        case 'employees':
+          endpoint = `/api/employees/${id}`;
+          queryKey = '/api/employees';
+          break;
+        case 'suppliers':
+          endpoint = `/api/suppliers/${id}`;
+          queryKey = '/api/suppliers';
+          break;
+        case 'third-parties':
+          endpoint = `/api/third-parties/${id}`;
+          queryKey = '/api/third-parties';
+          break;
+        case 'users':
+          endpoint = `/api/users/${id}`;
+          queryKey = '/api/users';
+          break;
       }
+
+      await apiRequest(endpoint, 'DELETE');
+      queryClient.invalidateQueries({ queryKey: [queryKey] });
       
       toast({
         title: "Sucesso",
-        description: `${type} excluído com sucesso`,
+        description: `${type} excluído com sucesso.`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Error deleting item:', error);
       toast({
         title: "Erro",
-        description: `Erro ao excluir ${type}`,
+        description: `Falha ao excluir ${type}: ${error.message}`,
         variant: "destructive",
       });
     }
   };
 
-  const renderContent = () => {
+  const getCurrentData = () => {
     switch (activeTab) {
       case 'materials':
-        if (materialsLoading) {
-          return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          );
-        }
+        return materials;
+      case 'categories':
+        return categories;
+      case 'employees':
+        return employees;
+      case 'suppliers':
+        return suppliers;
+      case 'third-parties':
+        return thirdParties;
+      case 'users':
+        return users;
+      default:
+        return [];
+    }
+  };
 
+  const isLoading = () => {
+    switch (activeTab) {
+      case 'materials':
+        return materialsLoading;
+      case 'employees':
+        return employeesLoading;
+      case 'suppliers':
+        return suppliersLoading;
+      case 'third-parties':
+        return thirdPartiesLoading;
+      case 'users':
+        return usersLoading;
+      default:
+        return false;
+    }
+  };
+
+  const renderTable = () => {
+    const data = getCurrentData();
+    const loading = isLoading();
+
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      );
+    }
+
+    if (!data || data.length === 0) {
+      return (
+        <div className="text-center py-8 text-gray-500">
+          Nenhum registro encontrado
+        </div>
+      );
+    }
+
+    switch (activeTab) {
+      case 'materials':
         return (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Buscar materiais..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="w-full sm:w-64">
-                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todas as categorias" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as categorias</SelectItem>
-                    {Array.isArray(categories) && categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Material</TableHead>
-                    <TableHead>Categoria</TableHead>
-                    <TableHead>Estoque Atual</TableHead>
-                    <TableHead>Estoque Mínimo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(materials) && materials.map((material) => (
-                    <TableRow key={material.id}>
-                      <TableCell className="font-medium">{material.name}</TableCell>
-                      <TableCell>{material.category.name}</TableCell>
-                      <TableCell>{material.currentStock}</TableCell>
-                      <TableCell>{material.minimumStock}</TableCell>
-                      <TableCell>
-                        {getStatusBadge(material.currentStock, material.minimumStock)}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(material)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(material.id, 'material')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Categoria</TableHead>
+                <TableHead>Estoque</TableHead>
+                <TableHead>Preço Unitário</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((material: Material) => (
+                <TableRow key={material.id}>
+                  <TableCell>{material.name}</TableCell>
+                  <TableCell>
+                    {categories.find((c) => c.id === material.categoryId)?.name || 'N/A'}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={material.currentStock <= material.minimumStock ? "destructive" : "secondary"}>
+                      {material.currentStock}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>R$ {material.unitPrice}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(material)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(material.id, 'material')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         );
 
       case 'categories':
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {categories?.map((category) => (
-              <Card key={category.id} className="bg-gray-50">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">{category.name}</h4>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {materials?.filter(m => m.categoryId === category.id).length || 0} materiais
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((category: Category) => (
+                <TableRow key={category.id}>
+                  <TableCell>{category.name}</TableCell>
+                  <TableCell>{category.description || 'N/A'}</TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
                       <Button
-                        variant="ghost"
                         size="sm"
+                        variant="outline"
                         onClick={() => handleEdit(category)}
-                        className="text-primary hover:text-primary/80"
                       >
-                        <Edit className="h-3 w-3" />
+                        <Edit className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost"
                         size="sm"
-                        onClick={() => handleDelete(category.id, 'category')}
-                        className="text-red-500 hover:text-red-600"
+                        variant="destructive"
+                        onClick={() => handleDelete(category.id, 'categoria')}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         );
 
       case 'employees':
-        if (employeesLoading) {
-          return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          );
-        }
-
         return (
-          <div className="space-y-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar funcionários..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Departamento</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(employees) && employees.length > 0 ? employees.map((employee) => (
-                    <TableRow key={employee.id}>
-                      <TableCell className="font-medium">{employee.name}</TableCell>
-                      <TableCell>{employee.department}</TableCell>
-                      <TableCell>{employee.email}</TableCell>
-                      <TableCell>{employee.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(employee)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(employee.id, 'employee')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        Nenhum funcionário encontrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Departamento</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((employee: Employee) => (
+                <TableRow key={employee.id}>
+                  <TableCell>{employee.name}</TableCell>
+                  <TableCell>{employee.department}</TableCell>
+                  <TableCell>{employee.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={employee.isActive ? "default" : "secondary"}>
+                      {employee.isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(employee)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(employee.id, 'funcionário')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         );
 
       case 'suppliers':
-        if (suppliersLoading) {
-          return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          );
-        }
-
         return (
-          <div className="space-y-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar fornecedores..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>CNPJ</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(suppliers) && suppliers.length > 0 ? suppliers.map((supplier) => (
-                    <TableRow 
-                      key={supplier.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => handleEdit(supplier)}
-                    >
-                      <TableCell className="font-medium">{supplier.name}</TableCell>
-                      <TableCell>{supplier.cnpj}</TableCell>
-                      <TableCell>{supplier.email}</TableCell>
-                      <TableCell>{supplier.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(supplier)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(supplier.id, 'supplier')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground">
-                        Nenhum fornecedor encontrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>CNPJ</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((supplier: Supplier) => (
+                <TableRow key={supplier.id}>
+                  <TableCell>{supplier.name}</TableCell>
+                  <TableCell>{supplier.cnpj}</TableCell>
+                  <TableCell>{supplier.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={supplier.isActive ? "default" : "secondary"}>
+                      {supplier.isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(supplier)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(supplier.id, 'fornecedor')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         );
 
       case 'third-parties':
-        if (thirdPartiesLoading) {
-          return (
-            <div className="flex items-center justify-center h-64">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          );
-        }
-
         return (
-          <div className="space-y-6">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Buscar terceiros..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Documento</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Telefone</TableHead>
-                    <TableHead className="w-24">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Array.isArray(thirdParties) && thirdParties.length > 0 ? thirdParties.map((thirdParty) => (
-                    <TableRow key={thirdParty.id}>
-                      <TableCell className="font-medium">{thirdParty.name}</TableCell>
-                      <TableCell>{thirdParty.document}</TableCell>
-                      <TableCell>{thirdParty.documentType}</TableCell>
-                      <TableCell>{thirdParty.email}</TableCell>
-                      <TableCell>{thirdParty.phone}</TableCell>
-                      <TableCell>
-                        <div className="flex space-x-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(thirdParty)}
-                            className="text-primary hover:text-primary/80"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(thirdParty.id, 'third-party')}
-                            className="text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )) : (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center text-muted-foreground">
-                        Nenhum terceiro encontrado
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome</TableHead>
+                <TableHead>Documento</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((thirdParty: ThirdParty) => (
+                <TableRow key={thirdParty.id}>
+                  <TableCell>{thirdParty.name}</TableCell>
+                  <TableCell>{thirdParty.document}</TableCell>
+                  <TableCell>{thirdParty.email}</TableCell>
+                  <TableCell>
+                    <Badge variant={thirdParty.isActive ? "default" : "secondary"}>
+                      {thirdParty.isActive ? 'Ativo' : 'Inativo'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(thirdParty)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => handleDelete(thirdParty.id, 'terceiro')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         );
 
       case 'users':
-        if (!canCreateUsers) return null;
-        
         return (
-          <div className="space-y-4">
-            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome de Usuário</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {usersLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ) : users?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                        Nenhum usuário encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    Array.isArray(users) && users.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell className="font-medium">{user.username}</TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>
-                          <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                            {user.role === 'admin' ? 'Administrador' : 'Usuário'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.isActive ? 'default' : 'destructive'}>
-                            {user.isActive ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(user.createdAt).toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(user)}
-                              className="text-primary hover:text-primary/80"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(user.id, 'user')}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-        );
-
-      case 'cost-centers':
-        if (costCentersLoading) {
-          return (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          );
-        }
-
-        return (
-          <div className="space-y-4">
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Código</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Departamento</TableHead>
-                    <TableHead>Responsável</TableHead>
-                    <TableHead>Orçamento Mensal</TableHead>
-                    <TableHead>Orçamento Anual</TableHead>
-                    <TableHead>Criado em</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {costCentersLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-4">
-                        <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                      </TableCell>
-                    </TableRow>
-                  ) : costCenters?.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={8} className="text-center py-8 text-gray-500">
-                        Nenhum centro de custo encontrado
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    Array.isArray(costCenters) && costCenters.map((costCenter) => (
-                      <TableRow key={costCenter.id}>
-                        <TableCell className="font-medium">{costCenter.code}</TableCell>
-                        <TableCell>{costCenter.name}</TableCell>
-                        <TableCell>{costCenter.department}</TableCell>
-                        <TableCell>{costCenter.responsible}</TableCell>
-                        <TableCell>
-                          {costCenter.monthlyBudget 
-                            ? `R$ ${parseFloat(costCenter.monthlyBudget.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {costCenter.annualBudget 
-                            ? `R$ ${parseFloat(costCenter.annualBudget.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
-                            : '-'
-                          }
-                        </TableCell>
-                        <TableCell>
-                          {new Date(costCenter.createdAt).toLocaleDateString('pt-BR')}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(costCenter)}
-                              className="text-primary hover:text-primary/80"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(costCenter.id, 'cost-center')}
-                              className="text-red-500 hover:text-red-600"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome de Usuário</TableHead>
+                <TableHead>Função</TableHead>
+                <TableHead>Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((user: User) => (
+                <TableRow key={user.id}>
+                  <TableCell>{user.username}</TableCell>
+                  <TableCell>
+                    <Badge>
+                      {user.role === 'super_admin' ? 'Super Admin' : 
+                       user.role === 'admin' ? 'Admin' : 'Usuário'}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEdit(user)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      {user.role !== 'super_admin' && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDelete(user.id, 'usuário')}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         );
 
       default:
@@ -829,40 +613,25 @@ export default function Management() {
   };
 
   return (
-    <div>
+    <div className="container mx-auto py-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Settings className="h-8 w-8 text-blue-600" />
+        <h1 className="text-3xl font-bold">Cadastros</h1>
+      </div>
+
       <Card>
-        <div className="border-b border-gray-200">
-          <div className="flex items-center justify-between p-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-8 h-8 bg-primary text-white rounded">
-                <Settings className="w-4 h-4" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Gestão de Cadastros</h2>
-                <p className="text-sm text-gray-600">Gerencie materiais, categorias, funcionários e fornecedores</p>
-              </div>
-            </div>
-            <Button onClick={handleCreate} className="bg-primary hover:bg-primary/90">
-              <Plus className="w-4 h-4 mr-2" />
-              Novo {tabItems.find(t => t.id === activeTab)?.label.slice(0, -1)}
-            </Button>
-          </div>
-          
-          {/* Sub Navigation */}
-          <div className="px-6">
-            <nav className="flex space-x-8">
+        <CardContent className="p-0">
+          {/* Tabs */}
+          <div className="border-b border-gray-200">
+            <nav className="flex space-x-8 px-6" aria-label="Tabs">
               {tabItems.map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => {
-                    setActiveTab(tab.id);
-                    setSearchQuery('');
-                    setSelectedCategory('');
-                  }}
+                  onClick={() => setActiveTab(tab.id as ActiveTab)}
                   className={cn(
-                    "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
+                    "whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm",
                     activeTab === tab.id
-                      ? "border-primary text-primary"
+                      ? "border-blue-500 text-blue-600"
                       : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   )}
                 >
@@ -871,63 +640,88 @@ export default function Management() {
               ))}
             </nav>
           </div>
-        </div>
 
-        <CardContent className="p-6">
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-medium text-gray-900">
-                {tabItems.find(t => t.id === activeTab)?.label}
-              </h3>
+          {/* Content */}
+          <div className="p-6">
+            {/* Header with search and actions */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Input
+                    placeholder="Buscar..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                
+                {activeTab === 'materials' && (
+                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Todas as categorias" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as categorias</SelectItem>
+                      {categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id.toString()}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+
+              <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Novo {tabItems.find(t => t.id === activeTab)?.label.slice(0, -1)}
+              </Button>
             </div>
-            {renderContent()}
+
+            {/* Table */}
+            <div className="rounded-md border">
+              {renderTable()}
+            </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Modals */}
       <MaterialModal
-        open={materialModalOpen}
-        onOpenChange={setMaterialModalOpen}
+        isOpen={materialModalOpen}
+        onClose={handleModalClose}
         material={editingItem}
-        onClose={handleModalClose}
       />
+
       <CategoryModal
-        open={categoryModalOpen}
-        onOpenChange={setCategoryModalOpen}
+        isOpen={categoryModalOpen}
+        onClose={handleModalClose}
         category={editingItem}
-        onClose={handleModalClose}
       />
+
       <EmployeeModal
-        open={employeeModalOpen}
-        onOpenChange={setEmployeeModalOpen}
+        isOpen={employeeModalOpen}
+        onClose={handleModalClose}
         employee={editingItem}
-        onClose={handleModalClose}
       />
+
       <SupplierModal
-        open={supplierModalOpen}
-        onOpenChange={setSupplierModalOpen}
+        isOpen={supplierModalOpen}
+        onClose={handleModalClose}
         supplier={editingItem}
-        onClose={handleModalClose}
       />
+
       <ThirdPartyModal
-        open={thirdPartyModalOpen}
-        onOpenChange={setThirdPartyModalOpen}
+        isOpen={thirdPartyModalOpen}
+        onClose={handleModalClose}
         thirdParty={editingItem}
-        onClose={handleModalClose}
       />
-      {canCreateUsers && (
-        <UserModal
-          open={userModalOpen}
-          onOpenChange={setUserModalOpen}
-          editingUser={editingItem}
-        />
-      )}
-      <CostCenterModal
-        open={costCenterModalOpen}
-        onOpenChange={setCostCenterModalOpen}
-        costCenter={editingItem}
+
+      <UserModal
+        isOpen={userModalOpen}
         onClose={handleModalClose}
+        user={editingItem}
       />
     </div>
   );

@@ -1112,7 +1112,7 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(materialMovements.ownerId, ownerId));
     }
 
-    // Get all entry movements with their materials and categories
+    // Get only supplier entries (exclude returns from financial calculation)
     const movementsData = await db
       .select({
         materialId: materialMovements.materialId,
@@ -1122,6 +1122,7 @@ export class DatabaseStorage implements IStorage {
         unitPrice: materialMovements.unitPrice,
         quantity: materialMovements.quantity,
         type: materialMovements.type,
+        originType: materialMovements.originType,
       })
       .from(materialMovements)
       .innerJoin(materials, eq(materialMovements.materialId, materials.id))
@@ -1129,6 +1130,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           eq(materialMovements.type, 'entry'),
+          eq(materialMovements.originType, 'supplier'), // Only supplier entries for financial calculation
           conditions.length > 0 ? and(...conditions) : undefined
         )
       )

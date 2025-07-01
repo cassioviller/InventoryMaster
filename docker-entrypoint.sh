@@ -64,11 +64,13 @@ echo "✅ Banco de dados conectado com sucesso!"
 echo "🔧 Verificando se as tabelas do banco de dados existem..."
 
 # Verificar se as tabelas principais existem
-if psql "$DATABASE_URL" -c "SELECT to_regclass('public.users');" | grep -q "users"; then
+USERS_EXISTS=$(psql "$DATABASE_URL" -t -c "SELECT to_regclass('public.users');" 2>/dev/null | tr -d ' ' | head -1)
+if [ "$USERS_EXISTS" = "users" ]; then
   echo "✅ Tabela 'users' já existe"
   
   # Verificar especificamente se cost_centers existe (funcionalidade crítica)
-  if psql "$DATABASE_URL" -c "SELECT to_regclass('public.cost_centers');" | grep -q "cost_centers"; then
+  COST_CENTERS_EXISTS=$(psql "$DATABASE_URL" -t -c "SELECT to_regclass('public.cost_centers');" 2>/dev/null | tr -d ' ' | head -1)
+  if [ "$COST_CENTERS_EXISTS" = "cost_centers" ]; then
     echo "✅ Tabela 'cost_centers' já existe"
   else
     echo "⚠️  Tabela 'cost_centers' não existe - executando correção do schema..."

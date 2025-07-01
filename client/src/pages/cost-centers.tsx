@@ -247,7 +247,10 @@ export default function CostCentersPage() {
                   <Input
                     id="code"
                     value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: (e.target.value || '').toUpperCase() })}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setFormData({ ...formData, code: typeof value === 'string' ? value.toUpperCase() : '' });
+                    }}
                     placeholder="Ex: MANUT001"
                     className="uppercase"
                     maxLength={20}

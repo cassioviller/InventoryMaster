@@ -251,9 +251,7 @@ export default function Management() {
   const handleDelete = async (id: number, type: string) => {
     try {
       const endpoint = type === 'third-party' ? 'third-parties' : `${type}s`;
-      await apiRequest(`/api/${endpoint}/${id}`, {
-        method: 'DELETE',
-      });
+      await apiRequest(`/api/${endpoint}/${id}`, 'DELETE');
 
       toast({
         title: 'Sucesso',

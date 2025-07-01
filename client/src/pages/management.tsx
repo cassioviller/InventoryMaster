@@ -24,7 +24,7 @@ import { EmployeeModal } from '@/components/modals/employee-modal';
 import { SupplierModal } from '@/components/modals/supplier-modal';
 import { ThirdPartyModal } from '@/components/modals/third-party-modal';
 import { UserModal } from '@/components/modals/user-modal';
-import { CostCenterModal } from '@/components/modals/cost-center-modal';
+
 import { useAuth } from '@/hooks/use-auth';
 import type { Material, Category, Employee, Supplier, ThirdParty, User, CostCenter } from '@shared/schema';
 
@@ -37,7 +37,6 @@ const getTabItems = (canCreateUsers: boolean) => {
     { id: 'employees', label: 'Funcionários' },
     { id: 'suppliers', label: 'Fornecedores' },
     { id: 'third-parties', label: 'Terceiros' },
-    { id: 'cost-centers', label: 'Centros de Custo' },
   ];
   
   if (canCreateUsers) {
@@ -58,7 +57,7 @@ export default function Management() {
   const [supplierModalOpen, setSupplierModalOpen] = useState(false);
   const [thirdPartyModalOpen, setThirdPartyModalOpen] = useState(false);
   const [userModalOpen, setUserModalOpen] = useState(false);
-  const [costCenterModalOpen, setCostCenterModalOpen] = useState(false);
+
   const [editingItem, setEditingItem] = useState<any>(null);
   
   const { toast } = useToast();
@@ -175,29 +174,10 @@ export default function Management() {
     enabled: activeTab === 'users' && canCreateUsers && !!localStorage.getItem('token'),
   });
 
-  const { data: costCentersData, isLoading: costCentersLoading } = useQuery({
-    queryKey: ['/api/cost-centers', searchQuery],
-    queryFn: async () => {
-      try {
-        let url = '/api/cost-centers';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
-        
-        const res = await authenticatedRequest(url);
-        const data = await res.json();
-        return Array.isArray(data) ? data : [];
-      } catch (error) {
-        console.error('Error fetching cost centers:', error);
-        return [];
-      }
-    },
-    enabled: activeTab === 'cost-centers' && !!localStorage.getItem('token'),
-  });
-
   const employees = employeesData || [];
   const suppliers = suppliersData || [];
   const thirdParties = thirdPartiesData || [];
   const users = usersData || [];
-  const costCenters = costCentersData || [];
 
   const getStatusBadge = (currentStock: number, minimumStock: number) => {
     if (currentStock === 0) {

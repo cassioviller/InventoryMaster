@@ -1,0 +1,43 @@
+PROMPT PARA CORREÇÃO COMPLETA DOS RELATÓRIOS:
+"Preciso corrigir problemas críticos nos relatórios do sistema de almoxarifado. Há várias inconsistências que precisam ser resolvidas:
+PROBLEMA 1: RELATÓRIO FINANCEIRO - LÓGICA INCORRETA
+O relatório financeiro está mostrando apenas valor unitário médio
+Precisa separar por lotes com valores diferentes (ex: 207 unidades a R$ 10 = R$ 2.070 + 20 unidades a R$ 2 = R$ 40)
+Usar a mesma lógica da tela de saída de material que mostra lotes separados
+Devoluções devem aumentar estoque físico mas NÃO alterar valores financeiros
+PROBLEMA 2: RELATÓRIO DE MOVIMENTAÇÕES GERAIS
+Adicionar coluna 'Valor Total' para todas as movimentações
+Incluir totalizadores: Total de Entradas, Total de Saídas, Total de Devoluções
+Corrigir exibição de datas (está mostrando 30/06 em vez de 01/07)
+Campos em branco precisam ser preenchidos corretamente
+PROBLEMA 3: SIMPLIFICAR ABA RELATÓRIOS
+REMOVER todos os outros relatórios da aba (manter apenas 'Movimentações Gerais')
+Adicionar filtros avançados ao relatório de movimentações:
+Centro de Custo
+Tipo (Entrada/Saída/Devolução)
+Fornecedor
+Data Início/Fim
+Material/Categoria
+PROBLEMA 4: TIPOS DE MOVIMENTAÇÃO
+Devolução deve aparecer como 'Devolução' (não como 'Entrada')
+Corrigir a lógica para identificar corretamente cada tipo
+AÇÕES ESPECÍFICAS:
+Corrigir relatório financeiro:
+Implementar lógica de lotes separados por preço
+Mostrar: Material | Lote 1 (Qtd + Valor Unit + Total) | Lote 2 (Qtd + Valor Unit + Total)
+Devoluções: aumentam estoque físico, mantêm valor original do lote
+Melhorar movimentações gerais:
+Adicionar coluna 'Valor Total'
+Adicionar totalizadores no final
+Corrigir datas e campos vazios
+Implementar filtros avançados
+Simplificar interface:
+Remover relatórios desnecessários
+Concentrar tudo em 'Movimentações Gerais' com filtros
+Testar cenário:
+Material: 220 unidades (200 a R$ 10 + 20 a R$ 2)
+Saída: 10 unidades (do lote R$ 10)
+Devolução: 3 unidades (volta para lote R$ 10)
+Resultado: 213 unidades (193 a R$ 10 + 20 a R$ 2)
+PRIORIDADE: CRÍTICA - Relatórios são fundamentais para gestão financeira.
+Execute todas as correções e teste com dados reais para garantir precisão."

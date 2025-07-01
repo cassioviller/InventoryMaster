@@ -866,6 +866,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+// Enhanced general movements report with totals and advanced filters
+app.get("/api/reports/general-movements-enhanced", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { startDate, endDate, type, costCenterId, supplierId, materialId, categoryId } = req.query;
+    const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+    
+    let adjustedStartDate, adjustedEndDate;
+    if (startDate) {
+      adjustedStartDate = new Date(startDate as string);
+      adjustedStartDate.setHours(0, 0, 0, 0);
+    }
+    if (endDate) {
+      adjustedEndDate = new Date(endDate as string);
+      adjustedEndDate.setHours(23, 59, 59, 999);
+    }
+    
+    const report = await storage.getGeneralMovementsReportWithTotals(
+      adjustedStartDate,
+      adjustedEndDate,
+      type as 'entry' | 'exit' | 'return' | undefined,
+      ownerId,
+      costCenterId ? parseInt(costCenterId as string) : undefined,
+      supplierId ? parseInt(supplierId as string) : undefined,
+      materialId ? parseInt(materialId as string) : undefined,
+      categoryId ? parseInt(categoryId as string) : undefined
+    );
+    
+    res.json(report);
+  } catch (error) {
+    console.error('Error generating enhanced general movements report:', error);
+    res.status(500).json({ 
+      message: "Failed to generate enhanced general movements report",
+      error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+    });
+  }
+});
+
 // Material lots routes for FIFO logic
 app.get("/api/materials/:id/lots", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {

@@ -82,6 +82,7 @@ export interface IStorage {
   // Report methods
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
   getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number, costCenterId?: number): Promise<any[]>;
+  getGeneralMovementsReportWithTotals(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit' | 'return', ownerId?: number, costCenterId?: number, supplierId?: number, materialId?: number, categoryId?: number): Promise<{ movements: any[]; totals: { totalEntries: number; totalExits: number; totalReturns: number; totalGeneral: number; count: number; }; }>;
   getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
   getEmployeeMovementReport(employeeId?: number, month?: number, year?: number, ownerId?: number, startDate?: Date, endDate?: Date): Promise<any[]>;
   getSupplierTrackingReport(supplierId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]>;
@@ -939,6 +940,177 @@ export class DatabaseStorage implements IStorage {
     });
   }
 
+  // Enhanced version with totals and filters
+  async getGeneralMovementsReportWithTotals(
+    startDate?: Date, 
+    endDate?: Date, 
+    type?: 'entry' | 'exit' | 'return', 
+    ownerId?: number, 
+    costCenterId?: number,
+    supplierId?: number,
+    materialId?: number,
+    categoryId?: number
+  ): Promise<{
+    movements: any[];
+    totals: {
+      totalEntries: number;
+      totalExits: number;
+      totalReturns: number;
+      totalGeneral: number;
+      count: number;
+    };
+  }> {
+    const conditions = [];
+    
+    // Date filters
+    if (startDate) conditions.push(gte(materialMovements.date, startDate));
+    if (endDate) conditions.push(lte(materialMovements.date, endDate));
+    if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
+    if (costCenterId) conditions.push(eq(materialMovements.costCenterId, costCenterId));
+    if (supplierId) conditions.push(eq(materialMovements.supplierId, supplierId));
+    if (materialId) conditions.push(eq(materialMovements.materialId, materialId));
+    
+    // Type filter (including returns)
+    if (type) {
+      if (type === 'return') {
+        conditions.push(or(
+          eq(materialMovements.originType, 'employee_return'),
+          eq(materialMovements.originType, 'third_party_return')
+        ));
+      } else {
+        conditions.push(eq(materialMovements.type, type));
+      }
+    }
+    
+    // Category filter
+    if (categoryId) {
+      conditions.push(eq(materials.categoryId, categoryId));
+    }
+    
+    const movements = await db
+      .select({
+        id: materialMovements.id,
+        type: materialMovements.type,
+        date: materialMovements.date,
+        quantity: materialMovements.quantity,
+        unitPrice: materialMovements.unitPrice,
+        notes: materialMovements.notes,
+        createdAt: materialMovements.createdAt,
+        originType: materialMovements.originType,
+        destinationType: materialMovements.destinationType,
+        materialId: materialMovements.materialId,
+        supplierId: materialMovements.supplierId,
+        destinationEmployeeId: materialMovements.destinationEmployeeId,
+        destinationThirdPartyId: materialMovements.destinationThirdPartyId,
+        returnEmployeeId: materialMovements.returnEmployeeId,
+        returnThirdPartyId: materialMovements.returnThirdPartyId,
+        costCenterId: materialMovements.costCenterId,
+        material: {
+          id: materials.id,
+          name: materials.name,
+          unit: materials.unit
+        },
+        supplier: {
+          id: suppliers.id,
+          name: suppliers.name
+        },
+        employee: {
+          id: employees.id,
+          name: employees.name
+        },
+        thirdParty: {
+          id: thirdParties.id,
+          name: thirdParties.name
+        },
+        costCenter: {
+          id: costCenters.id,
+          code: costCenters.code,
+          name: costCenters.name,
+          department: costCenters.department
+        }
+      })
+      .from(materialMovements)
+      .leftJoin(materials, eq(materialMovements.materialId, materials.id))
+      .leftJoin(suppliers, eq(materialMovements.supplierId, suppliers.id))
+      .leftJoin(employees, or(
+        eq(materialMovements.destinationEmployeeId, employees.id),
+        eq(materialMovements.returnEmployeeId, employees.id)
+      ))
+      .leftJoin(costCenters, eq(materialMovements.costCenterId, costCenters.id))
+      .leftJoin(thirdParties, or(
+        eq(materialMovements.destinationThirdPartyId, thirdParties.id),
+        eq(materialMovements.returnThirdPartyId, thirdParties.id)
+      ))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(materialMovements.date));
+
+    // Process movements and calculate totals
+    let totalEntries = 0;
+    let totalExits = 0;
+    let totalReturns = 0;
+    
+    const processedMovements = movements.map(movement => {
+      let originDestination = '';
+      let responsiblePerson = '';
+      let displayType = movement.type === 'entry' ? 'Entrada' : 'Saída';
+      const totalValue = movement.quantity * parseFloat(movement.unitPrice || '0');
+
+      // Determine movement type and calculate totals
+      if (movement.type === 'entry') {
+        if (movement.originType === 'supplier' && movement.supplier) {
+          originDestination = movement.supplier.name;
+          responsiblePerson = '-';
+          totalEntries += totalValue;
+        } else if (movement.originType === 'employee_return' && movement.employee) {
+          originDestination = movement.employee.name;
+          responsiblePerson = movement.employee.name;
+          displayType = 'Devolução';
+          totalReturns += totalValue;
+        } else if (movement.originType === 'third_party_return' && movement.thirdParty) {
+          originDestination = movement.thirdParty.name;
+          responsiblePerson = movement.thirdParty.name;
+          displayType = 'Devolução';
+          totalReturns += totalValue;
+        } else {
+          originDestination = 'N/A';
+          responsiblePerson = '-';
+          totalEntries += totalValue;
+        }
+      } else if (movement.type === 'exit') {
+        if (movement.destinationType === 'employee' && movement.employee) {
+          originDestination = movement.employee.name;
+          responsiblePerson = movement.employee.name;
+        } else if (movement.destinationType === 'third_party' && movement.thirdParty) {
+          originDestination = movement.thirdParty.name;
+          responsiblePerson = movement.thirdParty.name;
+        } else {
+          originDestination = 'N/A';
+          responsiblePerson = '-';
+        }
+        totalExits += totalValue;
+      }
+
+      return {
+        ...movement,
+        totalValue,
+        originDestination,
+        responsiblePerson,
+        displayType
+      };
+    });
+
+    return {
+      movements: processedMovements,
+      totals: {
+        totalEntries,
+        totalExits,
+        totalReturns,
+        totalGeneral: totalEntries + totalExits + totalReturns,
+        count: processedMovements.length
+      }
+    };
+  }
+
   async getMaterialConsumptionReport(materialId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {
     const conditions = [eq(materialMovements.type, 'exit')];
     if (materialId) conditions.push(eq(materialMovements.materialId, materialId));
@@ -1204,41 +1376,64 @@ export class DatabaseStorage implements IStorage {
         )
         .orderBy(materialMovements.date); // FIFO order
 
-      // Calculate financial value using FIFO logic
-      let remainingStock = material.currentStock;
-      let totalFinancialValue = 0;
-      let weightedUnitPrice = '0.00';
-
-      if (supplierEntries.length > 0 && remainingStock > 0) {
-        let totalCost = 0;
-        let totalQuantityUsed = 0;
-
-        for (const entry of supplierEntries) {
-          if (remainingStock <= 0) break;
-          
-          const quantityToUse = Math.min(remainingStock, entry.quantity);
-          const unitPrice = parseFloat(entry.unitPrice || '0');
-          const costForThisLot = quantityToUse * unitPrice;
-          
-          totalCost += costForThisLot;
-          totalQuantityUsed += quantityToUse;
-          remainingStock -= quantityToUse;
-        }
-
-        if (totalQuantityUsed > 0) {
-          weightedUnitPrice = (totalCost / totalQuantityUsed).toFixed(2);
-          totalFinancialValue = totalCost;
-        }
+      // Get available lots for this material (FIFO logic)
+      let lots: any[] = [];
+      try {
+        lots = await this.getMaterialLots(material.id, ownerId);
+      } catch (error) {
+        console.log(`Erro ao buscar lotes para material ${material.name}:`, error);
       }
+
+      // If no lots available, return empty record
+      if (lots.length === 0) {
+        return {
+          id: material.id,
+          name: material.name,
+          category: material.categoryName || 'Sem categoria',
+          unit: material.unit || 'UN',
+          currentStock: material.currentStock || 0,
+          unitPrice: '0.00',
+          totalValue: 0,
+          lotInfo: 'Sem estoque',
+          lots: []
+        };
+      }
+
+      // Group lots by unit price to show separate entries
+      const lotsByPrice = lots.reduce((acc, lot) => {
+        const price = lot.unitPrice;
+        if (!acc[price]) {
+          acc[price] = {
+            unitPrice: price,
+            quantity: 0,
+            totalValue: 0
+          };
+        }
+        acc[price].quantity += lot.availableQuantity;
+        acc[price].totalValue += lot.availableQuantity * parseFloat(price);
+        return acc;
+      }, {} as Record<string, any>);
+
+      // Create base entry with total values
+      const totalStock = Object.values(lotsByPrice).reduce((sum: number, lot: any) => sum + lot.quantity, 0);
+      const totalValue = Object.values(lotsByPrice).reduce((sum: number, lot: any) => sum + lot.totalValue, 0);
+      const avgPrice = totalStock > 0 ? (totalValue / totalStock).toFixed(2) : '0.00';
 
       return {
         id: material.id,
         name: material.name,
         category: material.categoryName || 'Sem categoria',
         unit: material.unit || 'UN',
-        currentStock: material.currentStock,
-        unitPrice: weightedUnitPrice,
-        totalValue: totalFinancialValue,
+        currentStock: totalStock,
+        unitPrice: avgPrice,
+        totalValue: totalValue,
+        lotInfo: `${Object.keys(lotsByPrice).length} lote(s)`,
+        lots: Object.entries(lotsByPrice).map(([price, data]: [string, any]) => ({
+          unitPrice: parseFloat(price).toFixed(2),
+          quantity: data.quantity,
+          totalValue: data.totalValue,
+          description: `${data.quantity} ${material.unit || 'UN'} × R$ ${parseFloat(price).toFixed(2)} = R$ ${data.totalValue.toFixed(2)}`
+        }))
       };
     }));
 

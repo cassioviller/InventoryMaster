@@ -79,7 +79,7 @@ export function Header() {
                 <Button variant="ghost" className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center">
                     <span className="text-sm font-medium">
-                      {user?.username?.slice(0, 2).toUpperCase() || 'AD'}
+                      {user?.username ? user.username.slice(0, 2).toUpperCase() : 'AD'}
                     </span>
                   </div>
                   <span className="text-sm font-medium text-gray-700">

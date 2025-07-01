@@ -25,7 +25,7 @@ export async function apiRequest(
 
   // Validate HTTP method
   const validMethods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-  const upperMethod = method.toUpperCase();
+  const upperMethod = (method || '').toString().toUpperCase();
   
   if (!validMethods.includes(upperMethod)) {
     throw new Error(`Invalid HTTP method: ${method}`);

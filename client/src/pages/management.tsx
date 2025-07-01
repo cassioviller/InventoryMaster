@@ -28,7 +28,7 @@ import { CostCenterModal } from '@/components/modals/cost-center-modal';
 import { useAuth } from '@/hooks/use-auth';
 import type { Material, Category, Employee, Supplier, ThirdParty, User, CostCenter } from '@shared/schema';
 
-type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users' | 'cost-centers';
+type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users';
 
 const getTabItems = (canCreateUsers: boolean) => {
   const baseItems = [

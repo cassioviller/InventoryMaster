@@ -82,10 +82,7 @@ export default function CostCentersPage() {
     mutationFn: async (data: CostCenterFormData) => {
       const method = editingCenter ? "PUT" : "POST";
       const url = editingCenter ? `/api/cost-centers/${editingCenter.id}` : "/api/cost-centers";
-      return apiRequest(url, {
-        method,
-        body: JSON.stringify(data),
-      });
+      return apiRequest(url, method, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-centers"] });
@@ -107,7 +104,7 @@ export default function CostCentersPage() {
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      return apiRequest(`/api/cost-centers/${id}`, { method: "DELETE" });
+      return apiRequest(`/api/cost-centers/${id}`, "DELETE");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-centers"] });

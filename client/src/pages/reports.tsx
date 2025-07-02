@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect, useSearchableSelectOptions } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -120,6 +121,42 @@ export default function Reports() {
       return response.json();
     }
   });
+
+  // Configure searchable select options for all filters
+  const costCenterOptions = useSearchableSelectOptions(
+    Array.isArray(costCenters) ? costCenters : [],
+    'id',
+    'name',
+    ['code', 'name', 'department', 'responsible']
+  );
+
+  const supplierOptions = useSearchableSelectOptions(
+    Array.isArray(suppliers) ? suppliers : [],
+    'id',
+    'name',
+    ['name', 'contact', 'email']
+  );
+
+  const materialOptions = useSearchableSelectOptions(
+    Array.isArray(materials) ? materials : [],
+    'id',
+    'name',
+    ['name', 'description', 'unit']
+  );
+
+  const categoryOptions = useSearchableSelectOptions(
+    Array.isArray(categories) ? categories : [],
+    'id',
+    'name',
+    ['name', 'description']
+  );
+
+  const employeeOptions = useSearchableSelectOptions(
+    Array.isArray(employees) ? employees : [],
+    'id',
+    'name',
+    ['name', 'department', 'position', 'contact']
+  );
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
@@ -245,19 +282,13 @@ export default function Reports() {
             {/* Cost Center Filter */}
             <div className="space-y-2">
               <Label htmlFor="costCenter">Centro de Custo</Label>
-              <Select value={filters.costCenterId || 'all'} onValueChange={(value) => handleFilterChange('costCenterId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os centros" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os centros</SelectItem>
-                  {Array.isArray(costCenters) && costCenters.map((center: any) => (
-                    <SelectItem key={center.id} value={center.id.toString()}>
-                      {center.code} - {center.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={costCenterOptions}
+                value={filters.costCenterId}
+                onValueChange={(value) => handleFilterChange('costCenterId', value)}
+                placeholder="Buscar centro de custo..."
+                emptyText="Nenhum centro encontrado"
+              />
             </div>
 
             {/* Supplier Filter */}

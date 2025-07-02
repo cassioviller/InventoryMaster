@@ -1,0 +1,147 @@
+# Prompt: Implementar Autocomplete em Todos os Dropdowns
+
+## Funcionalidade Solicitada
+
+Implementar autocomplete (busca/filtro) em todos os dropdowns do sistema InventoryMaster para facilitar a seleção quando há muitas opções.
+
+## Como Deve Funcionar
+
+### Comportamento Esperado
+- Usuário digita no dropdown
+- Sistema filtra opções em tempo real
+- Mostra apenas itens que contêm o texto digitado
+- Busca funciona em qualquer parte do nome (não apenas no início)
+
+### Exemplo Prático
+**Dropdown de Material:**
+- Lista completa: "Disco de Corte 7", "Disco de Corte 9", "Martelo", "Mouse", "Teclado"
+- Usuário digita: "disc"
+- Resultado filtrado: "Disco de Corte 7", "Disco de Corte 9"z
+- Usuário digita: "corte 7"
+- Resultado filtrado: "Disco de Corte 7"
+
+## Dropdowns que Precisam de Autocomplete
+
+### 1. Entrada de Material
+- **Material**: Filtrar por nome do material
+- **Funcionário**: Filtrar por nome do funcionário
+- **Origem**: Filtrar fornecedores (quando aplicável)
+
+### 2. Saída de Material
+- **Material**: Filtrar por nome do material
+- **Funcionário**: Filtrar por nome do funcionário
+- **Centro de Custo**: Filtrar por código ou nome do centro
+
+### 3. Cadastros
+- **Funcionário**: Filtrar por nome
+- **Fornecedor**: Filtrar por nome
+- **Centro de Custo**: Filtrar por código ou nome
+- **Categoria**: Filtrar por nome da categoria
+
+### 4. Relatórios e Filtros
+- **Centro de Custo**: Filtrar por código ou nome
+- **Funcionário**: Filtrar por nome
+- **Material**: Filtrar por nome
+- **Categoria**: Filtrar por nome
+- **Fornecedor**: Filtrar por nome
+
+## Especificações Técnicas
+
+### Critérios de Busca
+- **Case insensitive**: "DISC", "disc", "Disc" devem funcionar igual
+- **Busca parcial**: Encontrar texto em qualquer parte do nome
+- **Múltiplas palavras**: "corte 7" deve encontrar "Disco de Corte 7"
+- **Acentos**: Ignorar acentos na busca (opcional)
+
+### Interface
+- **Campo editável**: Usuário pode digitar no dropdown
+- **Lista dinâmica**: Opções filtradas aparecem abaixo
+- **Seleção**: Clicar na opção ou usar setas do teclado
+- **Limpar**: Opção para limpar e ver todas as opções novamente
+
+### Performance
+- **Busca instantânea**: Filtrar conforme usuário digita
+- **Mínimo de caracteres**: Começar a filtrar a partir de 1 caractere
+- **Limite de resultados**: Mostrar no máximo 10-15 resultados por vez
+
+## Casos de Uso Detalhados
+
+### Caso 1: Seleção de Material
+**Cenário**: Usuário precisa selecionar "Disco de Corte 7" entre 50 materiais
+**Ação**: Digita "disc"
+**Resultado**: Lista mostra apenas discos de corte
+**Benefício**: Encontra rapidamente sem rolar lista longa
+
+### Caso 2: Seleção de Funcionário
+**Cenário**: Usuário precisa selecionar "João Silva" entre 30 funcionários
+**Ação**: Digita "joão" ou "silva"
+**Resultado**: Lista mostra apenas funcionários com esse nome
+**Benefício**: Localização rápida por nome ou sobrenome
+
+### Caso 3: Seleção de Centro de Custo
+**Cenário**: Usuário precisa selecionar "MANUT001 - Manutenção Predial"
+**Ação**: Digita "manut" ou "001" ou "predial"
+**Resultado**: Lista mostra centros relacionados à manutenção
+**Benefício**: Busca por código ou descrição
+
+### Caso 4: Filtros de Relatório
+**Cenário**: Usuário quer filtrar relatório por material específico
+**Ação**: Digita parte do nome do material
+**Resultado**: Dropdown filtra materiais relevantes
+**Benefício**: Filtros mais eficientes
+
+## Prioridade de Implementação
+
+### Alta Prioridade
+1. **Material** (Entrada e Saída) - Usado constantemente
+2. **Funcionário** (Entrada e Saída) - Lista pode ser longa
+3. **Centro de Custo** (Saída e Relatórios) - Códigos difíceis de lembrar
+
+### Média Prioridade
+4. **Fornecedor** (Entrada) - Lista pode crescer
+5. **Categoria** (Cadastros e Filtros) - Organização
+6. **Filtros de Relatórios** - Melhoria de UX
+
+## Comportamentos Especiais
+
+### Quando Não Encontrar Resultados
+- Mostrar mensagem: "Nenhum item encontrado"
+- Permitir limpar busca para ver todas as opções
+- Sugerir verificar ortografia
+
+### Seleção Rápida
+- **Enter**: Selecionar primeiro item da lista filtrada
+- **Setas**: Navegar pelos resultados
+- **Esc**: Fechar dropdown sem selecionar
+
+### Múltiplas Palavras
+- "disco corte" deve encontrar "Disco de Corte 7"
+- "joão silva" deve encontrar "João Silva Santos"
+- Ordem das palavras não deve importar
+
+## Resultado Esperado
+
+### Experiência do Usuário
+- **Mais rápido**: Encontrar itens sem rolar listas longas
+- **Mais fácil**: Digitar é mais rápido que procurar visualmente
+- **Menos erros**: Reduz seleções incorretas
+- **Mais produtivo**: Operações mais ágeis
+
+### Casos Práticos Melhorados
+- Entrada de material com 100+ itens: encontrar rapidamente
+- Seleção de funcionário em empresa grande: busca por nome
+- Centro de custo com códigos: busca por descrição
+- Relatórios: filtros mais eficientes
+
+## Implementação Solicitada
+
+Por favor, implementar autocomplete/busca em todos os dropdowns do sistema conforme especificado acima. A funcionalidade deve:
+
+1. **Filtrar em tempo real** conforme usuário digita
+2. **Buscar em qualquer parte** do texto (não apenas início)
+3. **Ignorar maiúsculas/minúsculas** na busca
+4. **Funcionar em todos os dropdowns** listados
+5. **Manter interface intuitiva** e responsiva
+
+Priorizar primeiro os dropdowns de Material, Funcionário e Centro de Custo por serem os mais utilizados no dia a dia do sistema.
+

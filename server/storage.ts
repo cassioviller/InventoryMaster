@@ -460,19 +460,11 @@ export class DatabaseStorage implements IStorage {
   async searchMaterials(query: string, ownerId?: number): Promise<Material[]> {
     try {
       const conditions = [
-        or(
-          ilike(materials.name, `%${query}%`),
-          ilike(materials.description, `%${query}%`),
-          ilike(materials.sku, `%${query}%`)
-        )
+        ilike(materials.name, `%${query}%`)
       ];
       if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
       
-      return await db
-        .select()
-        .from(materials)
-        .leftJoin(categories, eq(materials.categoryId, categories.id))
-        .where(and(...conditions));
+      return await db.select().from(materials).where(and(...conditions));
     } catch (error) {
       console.error('Error searching materials:', error);
       throw new Error('Failed to search materials');

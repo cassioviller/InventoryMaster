@@ -8,7 +8,7 @@ import {
   type MaterialWithDetails, type MovementWithDetails, type CostCenter, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike, ne, isNotNull } from "drizzle-orm";
+import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike, ne, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -33,7 +33,7 @@ export interface IStorage {
   getMaterial(id: number, ownerId?: number): Promise<Material | undefined>;
   createMaterial(insertMaterial: InsertMaterial): Promise<Material>;
   updateMaterial(id: number, updateMaterial: Partial<InsertMaterial>, ownerId?: number): Promise<Material | undefined>;
-  deleteMaterial(id: number, ownerId?: number): Promise<boolean>;
+  deleteMaterial(id: number, ownerId?: number): Promise<{ success: boolean; message?: string }>;
   getLowStockMaterials(ownerId?: number): Promise<MaterialWithDetails[]>;
 
   // Supplier methods
@@ -263,16 +263,32 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0 ? result[0] : undefined;
   }
 
-  async deleteMaterial(id: number, ownerId?: number): Promise<boolean> {
+  async deleteMaterial(id: number, ownerId?: number): Promise<{ success: boolean; message?: string }> {
     try {
+      // Check if material has movements
+      const movementsCount = await db
+        .select({ count: sql<number>`count(*)` })
+        .from(materialMovements)
+        .where(eq(materialMovements.materialId, id));
+      
+      if (movementsCount[0]?.count > 0) {
+        return {
+          success: false,
+          message: `Não é possível excluir este material pois ele possui ${movementsCount[0].count} movimentação(ões) registrada(s). Exclua as movimentações primeiro.`
+        };
+      }
+
       const conditions = [eq(materials.id, id)];
       if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
 
-      await db.delete(materials).where(and(...conditions));
-      return true;
+      const result = await db.delete(materials).where(and(...conditions));
+      return { success: true };
     } catch (error) {
       console.error('Error deleting material:', error);
-      return false;
+      return { 
+        success: false, 
+        message: 'Erro interno ao excluir material' 
+      };
     }
   }
 

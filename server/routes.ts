@@ -469,7 +469,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Material not found" });
       }
 
-      await storage.deleteMaterial(id, ownerId);
+      const result = await storage.deleteMaterial(id, ownerId);
+      
+      if (!result.success) {
+        return res.status(400).json({ message: result.message });
+      }
+
       res.status(204).send();
     } catch (error) {
       res.status(400).json({ message: "Failed to delete material" });

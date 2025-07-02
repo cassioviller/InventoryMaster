@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect, useSearchableSelectOptions } from '@/components/ui/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { ShoppingCart, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -101,6 +102,13 @@ export default function MaterialEntry() {
   const employees = employeesData || [];
   const thirdParties = thirdPartiesData || [];
   const costCenters = costCentersData || [];
+
+  // Preparar opções para SearchableSelect
+  const materialOptions = useSearchableSelectOptions(materials, 'id', 'name', ['name', 'description']);
+  const supplierOptions = useSearchableSelectOptions(suppliers, 'id', 'name', ['name', 'contact']);
+  const employeeOptions = useSearchableSelectOptions(employees, 'id', 'name', ['name', 'department', 'position']);
+  const thirdPartyOptions = useSearchableSelectOptions(thirdParties, 'id', 'name', ['name', 'contact']);
+  const costCenterOptions = useSearchableSelectOptions(costCenters, 'id', 'name', ['code', 'name', 'description', 'department']);
 
   const createEntryMutation = useMutation({
     mutationFn: async (data: CreateEntry) => {
@@ -394,20 +402,16 @@ export default function MaterialEntry() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Fornecedor *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um fornecedor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {suppliers?.map((supplier: any) => (
-                          <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        options={supplierOptions}
+                        value={field.value?.toString()}
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        placeholder="Selecione um fornecedor"
+                        searchPlaceholder="Buscar fornecedor..."
+                        emptyText="Nenhum fornecedor encontrado"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -422,20 +426,16 @@ export default function MaterialEntry() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Funcionário *</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um funcionário" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {employees?.map((employee: any) => (
-                            <SelectItem key={employee.id} value={employee.id.toString()}>
-                              {employee.name} - {employee.department}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <SearchableSelect
+                          options={employeeOptions}
+                          value={field.value?.toString()}
+                          onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                          placeholder="Selecione um funcionário"
+                          searchPlaceholder="Buscar funcionário..."
+                          emptyText="Nenhum funcionário encontrado"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -446,20 +446,16 @@ export default function MaterialEntry() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Centro de Custo *</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um centro de custo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {costCenters?.map((center: any) => (
-                            <SelectItem key={center.id} value={center.id.toString()}>
-                              {center.code} - {center.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <SearchableSelect
+                          options={costCenterOptions}
+                          value={field.value?.toString()}
+                          onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                          placeholder="Selecione um centro de custo"
+                          searchPlaceholder="Buscar centro de custo..."
+                          emptyText="Nenhum centro de custo encontrado"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}

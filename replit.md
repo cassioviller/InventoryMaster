@@ -94,7 +94,34 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (01/07/2025 - 15:25)
+## Status Atual (02/07/2025 - 10:50)
+**SISTEMA CRUD DE MOVIMENTAÇÕES IMPLEMENTADO COMPLETAMENTE**:
+- ✅ **PROBLEMA ORIGINAL RESOLVIDO**: Estoque inconsistente após exclusões manuais no DbGate corrigido - DISCO DE CORTE 7 de 235 para 6 unidades corretas
+- ✅ **SISTEMA CRUD COMPLETO**: Nova página `/movements-management` com interface completa para gerenciar movimentações
+- ✅ **FUNCIONALIDADES IMPLEMENTADAS**:
+  * Listagem de todas as movimentações com filtros avançados (material, tipo, busca textual)
+  * Exclusão de movimentações com confirmação e recálculo automático de estoque
+  * Botão para recalcular todos os estoques manualmente
+  * Interface responsiva com detalhes completos (fornecedor, funcionário, centro de custo)
+- ✅ **API BACKEND COMPLETA**:
+  * `DELETE /api/movements/:id` - exclusão segura com recálculo automático
+  * `POST /api/materials/recalculate-all-stocks` - recálculo global de estoques
+  * `POST /api/materials/:id/recalculate-stock` - recálculo individual por material
+- ✅ **VALIDAÇÕES E SEGURANÇA**:
+  * Isolamento multi-tenant (usuários só veem suas próprias movimentações)
+  * Confirmação obrigatória antes de exclusões
+  * Recálculo automático baseado em movimentações existentes (não nos valores de estoque)
+  * Logs detalhados para auditoria
+- ✅ **NAVEGAÇÃO INTEGRADA**: Novo menu "Gerenciar Movimentações" disponível para todos os usuários
+- ✅ **TESTES VALIDADOS**: Exclusão da movimentação ID 101 testada com sucesso - estoque recalculado de 8 para 6 unidades
+
+**BENEFÍCIOS DO SISTEMA**:
+- Evita manipulação direta no banco de dados (DbGate)
+- Mantém integridade automática dos estoques
+- Interface amigável para administração de dados
+- Auditoria completa de todas as operações
+
+## Status Anterior (01/07/2025 - 15:25)
 **PROBLEMA DE ORDENAÇÃO DE MOVIMENTAÇÕES CORRIGIDO COMPLETAMENTE**:
 - ✅ **BUG IDENTIFICADO E RESOLVIDO**: Entradas criadas com data string (ex: "2025-07-01") eram processadas como meia-noite UTC (00:00:00), causando ordenação inconsistente no relatório de movimentações
 - ✅ **CORREÇÃO IMPLEMENTADA EM createEntry()**: Campo `date` agora sempre usa `new Date()` (timestamp atual) em vez de processar data fornecida pelo frontend

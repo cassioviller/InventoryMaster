@@ -107,10 +107,17 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
   * Material Entry: Fornecedor, Material, Centro de Custo com busca
   * Material Exit: Funcionário, Terceiro, Centro de Custo, Material com busca
   * Cost Center Reports: Centro de Custo com busca por código, nome, departamento
+  * **Movement Reports (Relatórios de Movimentações)**: Todos os 5 filtros implementados
+    - Centro de Custo: Busca por código, nome, departamento, responsável
+    - Fornecedor: Busca por nome, contato, email
+    - Material: Busca por nome, descrição, unidade
+    - Categoria: Busca por nome, descrição
+    - Funcionário: Busca por nome, departamento, posição, contato
 - ✅ **BUSCA MULTI-CAMPO IMPLEMENTADA**: Busca por múltiplos campos (nome, código, departamento, etc.)
 - ✅ **HOOK PERSONALIZADO**: useSearchableSelectOptions para conversão automática de dados
 - ✅ **INTERFACE APRIMORADA**: Placeholder personalizado, texto de vazio, busca instantânea
 - ✅ **PERFORMANCE OTIMIZADA**: Debounce automático na busca para melhor UX
+- ✅ **COBERTURA COMPLETA**: Sistema 100% implementado em todas as páginas solicitadas
 
 **SISTEMA COMPLETO DE CRUD E EXPORTAÇÃO MANTIDO**:
 - ✅ **CRUD TOTALMENTE FUNCIONAL**: Sistema CRUD para todas entidades (Materiais, Categorias, Funcionários, Fornecedores, Terceiros, Centros de Custo)

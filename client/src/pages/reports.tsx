@@ -294,73 +294,49 @@ export default function Reports() {
             {/* Supplier Filter */}
             <div className="space-y-2">
               <Label htmlFor="supplier">Fornecedor</Label>
-              <Select value={filters.supplierId || 'all'} onValueChange={(value) => handleFilterChange('supplierId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os fornecedores" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os fornecedores</SelectItem>
-                  {Array.isArray(suppliers) && suppliers.map((supplier: any) => (
-                    <SelectItem key={supplier.id} value={supplier.id.toString()}>
-                      {supplier.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={supplierOptions}
+                value={filters.supplierId}
+                onValueChange={(value) => handleFilterChange('supplierId', value)}
+                placeholder="Buscar fornecedor..."
+                emptyText="Nenhum fornecedor encontrado"
+              />
             </div>
 
             {/* Material Filter */}
             <div className="space-y-2">
               <Label htmlFor="material">Material</Label>
-              <Select value={filters.materialId || 'all'} onValueChange={(value) => handleFilterChange('materialId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os materiais" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os materiais</SelectItem>
-                  {Array.isArray(materials) && materials.map((material: any) => (
-                    <SelectItem key={material.id} value={material.id.toString()}>
-                      {material.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={materialOptions}
+                value={filters.materialId}
+                onValueChange={(value) => handleFilterChange('materialId', value)}
+                placeholder="Buscar material..."
+                emptyText="Nenhum material encontrado"
+              />
             </div>
 
             {/* Category Filter */}
             <div className="space-y-2">
               <Label htmlFor="category">Categoria</Label>
-              <Select value={filters.categoryId || 'all'} onValueChange={(value) => handleFilterChange('categoryId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todas as categorias" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as categorias</SelectItem>
-                  {Array.isArray(categories) && categories.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={categoryOptions}
+                value={filters.categoryId}
+                onValueChange={(value) => handleFilterChange('categoryId', value)}
+                placeholder="Buscar categoria..."
+                emptyText="Nenhuma categoria encontrada"
+              />
             </div>
 
             {/* Employee Filter */}
             <div className="space-y-2">
               <Label htmlFor="employee">Funcionário</Label>
-              <Select value={filters.employeeId || 'all'} onValueChange={(value) => handleFilterChange('employeeId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Todos os funcionários" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os funcionários</SelectItem>
-                  {Array.isArray(employees) && employees.map((employee: any) => (
-                    <SelectItem key={employee.id} value={employee.id.toString()}>
-                      {employee.name} - {employee.department}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <SearchableSelect
+                options={employeeOptions}
+                value={filters.employeeId}
+                onValueChange={(value) => handleFilterChange('employeeId', value)}
+                placeholder="Buscar funcionário..."
+                emptyText="Nenhum funcionário encontrado"
+              />
             </div>
           </div>
 

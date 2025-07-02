@@ -1031,6 +1031,29 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
     }
   });
 
+  // Movement management routes
+  app.delete('/api/movements/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const movementId = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      if (isNaN(movementId)) {
+        return res.status(400).json({ error: 'Invalid movement ID' });
+      }
+
+      const success = await storage.deleteMovement(movementId, ownerId);
+      
+      if (!success) {
+        return res.status(404).json({ error: 'Movement not found' });
+      }
+      
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting movement:', error);
+      res.status(500).json({ error: 'Failed to delete movement' });
+    }
+  });
+
   app.get("/api/cost-centers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;

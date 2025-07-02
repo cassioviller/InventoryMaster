@@ -83,6 +83,9 @@ export interface IStorage {
   recalculateStock(materialId: number): Promise<number>;
   recalculateAllStocks(ownerId?: number): Promise<void>;
 
+  // Movement management methods
+  deleteMovement(id: number, ownerId?: number): Promise<boolean>;
+
   // Report methods
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
   getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number, costCenterId?: number): Promise<any[]>;
@@ -1617,6 +1620,46 @@ export class DatabaseStorage implements IStorage {
     }
     
     console.log(`Recalculated stocks for ${materialsList.length} materials`);
+  }
+
+  // Delete movement and recalculate stock
+  async deleteMovement(id: number, ownerId?: number): Promise<boolean> {
+    try {
+      console.log(`Deleting movement ${id}`);
+      
+      // First, get the movement details before deleting
+      const conditions = [eq(materialMovements.id, id)];
+      if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
+      
+      const [movement] = await db
+        .select({
+          materialId: materialMovements.materialId,
+          type: materialMovements.type,
+          quantity: materialMovements.quantity,
+        })
+        .from(materialMovements)
+        .where(and(...conditions));
+
+      if (!movement) {
+        console.log(`Movement ${id} not found`);
+        return false;
+      }
+
+      // Delete the movement
+      const result = await db
+        .delete(materialMovements)
+        .where(and(...conditions));
+
+      console.log(`Movement ${id} deleted, recalculating stock for material ${movement.materialId}`);
+      
+      // Recalculate stock for the affected material
+      await this.recalculateStock(movement.materialId);
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting movement:', error);
+      return false;
+    }
   }
 
   async getCostCenterReport(costCenterId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {

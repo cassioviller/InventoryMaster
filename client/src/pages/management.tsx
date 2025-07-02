@@ -273,10 +273,20 @@ export default function Management() {
                       'Usuário'} excluído com sucesso.`,
       });
 
-      // Force refetch by invalidating and immediately refetching
+      // Force cache clear and refetch
       const queryKey = type === 'third-party' ? '/api/third-parties' : `/api/${type}s`;
+      
+      // Remove all cache entries for this query
+      queryClient.removeQueries({ queryKey: [queryKey] });
+      
+      // Invalidate all queries to force refetch
       await queryClient.invalidateQueries({ queryKey: [queryKey] });
-      await queryClient.refetchQueries({ queryKey: [queryKey] });
+      
+      // Force immediate refetch
+      await queryClient.refetchQueries({ 
+        queryKey: [queryKey],
+        type: 'active'
+      });
     } catch (error) {
       console.error('Error deleting item:', error);
       toast({

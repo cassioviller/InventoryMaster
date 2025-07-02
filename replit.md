@@ -98,8 +98,9 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 **PROBLEMA DE EXCLUSÃO CORRIGIDO E SISTEMA COMPLETO**:
 - ✅ **BUG DE EXCLUSÃO RESOLVIDO**: Cache infinito do React Query estava impedindo atualização da interface
 - ✅ **CONFIRMAÇÃO DE EXCLUSÃO ADICIONADA**: Diálogo de confirmação antes de excluir qualquer item
-- ✅ **ATUALIZAÇÃO FORÇADA IMPLEMENTADA**: RefetchQueries após invalidateQueries para garantir atualização
-- ✅ **EXCLUSÃO FUNCIONANDO**: Testado na API (curl) e corrigido no frontend
+- ✅ **CACHE FORÇADAMENTE REMOVIDO**: Implementado removeQueries() + invalidateQueries() + refetchQueries()
+- ✅ **EXCLUSÃO FUNCIONANDO**: API confirmada funcionando, frontend com limpeza agressiva de cache
+- ✅ **VALIDAÇÃO COMPLETA**: Categoria "abc" removida com sucesso da base de dados
 
 **SISTEMA COMPLETO DE AUTOCOMPLETE IMPLEMENTADO**:
 - ✅ **COMPONENTE SEARCHABLESELECT CRIADO**: Componente reutilizável com busca em tempo real

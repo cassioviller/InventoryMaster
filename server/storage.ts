@@ -1689,16 +1689,13 @@ export class DatabaseStorage implements IStorage {
     } else {
       // Se nenhum centro específico, mostra todas saídas e devoluções que tenham centro de custo
       conditions.push(
-        and(
-          ne(materialMovements.costCenterId, null),
-          or(
-            eq(materialMovements.type, 'exit'),
-            and(
-              eq(materialMovements.type, 'entry'),
-              or(
-                eq(materialMovements.originType, 'employee_return'),
-                eq(materialMovements.originType, 'third_party_return')
-              )
+        or(
+          eq(materialMovements.type, 'exit'),
+          and(
+            eq(materialMovements.type, 'entry'),
+            or(
+              eq(materialMovements.originType, 'employee_return'),
+              eq(materialMovements.originType, 'third_party_return')
             )
           )
         )

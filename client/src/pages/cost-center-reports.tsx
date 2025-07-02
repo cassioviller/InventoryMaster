@@ -17,6 +17,7 @@ export default function CostCenterReports() {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [reportType, setReportType] = useState<string>("movements");
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Fetch cost centers
   const { data: costCenters = [] } = useQuery({
@@ -123,13 +124,23 @@ export default function CostCenterReports() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todos os centros</SelectItem>
-                {costCenters.map((center: any) => (
+                {Array.isArray(costCenters) && costCenters.map((center: any) => (
                   <SelectItem key={center.id} value={center.id.toString()}>
                     {center.code} - {center.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="search">Buscar</Label>
+            <Input
+              id="search"
+              placeholder="Buscar por material, observações..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
 
           <div className="space-y-2">

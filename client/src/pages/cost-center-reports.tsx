@@ -68,6 +68,22 @@ export default function CostCenterReports() {
     return `R$ ${value.toFixed(2).replace('.', ',')}`;
   };
 
+  // Filter data based on search term
+  const filterData = (data: any[]) => {
+    if (!searchTerm.trim()) return data;
+    
+    return data.filter((item: any) => {
+      const searchText = searchTerm.toLowerCase();
+      return (
+        item.material?.name?.toLowerCase().includes(searchText) ||
+        item.notes?.toLowerCase().includes(searchText) ||
+        item.costCenter?.code?.toLowerCase().includes(searchText) ||
+        item.costCenter?.name?.toLowerCase().includes(searchText) ||
+        item.displayType?.toLowerCase().includes(searchText)
+      );
+    });
+  };
+
   const exportToCSV = () => {
     const data = reportType === "movements" ? movementsData : reportData;
     const csvContent = [
@@ -274,7 +290,7 @@ export default function CostCenterReports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(reportType === "movements" ? movementsData : reportData).map((movement: any) => {
+                  {filterData(reportType === "movements" ? movementsData : reportData).map((movement: any) => {
                     const unitPrice = parseFloat(movement.unitPrice || '0');
                     const totalValue = movement.quantity * unitPrice;
                     
@@ -284,8 +300,8 @@ export default function CostCenterReports() {
                           {format(new Date(movement.createdAt), "dd/MM/yyyy", { locale: ptBR })}
                         </TableCell>
                         <TableCell>
-                          <Badge variant={movement.type === 'entry' ? 'default' : 'secondary'}>
-                            {movement.type === 'entry' ? 'Entrada' : 'Saída'}
+                          <Badge variant={movement.displayType === 'Devolução' ? 'outline' : movement.type === 'entry' ? 'default' : 'secondary'}>
+                            {movement.displayType || (movement.type === 'entry' ? 'Entrada' : 'Saída')}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">

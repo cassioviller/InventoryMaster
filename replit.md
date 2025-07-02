@@ -94,7 +94,20 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (02/07/2025 - 10:50)
+## Status Atual (02/07/2025 - 11:27)
+**CORREÇÕES CRÍTICAS DE PRODUÇÃO IMPLEMENTADAS COMPLETAMENTE**:
+- ✅ **RELATÓRIO CENTRO DE CUSTOS CORRIGIDO**: Devolução aparece como "Devolução" (não mais "Entrada")
+- ✅ **FILTRO DE CENTRO DE CUSTO FUNCIONAL**: Entradas de fornecedor não aparecem mais quando centro específico selecionado
+- ✅ **SISTEMA DE BUSCA IMPLEMENTADO**: Campo de busca funcionando por material, observações, centro de custo
+- ✅ **LÓGICA DE FILTROS APRIMORADA**: Centro de custos mostra apenas saídas e devoluções (nunca entradas de fornecedor)
+- ✅ **INTERFACE MELHORADA**: displayType correto em todos os relatórios
+- ✅ **VALIDAÇÃO CONFIRMADA**: API retorna "displayType":"Devolução" e "displayType":"Saída" corretamente
+- ✅ **PROBLEMAS DE PRODUÇÃO RESOLVIDOS**: 
+  * Filtro de centro não funcionar → CORRIGIDO
+  * Devolução aparecer como entrada → CORRIGIDO
+  * Sistema de busca não funcionar → IMPLEMENTADO
+
+## Status Anterior (02/07/2025 - 10:50)
 **SISTEMA CRUD DE MOVIMENTAÇÕES IMPLEMENTADO COMPLETAMENTE**:
 - ✅ **PROBLEMA ORIGINAL RESOLVIDO**: Estoque inconsistente após exclusões manuais no DbGate corrigido - DISCO DE CORTE 7 de 235 para 6 unidades corretas
 - ✅ **SISTEMA CRUD COMPLETO**: Nova página `/movements-management` com interface completa para gerenciar movimentações

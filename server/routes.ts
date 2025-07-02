@@ -386,7 +386,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/materials", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const materials = await storage.getMaterials(ownerId);
+      const search = req.query.search as string;
+      
+      let materials;
+      if (search) {
+        materials = await storage.searchMaterials(search, ownerId);
+      } else {
+        materials = await storage.getMaterials(ownerId);
+      }
+      
       res.json(materials);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch materials" });
@@ -580,7 +588,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/third-parties", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const thirdParties = await storage.getThirdParties(ownerId);
+      const search = req.query.search as string;
+      
+      let thirdParties;
+      if (search) {
+        thirdParties = await storage.searchThirdParties(search, ownerId);
+      } else {
+        thirdParties = await storage.getThirdParties(ownerId);
+      }
+      
       res.json(thirdParties);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch third parties" });

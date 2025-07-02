@@ -457,6 +457,46 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async searchMaterials(query: string, ownerId?: number): Promise<Material[]> {
+    try {
+      const conditions = [
+        or(
+          ilike(materials.name, `%${query}%`),
+          ilike(materials.description, `%${query}%`),
+          ilike(materials.sku, `%${query}%`)
+        )
+      ];
+      if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
+      
+      return await db
+        .select()
+        .from(materials)
+        .leftJoin(categories, eq(materials.categoryId, categories.id))
+        .where(and(...conditions));
+    } catch (error) {
+      console.error('Error searching materials:', error);
+      throw new Error('Failed to search materials');
+    }
+  }
+
+  async searchThirdParties(query: string, ownerId?: number): Promise<ThirdParty[]> {
+    try {
+      const conditions = [
+        or(
+          ilike(thirdParties.name, `%${query}%`),
+          ilike(thirdParties.document, `%${query}%`),
+          ilike(thirdParties.email, `%${query}%`)
+        )
+      ];
+      if (ownerId) conditions.push(eq(thirdParties.ownerId, ownerId));
+      
+      return await db.select().from(thirdParties).where(and(...conditions));
+    } catch (error) {
+      console.error('Error searching third parties:', error);
+      throw new Error('Failed to search third parties');
+    }
+  }
+
   // Third party methods
   async getThirdParties(ownerId?: number): Promise<ThirdParty[]> {
     const conditions = ownerId ? eq(thirdParties.ownerId, ownerId) : undefined;

@@ -53,6 +53,11 @@ const navItems = [
     label: 'Relatórios por Centro',
     icon: FileText,
   },
+  {
+    path: '/movements-management',
+    label: 'Gerenciar Movimentações',
+    icon: Settings,
+  },
 ];
 
 export function Navigation() {

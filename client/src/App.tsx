@@ -19,6 +19,7 @@ import CostCenterReports from "@/pages/cost-center-reports";
 import EmployeeReturn from "@/pages/employee-return";
 import ThirdPartyReturn from "@/pages/third-party-return";
 import SuperAdminPanel from "@/pages/super-admin-panel";
+import MovementsManagement from "@/pages/movements-management";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -143,6 +144,14 @@ function Router() {
         <ProtectedRoute>
           <AuthenticatedLayout>
             <FinancialReport />
+          </AuthenticatedLayout>
+        </ProtectedRoute>
+      </Route>
+      
+      <Route path="/movements-management">
+        <ProtectedRoute>
+          <AuthenticatedLayout>
+            <MovementsManagement />
           </AuthenticatedLayout>
         </ProtectedRoute>
       </Route>

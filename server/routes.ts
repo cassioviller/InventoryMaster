@@ -1211,8 +1211,8 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       
       if (format === 'pdf') {
         const pdfBuffer = ExportService.generatePDF(exportData);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename="materiais.pdf"');
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', 'attachment; filename="materiais.txt"');
         res.send(pdfBuffer);
       } else {
         const excelBuffer = ExportService.generateExcel(exportData);

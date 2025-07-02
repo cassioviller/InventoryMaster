@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { db } from "./db";
+import { ExportService, EXPORT_CONFIGS } from "./export-utils";
 import {
   loginSchema,
   insertUserSchema,
@@ -1188,6 +1189,200 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
         message: "Failed to generate cost center report",
         error: process.env.NODE_ENV === 'development' ? error : undefined
       });
+    }
+  });
+
+  // Export routes for all entities
+  
+  // Materials export
+  app.get("/api/export/materials/:format", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const format = req.params.format as 'pdf' | 'excel';
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      const materials = await storage.getMaterials(ownerId);
+      const config = EXPORT_CONFIGS.materials;
+      
+      const exportData = {
+        ...config,
+        data: materials,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      };
+      
+      if (format === 'pdf') {
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="materiais.pdf"');
+        res.send(pdfBuffer);
+      } else {
+        const excelBuffer = ExportService.generateExcel(exportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="materiais.xlsx"');
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error('Error exporting materials:', error);
+      res.status(500).json({ message: "Failed to export materials" });
+    }
+  });
+
+  // Categories export
+  app.get("/api/export/categories/:format", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const format = req.params.format as 'pdf' | 'excel';
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      const categories = await storage.getCategories(ownerId);
+      const config = EXPORT_CONFIGS.categories;
+      
+      const exportData = {
+        ...config,
+        data: categories,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      };
+      
+      if (format === 'pdf') {
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="categorias.pdf"');
+        res.send(pdfBuffer);
+      } else {
+        const excelBuffer = ExportService.generateExcel(exportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="categorias.xlsx"');
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error('Error exporting categories:', error);
+      res.status(500).json({ message: "Failed to export categories" });
+    }
+  });
+
+  // Employees export
+  app.get("/api/export/employees/:format", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const format = req.params.format as 'pdf' | 'excel';
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      const employees = await storage.getEmployees(ownerId);
+      const config = EXPORT_CONFIGS.employees;
+      
+      const exportData = {
+        ...config,
+        data: employees,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      };
+      
+      if (format === 'pdf') {
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="funcionarios.pdf"');
+        res.send(pdfBuffer);
+      } else {
+        const excelBuffer = ExportService.generateExcel(exportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="funcionarios.xlsx"');
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error('Error exporting employees:', error);
+      res.status(500).json({ message: "Failed to export employees" });
+    }
+  });
+
+  // Suppliers export
+  app.get("/api/export/suppliers/:format", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const format = req.params.format as 'pdf' | 'excel';
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      const suppliers = await storage.getSuppliers(ownerId);
+      const config = EXPORT_CONFIGS.suppliers;
+      
+      const exportData = {
+        ...config,
+        data: suppliers,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      };
+      
+      if (format === 'pdf') {
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="fornecedores.pdf"');
+        res.send(pdfBuffer);
+      } else {
+        const excelBuffer = ExportService.generateExcel(exportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="fornecedores.xlsx"');
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error('Error exporting suppliers:', error);
+      res.status(500).json({ message: "Failed to export suppliers" });
+    }
+  });
+
+  // Third parties export
+  app.get("/api/export/third-parties/:format", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const format = req.params.format as 'pdf' | 'excel';
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      const thirdParties = await storage.getThirdParties(ownerId);
+      const config = EXPORT_CONFIGS.thirdParties;
+      
+      const exportData = {
+        ...config,
+        data: thirdParties,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      };
+      
+      if (format === 'pdf') {
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="terceiros.pdf"');
+        res.send(pdfBuffer);
+      } else {
+        const excelBuffer = ExportService.generateExcel(exportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="terceiros.xlsx"');
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error('Error exporting third parties:', error);
+      res.status(500).json({ message: "Failed to export third parties" });
+    }
+  });
+
+  // Cost centers export
+  app.get("/api/export/cost-centers/:format", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const format = req.params.format as 'pdf' | 'excel';
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      const costCenters = await storage.getCostCenters(ownerId);
+      const config = EXPORT_CONFIGS.costCenters;
+      
+      const exportData = {
+        ...config,
+        data: costCenters,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      };
+      
+      if (format === 'pdf') {
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="centros-de-custo.pdf"');
+        res.send(pdfBuffer);
+      } else {
+        const excelBuffer = ExportService.generateExcel(exportData);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', 'attachment; filename="centros-de-custo.xlsx"');
+        res.send(excelBuffer);
+      }
+    } catch (error) {
+      console.error('Error exporting cost centers:', error);
+      res.status(500).json({ message: "Failed to export cost centers" });
     }
   });
 

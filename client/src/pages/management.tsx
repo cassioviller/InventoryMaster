@@ -25,6 +25,7 @@ import { SupplierModal } from '@/components/modals/supplier-modal';
 import { ThirdPartyModal } from '@/components/modals/third-party-modal';
 import { UserModal } from '@/components/modals/user-modal';
 import { useAuth } from '@/hooks/use-auth';
+import { ExportButtons } from '@/components/ui/export-buttons';
 import type { Material, Category, Employee, Supplier, ThirdParty, User } from '@shared/schema';
 
 type ActiveTab = 'materials' | 'categories' | 'employees' | 'suppliers' | 'third-parties' | 'users';
@@ -800,16 +801,28 @@ export default function Management() {
               </Select>
             )}
 
-            <Button onClick={handleCreate} className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Novo{' '}
-              {activeTab === 'materials' ? 'Material' :
-               activeTab === 'categories' ? 'Categoria' :
-               activeTab === 'employees' ? 'Funcionário' :
-               activeTab === 'suppliers' ? 'Fornecedor' :
-               activeTab === 'third-parties' ? 'Terceiro' :
-               'Usuário'}
-            </Button>
+            <div className="flex items-center gap-2">
+              <ExportButtons
+                entityName={activeTab === 'third-parties' ? 'third-parties' : activeTab}
+                entityLabel={activeTab === 'materials' ? 'Materiais' :
+                           activeTab === 'categories' ? 'Categorias' :
+                           activeTab === 'employees' ? 'Funcionários' :
+                           activeTab === 'suppliers' ? 'Fornecedores' :
+                           activeTab === 'third-parties' ? 'Terceiros' :
+                           'Usuários'}
+              />
+              
+              <Button onClick={handleCreate} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Novo{' '}
+                {activeTab === 'materials' ? 'Material' :
+                 activeTab === 'categories' ? 'Categoria' :
+                 activeTab === 'employees' ? 'Funcionário' :
+                 activeTab === 'suppliers' ? 'Fornecedor' :
+                 activeTab === 'third-parties' ? 'Terceiro' :
+                 'Usuário'}
+              </Button>
+            </div>
           </div>
 
           {/* Tab Content */}

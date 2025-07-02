@@ -42,6 +42,7 @@ export interface IStorage {
   createSupplier(insertSupplier: InsertSupplier): Promise<Supplier>;
   updateSupplier(id: number, updateSupplier: Partial<InsertSupplier>, ownerId?: number): Promise<Supplier | undefined>;
   deleteSupplier(id: number, ownerId?: number): Promise<boolean>;
+  searchSuppliers(query: string, ownerId?: number): Promise<Supplier[]>;
 
   // Employee methods
   getEmployees(ownerId?: number): Promise<Employee[]>;
@@ -49,6 +50,7 @@ export interface IStorage {
   createEmployee(insertEmployee: InsertEmployee): Promise<Employee>;
   updateEmployee(id: number, updateEmployee: Partial<InsertEmployee>, ownerId?: number): Promise<Employee | undefined>;
   deleteEmployee(id: number, ownerId?: number): Promise<boolean>;
+  searchEmployees(query: string, ownerId?: number): Promise<Employee[]>;
 
   // Third party methods
   getThirdParties(ownerId?: number): Promise<ThirdParty[]>;
@@ -371,6 +373,24 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
+  async searchSuppliers(query: string, ownerId?: number): Promise<Supplier[]> {
+    try {
+      const conditions = [
+        or(
+          ilike(suppliers.name, `%${query}%`),
+          ilike(suppliers.cnpj, `%${query}%`),
+          ilike(suppliers.email, `%${query}%`)
+        )
+      ];
+      if (ownerId) conditions.push(eq(suppliers.ownerId, ownerId));
+      
+      return await db.select().from(suppliers).where(and(...conditions));
+    } catch (error) {
+      console.error('Error searching suppliers:', error);
+      throw new Error('Failed to search suppliers');
+    }
+  }
+
   // Employee methods
   async getEmployees(ownerId?: number): Promise<Employee[]> {
     try {
@@ -416,6 +436,24 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error deleting employee:', error);
       return false;
+    }
+  }
+
+  async searchEmployees(query: string, ownerId?: number): Promise<Employee[]> {
+    try {
+      const conditions = [
+        or(
+          ilike(employees.name, `%${query}%`),
+          ilike(employees.department, `%${query}%`),
+          ilike(employees.email, `%${query}%`)
+        )
+      ];
+      if (ownerId) conditions.push(eq(employees.ownerId, ownerId));
+      
+      return await db.select().from(employees).where(and(...conditions));
+    } catch (error) {
+      console.error('Error searching employees:', error);
+      throw new Error('Failed to search employees');
     }
   }
 

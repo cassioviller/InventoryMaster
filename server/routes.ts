@@ -471,12 +471,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Employee routes
   app.get("/api/employees", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      console.log('Fetching employees for user:', req.user);
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      console.log('Using ownerId:', ownerId);
+      const search = req.query.search as string;
       
-      const employeesList = await storage.getEmployees(ownerId);
-      console.log('Storage result:', employeesList);
+      let employeesList;
+      if (search) {
+        employeesList = await storage.searchEmployees(search, ownerId);
+      } else {
+        employeesList = await storage.getEmployees(ownerId);
+      }
+      
       res.json(employeesList || []);
     } catch (error) {
       console.error('Error fetching employees:', error);
@@ -523,7 +527,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/suppliers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
-      const suppliers = await storage.getSuppliers(ownerId);
+      const search = req.query.search as string;
+      
+      let suppliers;
+      if (search) {
+        suppliers = await storage.searchSuppliers(search, ownerId);
+      } else {
+        suppliers = await storage.getSuppliers(ownerId);
+      }
+      
       res.json(suppliers);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch suppliers" });

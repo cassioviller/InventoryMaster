@@ -21,7 +21,8 @@ export default function Reports() {
     costCenterId: '',
     supplierId: '',
     materialId: '',
-    categoryId: ''
+    categoryId: '',
+    employeeId: ''
   });
 
   // Helper functions
@@ -98,6 +99,17 @@ export default function Reports() {
     }
   });
 
+  const { data: employees } = useQuery({
+    queryKey: ['/api/employees'],
+    queryFn: async () => {
+      const response = await fetch('/api/employees', {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Failed to fetch employees');
+      return response.json();
+    }
+  });
+
   const { data: materials } = useQuery({
     queryKey: ['/api/materials'],
     queryFn: async () => {
@@ -124,7 +136,8 @@ export default function Reports() {
       costCenterId: '',
       supplierId: '',
       materialId: '',
-      categoryId: ''
+      categoryId: '',
+      employeeId: ''
     });
   };
 
@@ -295,6 +308,24 @@ export default function Reports() {
                   {Array.isArray(categories) && categories.map((category: any) => (
                     <SelectItem key={category.id} value={category.id.toString()}>
                       {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Employee Filter */}
+            <div className="space-y-2">
+              <Label htmlFor="employee">Funcionário</Label>
+              <Select value={filters.employeeId || 'all'} onValueChange={(value) => handleFilterChange('employeeId', value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Todos os funcionários" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os funcionários</SelectItem>
+                  {Array.isArray(employees) && employees.map((employee: any) => (
+                    <SelectItem key={employee.id} value={employee.id.toString()}>
+                      {employee.name} - {employee.department}
                     </SelectItem>
                   ))}
                 </SelectContent>

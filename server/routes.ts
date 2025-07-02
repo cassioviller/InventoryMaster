@@ -881,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 // Enhanced general movements report with totals and advanced filters
 app.get("/api/reports/general-movements-enhanced", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { startDate, endDate, type, costCenterId, supplierId, materialId, categoryId } = req.query;
+    const { startDate, endDate, type, costCenterId, supplierId, materialId, categoryId, employeeId } = req.query;
     const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
     
     let adjustedStartDate, adjustedEndDate;
@@ -902,7 +902,8 @@ app.get("/api/reports/general-movements-enhanced", authenticateToken, async (req
       costCenterId ? parseInt(costCenterId as string) : undefined,
       supplierId ? parseInt(supplierId as string) : undefined,
       materialId ? parseInt(materialId as string) : undefined,
-      categoryId ? parseInt(categoryId as string) : undefined
+      categoryId ? parseInt(categoryId as string) : undefined,
+      employeeId ? parseInt(employeeId as string) : undefined
     );
     
     res.json(report);

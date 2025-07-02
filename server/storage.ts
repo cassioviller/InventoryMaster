@@ -994,7 +994,8 @@ export class DatabaseStorage implements IStorage {
     costCenterId?: number,
     supplierId?: number,
     materialId?: number,
-    categoryId?: number
+    categoryId?: number,
+    employeeId?: number
   ): Promise<{
     movements: any[];
     totals: {
@@ -1014,6 +1015,14 @@ export class DatabaseStorage implements IStorage {
     if (costCenterId) conditions.push(eq(materialMovements.costCenterId, costCenterId));
     if (supplierId) conditions.push(eq(materialMovements.supplierId, supplierId));
     if (materialId) conditions.push(eq(materialMovements.materialId, materialId));
+    
+    // Employee filter (for both destination and return employees)
+    if (employeeId) {
+      conditions.push(or(
+        eq(materialMovements.destinationEmployeeId, employeeId),
+        eq(materialMovements.returnEmployeeId, employeeId)
+      ));
+    }
     
     // Type filter (including returns)
     if (type) {

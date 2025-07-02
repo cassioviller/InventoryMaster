@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { SearchableSelect, useSearchableSelectOptions } from "@/components/ui/searchable-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
@@ -23,6 +24,20 @@ export default function CostCenterReports() {
   const { data: costCenters = [] } = useQuery({
     queryKey: ["/api/cost-centers"],
   });
+
+  // Create options for SearchableSelect
+  const costCenterOptions = useSearchableSelectOptions(
+    costCenters,
+    'id',
+    'name',
+    ['code', 'name', 'department', 'responsible']
+  );
+
+  // Add "All" option to cost centers
+  const allCostCenterOptions = [
+    { value: 'all', label: 'Todos os centros', searchText: 'todos centros' },
+    ...costCenterOptions
+  ];
 
   // Fetch cost center report
   const { data: reportData = [], isLoading: reportLoading } = useQuery({
@@ -142,19 +157,14 @@ export default function CostCenterReports() {
         <CardContent className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div className="space-y-2">
             <Label htmlFor="costCenter">Centro de Custo</Label>
-            <Select value={selectedCostCenter} onValueChange={setSelectedCostCenter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar centro" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os centros</SelectItem>
-                {Array.isArray(costCenters) && costCenters.map((center: any) => (
-                  <SelectItem key={center.id} value={center.id.toString()}>
-                    {center.code} - {center.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <SearchableSelect
+              options={allCostCenterOptions}
+              value={selectedCostCenter}
+              onValueChange={setSelectedCostCenter}
+              placeholder="Selecionar centro"
+              searchPlaceholder="Buscar centro de custo..."
+              emptyText="Nenhum centro de custo encontrado"
+            />
           </div>
 
           <div className="space-y-2">

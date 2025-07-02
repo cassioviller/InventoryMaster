@@ -471,20 +471,16 @@ export default function MaterialExit() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Centro de Custo *</FormLabel>
-                  <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um centro de custo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {costCentersData?.map((costCenter: any) => (
-                        <SelectItem key={costCenter.id} value={costCenter.id.toString()}>
-                          {costCenter.code} - {costCenter.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FormControl>
+                    <SearchableSelect
+                      options={costCenterOptions}
+                      value={field.value?.toString()}
+                      onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                      placeholder="Selecione um centro de custo"
+                      searchPlaceholder="Buscar centro de custo..."
+                      emptyText="Nenhum centro de custo encontrado"
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -496,18 +492,17 @@ export default function MaterialExit() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                  <Select value={selectedMaterial} onValueChange={handleMaterialChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um material" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {materials?.map((material: any) => (
-                        <SelectItem key={material.id} value={material.id.toString()}>
-                          {material.name} (Estoque: {material.currentStock})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <SearchableSelect
+                    options={materialOptions.map(option => ({
+                      ...option,
+                      label: `${option.label} (Estoque: ${materials.find(m => m.id.toString() === option.value)?.currentStock || 0})`
+                    }))}
+                    value={selectedMaterial}
+                    onValueChange={handleMaterialChange}
+                    placeholder="Selecione um material"
+                    searchPlaceholder="Buscar material..."
+                    emptyText="Nenhum material encontrado"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>

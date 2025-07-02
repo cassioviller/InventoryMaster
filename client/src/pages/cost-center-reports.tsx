@@ -40,22 +40,24 @@ export default function CostCenterReports() {
       const unitPrice = parseFloat(item.unitPrice || '0');
       const totalValue = item.quantity * unitPrice;
       
-      if (item.type === 'entry') {
-        acc.totalEntries += totalValue;
-        acc.entryCount += 1;
-      } else {
+      // Verificar se é devolução (entrada com originType de devolução)
+      const isReturn = item.type === 'entry' && 
+        (item.originType === 'employee_return' || item.originType === 'third_party_return');
+      
+      if (isReturn) {
+        acc.totalReturns += totalValue;
+        acc.returnCount += 1;
+      } else if (item.type === 'exit') {
         acc.totalExits += totalValue;
         acc.exitCount += 1;
       }
       
-      acc.totalValue += totalValue;
       return acc;
     }, {
-      totalEntries: 0,
       totalExits: 0,
-      totalValue: 0,
-      entryCount: 0,
-      exitCount: 0
+      totalReturns: 0,
+      exitCount: 0,
+      returnCount: 0
     });
   };
 

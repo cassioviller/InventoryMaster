@@ -1668,6 +1668,18 @@ export class DatabaseStorage implements IStorage {
     if (startDate) conditions.push(gte(materialMovements.createdAt, startDate));
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
+    
+    // Centro de custo só mostra saídas e devoluções (não entradas de fornecedor)
+    conditions.push(or(
+      eq(materialMovements.type, 'exit'),
+      and(
+        eq(materialMovements.type, 'entry'),
+        or(
+          eq(materialMovements.originType, 'employee_return'),
+          eq(materialMovements.originType, 'third_party_return')
+        )
+      )
+    ));
 
     const movements = await db
       .select({
@@ -1677,8 +1689,15 @@ export class DatabaseStorage implements IStorage {
         unitPrice: materialMovements.unitPrice,
         notes: materialMovements.notes,
         createdAt: materialMovements.createdAt,
+        date: materialMovements.date,
+        originType: materialMovements.originType,
+        destinationType: materialMovements.destinationType,
         materialId: materialMovements.materialId,
         costCenterId: materialMovements.costCenterId,
+        destinationEmployeeId: materialMovements.destinationEmployeeId,
+        destinationThirdPartyId: materialMovements.destinationThirdPartyId,
+        returnEmployeeId: materialMovements.returnEmployeeId,
+        returnThirdPartyId: materialMovements.returnThirdPartyId,
         material: {
           id: materials.id,
           name: materials.name,
@@ -1695,11 +1714,12 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(materials, eq(materialMovements.materialId, materials.id))
       .leftJoin(costCenters, eq(materialMovements.costCenterId, costCenters.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
-      .orderBy(desc(materialMovements.createdAt));
+      .orderBy(desc(materialMovements.date), desc(materialMovements.createdAt));
 
     return movements.map(item => ({
       ...item,
-      totalValue: item.quantity * parseFloat(item.unitPrice || '0')
+      totalValue: item.quantity * parseFloat(item.unitPrice || '0'),
+      displayType: (item.originType === 'employee_return' || item.originType === 'third_party_return') ? 'Devolução' : 'Saída'
     }));
   }
 }

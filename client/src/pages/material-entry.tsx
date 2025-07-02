@@ -87,10 +87,20 @@ export default function MaterialEntry() {
     },
   });
 
+  const { data: costCentersData } = useQuery({
+    queryKey: ['/api/cost-centers'],
+    queryFn: async () => {
+      const res = await authenticatedRequest('/api/cost-centers');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+  });
+
   const materials = materialsData || [];
   const suppliers = suppliersData || [];
   const employees = employeesData || [];
   const thirdParties = thirdPartiesData || [];
+  const costCenters = costCentersData || [];
 
   const createEntryMutation = useMutation({
     mutationFn: async (data: CreateEntry) => {
@@ -405,30 +415,56 @@ export default function MaterialEntry() {
             )}
 
             {originType === 'employee_return' && (
-              <FormField
-                control={form.control}
-                name="returnEmployeeId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Funcionário *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um funcionário" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {employees?.map((employee: any) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            {employee.name} - {employee.department}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <>
+                <FormField
+                  control={form.control}
+                  name="returnEmployeeId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Funcionário *</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um funcionário" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {employees?.map((employee: any) => (
+                            <SelectItem key={employee.id} value={employee.id.toString()}>
+                              {employee.name} - {employee.department}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="costCenterId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Centro de Custo *</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione um centro de custo" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {costCenters?.map((center: any) => (
+                            <SelectItem key={center.id} value={center.id.toString()}>
+                              {center.code} - {center.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </>
             )}
 
             {originType === 'third_party_return' && (

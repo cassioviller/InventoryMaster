@@ -992,6 +992,45 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
   });
 
   // Cost Center routes
+  // Stock recalculation routes
+  app.post('/api/materials/:id/recalculate-stock', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const materialId = parseInt(req.params.id);
+      
+      if (isNaN(materialId)) {
+        return res.status(400).json({ error: 'Invalid material ID' });
+      }
+
+      const newStock = await storage.recalculateStock(materialId);
+      
+      res.json({ 
+        success: true, 
+        materialId, 
+        newStock,
+        message: `Stock recalculated: ${newStock} units`
+      });
+    } catch (error) {
+      console.error('Error recalculating stock:', error);
+      res.status(500).json({ error: 'Failed to recalculate stock' });
+    }
+  });
+
+  app.post('/api/materials/recalculate-all-stocks', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const user = req.user;
+      
+      await storage.recalculateAllStocks(user?.id);
+      
+      res.json({ 
+        success: true,
+        message: 'All stocks recalculated successfully'
+      });
+    } catch (error) {
+      console.error('Error recalculating all stocks:', error);
+      res.status(500).json({ error: 'Failed to recalculate all stocks' });
+    }
+  });
+
   app.get("/api/cost-centers", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;

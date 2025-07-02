@@ -79,6 +79,10 @@ export interface IStorage {
   updateCostCenter(id: number, updateCostCenter: Partial<InsertCostCenter>, ownerId?: number): Promise<CostCenter | undefined>;
   deleteCostCenter(id: number, ownerId?: number): Promise<boolean>;
 
+  // Stock recalculation methods
+  recalculateStock(materialId: number): Promise<number>;
+  recalculateAllStocks(ownerId?: number): Promise<void>;
+
   // Report methods
   getStockReport(categoryId?: number, ownerId?: number): Promise<any[]>;
   getGeneralMovementsReport(startDate?: Date, endDate?: Date, type?: 'entry' | 'exit', ownerId?: number, costCenterId?: number): Promise<any[]>;
@@ -1560,6 +1564,59 @@ export class DatabaseStorage implements IStorage {
       console.error('Error deleting cost center:', error);
       return false;
     }
+  }
+
+  // Recalculate material stock based on movements
+  async recalculateStock(materialId: number): Promise<number> {
+    console.log(`Recalculating stock for material ${materialId}`);
+    
+    // Get all movements for this material
+    const movements = await db
+      .select({
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+      })
+      .from(materialMovements)
+      .where(eq(materialMovements.materialId, materialId))
+      .orderBy(materialMovements.createdAt);
+
+    let calculatedStock = 0;
+    for (const movement of movements) {
+      if (movement.type === 'entry') {
+        calculatedStock += movement.quantity;
+      } else if (movement.type === 'exit') {
+        calculatedStock -= movement.quantity;
+      }
+    }
+
+    console.log(`Calculated stock for material ${materialId}: ${calculatedStock}`);
+
+    // Update material stock
+    await db
+      .update(materials)
+      .set({ currentStock: calculatedStock })
+      .where(eq(materials.id, materialId));
+
+    return calculatedStock;
+  }
+
+  // Recalculate all material stocks
+  async recalculateAllStocks(ownerId?: number): Promise<void> {
+    console.log('Recalculating all material stocks...');
+    
+    const conditions = [];
+    if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
+    
+    const materialsList = await db
+      .select({ id: materials.id, name: materials.name })
+      .from(materials)
+      .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+    for (const material of materialsList) {
+      await this.recalculateStock(material.id);
+    }
+    
+    console.log(`Recalculated stocks for ${materialsList.length} materials`);
   }
 
   async getCostCenterReport(costCenterId?: number, startDate?: Date, endDate?: Date, ownerId?: number): Promise<any[]> {

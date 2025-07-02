@@ -250,6 +250,15 @@ export default function Management() {
   };
 
   const handleDelete = async (id: number, type: string) => {
+    if (!confirm(`Tem certeza que deseja excluir este ${type === 'material' ? 'material' : 
+                      type === 'category' ? 'categoria' : 
+                      type === 'employee' ? 'funcionário' : 
+                      type === 'supplier' ? 'fornecedor' : 
+                      type === 'third-party' ? 'terceiro' : 
+                      'usuário'}?`)) {
+      return;
+    }
+
     try {
       const endpoint = type === 'third-party' ? 'third-parties' : `${type}s`;
       await apiRequest(`/api/${endpoint}/${id}`, 'DELETE');
@@ -264,12 +273,10 @@ export default function Management() {
                       'Usuário'} excluído com sucesso.`,
       });
 
-      // Invalidate cache for the specific entity type
-      if (type === 'third-party') {
-        queryClient.invalidateQueries({ queryKey: ['/api/third-parties'] });
-      } else {
-        queryClient.invalidateQueries({ queryKey: [`/api/${type}s`] });
-      }
+      // Force refetch by invalidating and immediately refetching
+      const queryKey = type === 'third-party' ? '/api/third-parties' : `/api/${type}s`;
+      await queryClient.invalidateQueries({ queryKey: [queryKey] });
+      await queryClient.refetchQueries({ queryKey: [queryKey] });
     } catch (error) {
       console.error('Error deleting item:', error);
       toast({

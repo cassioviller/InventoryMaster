@@ -8,6 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { SearchableSelect, useSearchableSelectOptions } from '@/components/ui/searchable-select';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { ShoppingCart, Plus, Trash2, Loader2 } from 'lucide-react';
@@ -94,6 +95,13 @@ export default function MaterialExit() {
   const materials = materialsData || [];
   const employees = employeesData || [];
   const thirdParties = thirdPartiesData || [];
+  const costCenters = costCentersData || [];
+
+  // Preparar opções para SearchableSelect
+  const materialOptions = useSearchableSelectOptions(materials, 'id', 'name', ['name', 'description']);
+  const employeeOptions = useSearchableSelectOptions(employees, 'id', 'name', ['name', 'department', 'position']);
+  const thirdPartyOptions = useSearchableSelectOptions(thirdParties, 'id', 'name', ['name', 'contact']);
+  const costCenterOptions = useSearchableSelectOptions(costCenters, 'id', 'name', ['code', 'name', 'description', 'department']);
 
   const createExitMutation = useMutation({
     mutationFn: async (data: CreateExit) => {
@@ -417,20 +425,16 @@ export default function MaterialExit() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Funcionário *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um funcionário" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {employees?.map((employee: any) => (
-                          <SelectItem key={employee.id} value={employee.id.toString()}>
-                            {employee.name} - {employee.department}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        options={employeeOptions}
+                        value={field.value?.toString()}
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        placeholder="Selecione um funcionário"
+                        searchPlaceholder="Buscar funcionário..."
+                        emptyText="Nenhum funcionário encontrado"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -444,20 +448,16 @@ export default function MaterialExit() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Terceiro *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um terceiro" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {thirdParties?.map((thirdParty: any) => (
-                          <SelectItem key={thirdParty.id} value={thirdParty.id.toString()}>
-                            {thirdParty.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        options={thirdPartyOptions}
+                        value={field.value?.toString()}
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        placeholder="Selecione um terceiro"
+                        searchPlaceholder="Buscar terceiro..."
+                        emptyText="Nenhum terceiro encontrado"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

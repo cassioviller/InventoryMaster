@@ -470,20 +470,16 @@ export default function MaterialEntry() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Terceiro *</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(parseInt(value))} value={field.value?.toString()}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um terceiro" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {thirdParties?.map((thirdParty: any) => (
-                          <SelectItem key={thirdParty.id} value={thirdParty.id.toString()}>
-                            {thirdParty.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <FormControl>
+                      <SearchableSelect
+                        options={thirdPartyOptions}
+                        value={field.value?.toString()}
+                        onValueChange={(value) => field.onChange(value ? parseInt(value) : null)}
+                        placeholder="Selecione um terceiro"
+                        searchPlaceholder="Buscar terceiro..."
+                        emptyText="Nenhum terceiro encontrado"
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -497,18 +493,14 @@ export default function MaterialEntry() {
               {/* Material Selection */}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
-                <Select value={selectedMaterial} onValueChange={handleMaterialChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um material" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {materials?.map((material: any) => (
-                      <SelectItem key={material.id} value={material.id.toString()}>
-                        {material.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableSelect
+                  options={materialOptions}
+                  value={selectedMaterial}
+                  onValueChange={handleMaterialChange}
+                  placeholder="Selecione um material"
+                  searchPlaceholder="Buscar material..."
+                  emptyText="Nenhum material encontrado"
+                />
               </div>
 
               {/* Lotes de Devolução - mostrar apenas para devoluções */}

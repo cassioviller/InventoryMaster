@@ -68,11 +68,19 @@ export default function CostCenterReports() {
     return `R$ ${value.toFixed(2).replace('.', ',')}`;
   };
 
-  // Filter data based on search term
+  // Filter data - only exits and returns, never supplier entries
   const filterData = (data: any[]) => {
-    if (!searchTerm.trim()) return data;
+    // First filter: only exits and returns (never supplier entries)
+    let filteredData = data.filter((item: any) => {
+      if (item.type === 'exit') return true;
+      if (item.type === 'entry' && (item.originType === 'employee_return' || item.originType === 'third_party_return')) return true;
+      return false;
+    });
     
-    return data.filter((item: any) => {
+    // Second filter: search term
+    if (!searchTerm.trim()) return filteredData;
+    
+    return filteredData.filter((item: any) => {
       const searchText = searchTerm.toLowerCase();
       return (
         item.material?.name?.toLowerCase().includes(searchText) ||

@@ -8,7 +8,7 @@ import {
   type MaterialWithDetails, type MovementWithDetails, type CostCenter, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike, ne } from "drizzle-orm";
+import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike, ne, isNotNull } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -1668,38 +1668,24 @@ export class DatabaseStorage implements IStorage {
     if (endDate) conditions.push(lte(materialMovements.createdAt, endDate));
     if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
     
-    // Centro de custo só mostra saídas e devoluções (não entradas de fornecedor)
-    // Se um centro específico for selecionado, filtra apenas movimentações COM centro de custo
-    if (costCenterId) {
-      conditions.push(
+    // Centro de custo - NUNCA mostrar entradas de fornecedor
+    // Apenas saídas (type = 'exit') ou devoluções (entry com originType = return)
+    conditions.push(
+      or(
+        eq(materialMovements.type, 'exit'),
         and(
-          eq(materialMovements.costCenterId, costCenterId),
+          eq(materialMovements.type, 'entry'),
           or(
-            eq(materialMovements.type, 'exit'),
-            and(
-              eq(materialMovements.type, 'entry'),
-              or(
-                eq(materialMovements.originType, 'employee_return'),
-                eq(materialMovements.originType, 'third_party_return')
-              )
-            )
+            eq(materialMovements.originType, 'employee_return'),
+            eq(materialMovements.originType, 'third_party_return')
           )
         )
-      );
-    } else {
-      // Se nenhum centro específico, mostra todas saídas e devoluções que tenham centro de custo
-      conditions.push(
-        or(
-          eq(materialMovements.type, 'exit'),
-          and(
-            eq(materialMovements.type, 'entry'),
-            or(
-              eq(materialMovements.originType, 'employee_return'),
-              eq(materialMovements.originType, 'third_party_return')
-            )
-          )
-        )
-      );
+      )
+    );
+
+    // Se um centro específico for selecionado, filtra por esse centro
+    if (costCenterId) {
+      conditions.push(eq(materialMovements.costCenterId, costCenterId));
     }
 
     const movements = await db

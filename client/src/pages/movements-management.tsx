@@ -267,7 +267,7 @@ export default function MovementsManagement() {
           ) : (
             <div className="space-y-4">
               {filteredMovements.map((movement: Movement) => (
-                <div key={movement.id} className="border rounded-lg p-4 hover:bg-gray-50">
+                <div key={movement.id} className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 dark:border-gray-700">
                   <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-start">
                     <div>
                       <div className="font-medium">#{movement.id}</div>
@@ -278,42 +278,42 @@ export default function MovementsManagement() {
                     
                     <div>
                       <div className="font-medium">{movement.material?.name}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
                         {movement.quantity} {movement.material?.unit}
                       </div>
                     </div>
                     
                     <div>
-                      <div className="text-sm text-gray-600">Preço Unitário</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Preço Unitário</div>
                       <div className="font-medium">
                         {formatCurrency(movement.unitPrice || 0)}
                       </div>
                     </div>
                     
                     <div>
-                      <div className="text-sm text-gray-600">Valor Total</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Valor Total</div>
                       <div className="font-medium">
                         {formatCurrency((movement.quantity || 0) * parseFloat(movement.unitPrice || '0'))}
                       </div>
                     </div>
                     
                     <div>
-                      <div className="text-sm text-gray-600">Data</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">Data</div>
                       <div className="text-sm">
                         {formatDate(movement.date)}
                       </div>
                       {movement.supplier && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {movement.supplier.name}
                         </div>
                       )}
                       {movement.employee && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {movement.employee.name}
                         </div>
                       )}
                       {movement.costCenter && (
-                        <div className="text-xs text-gray-500 mt-1">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                           {movement.costCenter.code}
                         </div>
                       )}

@@ -106,9 +106,12 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
   * Exportação Excel funcionando normalmente (22KB .xlsx com dados reais)
   * Headers corretos configurados para download automático
   * **DADOS REAIS IMPLEMENTADOS**: Exportação agora usa dados reais do banco com filtros aplicados
-  * **FILTROS FUNCIONAIS**: Filtro por funcionário, centro de custo, datas, etc. aplicados corretamente
+  * **FILTROS MÚLTIPLOS FUNCIONAIS**: Filtros combinados funcionando (ex: funcionário + categoria)
+  * **SISTEMA PDF RECRIADO**: Novo gerador PDF do zero com formatação profissional e ícones
+  * **EXCEL PRESERVADO**: Sistema Excel mantido intacto e funcionando perfeitamente
   * **TOTALIZADORES INCLUÍDOS**: Totais de entradas, saídas, devoluções e geral nos relatórios
   * **CAMPOS COMPLETOS**: Data, tipo, material, quantidade, valor, origem/destino, responsável, centro de custo
+  * **FORMATAÇÃO APRIMORADA**: Layout profissional com seções bem definidas e legibilidade otimizada
   * Estrutura de dados clara e legível nos relatórios exportados
 
 ## Status Anterior (02/07/2025 - 13:06)

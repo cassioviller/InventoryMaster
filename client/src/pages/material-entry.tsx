@@ -338,8 +338,8 @@ export default function MaterialEntry() {
             <ShoppingCart className="w-4 h-4" />
           </div>
           <div>
-            <CardTitle className="text-xl font-bold text-gray-900">Entrada de Material</CardTitle>
-            <p className="text-sm text-gray-600">Adicione múltiplos materiais em uma única entrada</p>
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">Entrada de Material</CardTitle>
+            <p className="text-sm text-gray-600 dark:text-white">Adicione múltiplos materiais em uma única entrada</p>
           </div>
         </div>
       </CardHeader>
@@ -488,11 +488,11 @@ export default function MaterialEntry() {
 
             {/* Material Selection */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Materiais</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Adicionar Materiais</h3>
               
               {/* Material Selection */}
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Material</label>
                 <SearchableSelect
                   options={materialOptions}
                   value={selectedMaterial}
@@ -560,7 +560,7 @@ export default function MaterialEntry() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Quantidade</label>
                   <Input
                     type="number"
                     min="1"
@@ -570,7 +570,7 @@ export default function MaterialEntry() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
                     Valor Unitário (R$)
                     {(originType === 'employee_return' || originType === 'third_party_return') && availableReturnLots.length > 0 && (
                       <span className="text-xs text-gray-500 ml-1">(baseado no lote selecionado)</span>

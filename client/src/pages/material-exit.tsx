@@ -362,8 +362,8 @@ export default function MaterialExit() {
             <ShoppingCart className="w-4 h-4" />
           </div>
           <div>
-            <CardTitle className="text-xl font-bold text-gray-900">Saída de Material</CardTitle>
-            <p className="text-sm text-gray-600">Registre a saída de múltiplos materiais em uma única operação</p>
+            <CardTitle className="text-xl font-bold text-gray-900 dark:text-white">Saída de Material</CardTitle>
+            <p className="text-sm text-gray-600 dark:text-white">Registre a saída de múltiplos materiais em uma única operação</p>
           </div>
         </div>
       </CardHeader>
@@ -488,10 +488,10 @@ export default function MaterialExit() {
 
             {/* Material Selection */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Adicionar Materiais</h3>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Adicionar Materiais</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Material</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Material</label>
                   <SearchableSelect
                     options={materialOptions.map(option => ({
                       ...option,
@@ -505,7 +505,7 @@ export default function MaterialExit() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Quantidade</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Quantidade</label>
                   <Input
                     type="number"
                     min="1"
@@ -515,7 +515,7 @@ export default function MaterialExit() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Finalidade</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Finalidade</label>
                   <Input
                     placeholder="Para que será usado..."
                     value={purpose}

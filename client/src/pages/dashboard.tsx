@@ -52,7 +52,7 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Stock Alerts */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Alertas de Estoque</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Alertas de Estoque</h2>
         
         {lowStockMaterials && lowStockMaterials.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -100,8 +100,8 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total de Materiais</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-600 dark:text-white">Total de Materiais</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
                     {stats?.totalMaterials || 0}
                   </p>
                 </div>
@@ -116,8 +116,8 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Entradas Hoje</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-600 dark:text-white">Entradas Hoje</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
                     {stats?.entriesToday || 0}
                   </p>
                 </div>
@@ -132,8 +132,8 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Saídas Hoje</p>
-                  <p className="text-3xl font-bold text-gray-900">
+                  <p className="text-sm font-medium text-gray-600 dark:text-white">Saídas Hoje</p>
+                  <p className="text-3xl font-bold text-gray-900 dark:text-white">
                     {stats?.exitsToday || 0}
                   </p>
                 </div>
@@ -148,8 +148,8 @@ export default function Dashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Itens Críticos</p>
-                  <p className="text-3xl font-bold text-red-500">
+                  <p className="text-sm font-medium text-gray-600 dark:text-white">Itens Críticos</p>
+                  <p className="text-3xl font-bold text-red-500 dark:text-white">
                     {stats?.criticalItems || 0}
                   </p>
                 </div>

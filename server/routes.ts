@@ -1419,7 +1419,64 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
         employeeId
       } = req.query;
 
-      // Create demo export data to test the export functionality
+      // Parse dates if provided
+      let adjustedStartDate, adjustedEndDate;
+      if (startDate) {
+        adjustedStartDate = new Date(startDate as string);
+        adjustedStartDate.setHours(0, 0, 0, 0);
+      }
+      if (endDate) {
+        adjustedEndDate = new Date(endDate as string);
+        adjustedEndDate.setHours(23, 59, 59, 999);
+      }
+
+      // Fetch real data from database with filters
+      const report = await storage.getGeneralMovementsReportWithTotals(
+        adjustedStartDate,
+        adjustedEndDate,
+        movementType as 'entry' | 'exit' | 'return' | undefined,
+        ownerId,
+        costCenterId ? parseInt(costCenterId as string) : undefined,
+        supplierId ? parseInt(supplierId as string) : undefined,
+        materialId ? parseInt(materialId as string) : undefined,
+        categoryId ? parseInt(categoryId as string) : undefined,
+        employeeId ? parseInt(employeeId as string) : undefined
+      );
+
+      // Build filters description
+      const appliedFilters = [];
+      if (startDate || endDate) {
+        const startStr = startDate ? new Date(startDate as string).toLocaleDateString('pt-BR') : '';
+        const endStr = endDate ? new Date(endDate as string).toLocaleDateString('pt-BR') : '';
+        if (startStr && endStr) {
+          appliedFilters.push(`Período: ${startStr} até ${endStr}`);
+        } else if (startStr) {
+          appliedFilters.push(`A partir de: ${startStr}`);
+        } else if (endStr) {
+          appliedFilters.push(`Até: ${endStr}`);
+        }
+      }
+      if (movementType && movementType !== 'all') {
+        const typeLabels = { entry: 'Entradas', exit: 'Saídas', return: 'Devoluções' };
+        appliedFilters.push(`Tipo: ${typeLabels[movementType as keyof typeof typeLabels]}`);
+      }
+      if (employeeId) {
+        appliedFilters.push(`Funcionário filtrado`);
+      }
+      if (costCenterId) {
+        appliedFilters.push(`Centro de custo filtrado`);
+      }
+      if (supplierId) {
+        appliedFilters.push(`Fornecedor filtrado`);
+      }
+      if (materialId) {
+        appliedFilters.push(`Material filtrado`);
+      }
+      if (categoryId) {
+        appliedFilters.push(`Categoria filtrada`);
+      }
+
+      // Format data for export
       const exportData = {
         title: 'Relatório de Movimentações',
         columns: [
@@ -1427,28 +1484,34 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
           { key: 'tipo', label: 'Tipo' },
           { key: 'material', label: 'Material' },
           { key: 'quantidade', label: 'Quantidade' },
-          { key: 'valor', label: 'Valor Total' }
+          { key: 'valor', label: 'Valor Total' },
+          { key: 'origem', label: 'Origem/Destino' },
+          { key: 'responsavel', label: 'Responsável' },
+          { key: 'centro', label: 'Centro de Custo' }
         ],
-        data: [
-          {
-            data: new Date().toLocaleDateString('pt-BR'),
-            tipo: 'Entrada',
-            material: 'Material Teste 1',
-            quantidade: '10',
-            valor: 'R$ 255,00'
-          },
-          {
-            data: new Date().toLocaleDateString('pt-BR'),
-            tipo: 'Saída',
-            material: 'Material Teste 2',
-            quantidade: '5',
-            valor: 'R$ 127,50'
-          }
-        ],
-        filters: [
-          'Relatório de Movimentações - Demo',
+        data: (report.movements || []).map((movement: any) => ({
+          data: new Date(movement.date || movement.createdAt).toLocaleDateString('pt-BR'),
+          tipo: movement.displayType || (movement.type === 'entry' ? 'Entrada' : movement.type === 'exit' ? 'Saída' : 'Devolução'),
+          material: movement.material?.name || '-',
+          quantidade: `${movement.quantity || 0} ${movement.material?.unit || ''}`,
+          valor: `R$ ${(movement.totalValue || 0).toFixed(2).replace('.', ',')}`,
+          origem: movement.originDestination || '-',
+          responsavel: movement.responsiblePerson || '-',
+          centro: movement.costCenter ? `${movement.costCenter.code} - ${movement.costCenter.name}` : '-'
+        })),
+        filters: appliedFilters.length > 0 ? [
+          'Relatório de Movimentações',
+          `Filtros aplicados: ${appliedFilters.join(', ')}`
+        ] : [
+          'Relatório de Movimentações',
           'Filtros aplicados: Todos os dados'
-        ]
+        ],
+        totals: report.totals ? [
+          `Total de Entradas: R$ ${(report.totals.totalEntries || 0).toFixed(2).replace('.', ',')}`,
+          `Total de Saídas: R$ ${(report.totals.totalExits || 0).toFixed(2).replace('.', ',')}`,
+          `Total de Devoluções: R$ ${(report.totals.totalReturns || 0).toFixed(2).replace('.', ',')}`,
+          `Total Geral: R$ ${(report.totals.totalGeneral || 0).toFixed(2).replace('.', ',')}`
+        ] : []
       };
 
       if (format === 'pdf') {

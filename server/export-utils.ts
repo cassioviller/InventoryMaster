@@ -12,6 +12,7 @@ export interface ExportData {
   columns: ExportColumn[];
   data: any[];
   filters?: string[];
+  totals?: string[];
 }
 
 export class ExportService {
@@ -43,6 +44,15 @@ export class ExportService {
       content += row + '\n';
     });
     
+    // Add totals if provided
+    if (exportData.totals && exportData.totals.length > 0) {
+      content += '\n' + '='.repeat(50) + '\n';
+      content += 'TOTALIZADORES:\n';
+      exportData.totals.forEach(total => {
+        content += `- ${total}\n`;
+      });
+    }
+    
     content += '\n' + '='.repeat(50) + '\n';
     content += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
     content += 'Sistema de Almoxarifado - Relatório de Movimentações\n';
@@ -73,6 +83,15 @@ export class ExportService {
         worksheetData.splice(index, 0, [filter, ...Array(headers.length - 1).fill('')]);
       });
       worksheetData.splice(exportData.filters.length, 0, ['']); // Empty row separator
+    }
+    
+    // Add totals at the end if provided
+    if (exportData.totals && exportData.totals.length > 0) {
+      worksheetData.push(['']); // Empty row separator
+      worksheetData.push(['TOTALIZADORES', ...Array(headers.length - 1).fill('')]);
+      exportData.totals.forEach(total => {
+        worksheetData.push([total, ...Array(headers.length - 1).fill('')]);
+      });
     }
     
     // Create worksheet

@@ -1,0 +1,31 @@
+RELATÓRIO: Relatório de Movimentações
+==================================================
+
+FILTROS APLICADOS:
+- Relatório de Movimentações
+- Filtros aplicados: Funcionário filtrado
+
+Data | Tipo | Material | Quantidade | Valor Total | Origem/Destino | Responsável | Centro de Custo
+--------------------------------------------------------------------------------------------------
+02/07/2025 | Devolução | Capacete de Segurança | 1 unidade | R$ 45,00 | Funcionário Teste 1 | Funcionário Teste 1 | MANUT001 - Manutenção Predial
+01/07/2025 | Saída | Tomada 2P+T 20A | 5 unidade | R$ 75,00 | Funcionário Teste 1 | Funcionário Teste 1 | TESTE001 - Centro de Teste
+01/07/2025 | Devolução | Teclado | 2 unidade | R$ 31,00 | Funcionário Teste 1 | Funcionário Teste 1 | -
+01/07/2025 | Saída | Capacete de Segurança | 3 unidade | R$ 135,00 | Funcionário Teste 1 | Funcionário Teste 1 | MANUT001 - Manutenção Predial
+01/07/2025 | Saída | Cabo Elétrico | 2 metro | R$ 51,00 | Funcionário Teste 1 | Funcionário Teste 1 | ADM001 - Administração Geral
+01/07/2025 | Saída | Cabo Elétrico | 5 metro | R$ 127,50 | Funcionário Teste 1 | Funcionário Teste 1 | TEST001 - Centro de Teste
+01/07/2025 | Saída | Chave de Fenda | 10 unidade | R$ 185,00 | Funcionário Teste 1 | Funcionário Teste 1 | -
+30/06/2025 | Saída | Martelo | 1 unidade | R$ 0,00 | Funcionário Teste 1 | Funcionário Teste 1 | -
+30/06/2025 | Saída | Martelo | 8 unidade | R$ 160,00 | Funcionário Teste 1 | Funcionário Teste 1 | -
+30/06/2025 | Saída | Martelo | 5 unidade | R$ 77,50 | Funcionário Teste 1 | Funcionário Teste 1 | -
+01/01/2025 | Devolução | Cimento | 2 saco | R$ 50,00 | Funcionário Teste 1 | Funcionário Teste 1 | -
+
+==================================================
+TOTALIZADORES:
+- Total de Entradas: R$ 0,00
+- Total de Saídas: R$ 811,00
+- Total de Devoluções: R$ 126,00
+- Total Geral: R$ 937,00
+
+==================================================
+Gerado em: 03/07/2025, 11:43:18
+Sistema de Almoxarifado - Relatório de Movimentações

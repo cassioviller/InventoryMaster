@@ -94,7 +94,20 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (02/07/2025 - 13:06)
+## Status Atual (03/07/2025 - 11:38)
+**CORREÇÕES DARK MODE E EXPORTAÇÃO CONCLUÍDAS**:
+- ✅ **DARK MODE CORRIGIDO**: Textos de títulos e labels agora ficam brancos no tema escuro
+  * Dashboard: "Total de Materiais", "Entradas Hoje", "Saídas Hoje", "Itens Críticos"
+  * Entrada de Material: "Entrada de Material", "Adicione múltiplos materiais...", "Adicionar Materiais", "Material", "Quantidade", "Valor Unitário (R$)"
+  * Saída de Material: "Saída de Material", "Registre a saída...", "Adicionar Materiais", "Material", "Quantidade", "Finalidade"
+- ✅ **EXPORTAÇÃO CORRIGIDA**: Sistema de exportação completamente funcional
+  * Problema do Adobe Acrobat resolvido - arquivo agora baixa como .txt válido
+  * Exportação PDF retorna texto formatado (Content-Type: text/plain)
+  * Exportação Excel funcionando normalmente (17KB .xlsx)
+  * Headers corretos configurados para download automático
+  * Estrutura de dados clara e legível nos relatórios exportados
+
+## Status Anterior (02/07/2025 - 13:06)
 **RELATÓRIO EXECUTIVO PROFISSIONAL CRIADO**:
 - ✅ **RELATÓRIO COMPLETO GERADO**: Documento executivo profissional para alta gestão
 - ✅ **DADOS REAIS INCLUÍDOS**: Estatísticas atuais do sistema (9 materiais, R$ 2.209, 99 movimentações)

@@ -1,0 +1,11 @@
+Relatório de Movimentações
+
+Relatório de Movimentações - Demo
+Filtros aplicados: Todos os dados
+
+Data	Tipo	Material	Quantidade	Valor Total
+-----------------------------------------
+03/07/2025	Entrada	Material Teste 1	10	R$ 255,00
+03/07/2025	Saída	Material Teste 2	5	R$ 127,50
+
+Gerado em: 03/07/2025, 11:37:18

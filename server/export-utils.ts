@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import PDFDocument from 'pdfkit';
 
 export interface ExportColumn {
   key: string;
@@ -14,17 +15,22 @@ export interface ExportData {
 }
 
 export class ExportService {
-  // Generate PDF export (simplified - just returns a simple text-based PDF)
+  // Generate PDF export - return as text for now
   static generatePDF(exportData: ExportData): Buffer {
-    // Create a simple text representation for now
-    let content = `${exportData.title}\n\n`;
+    // For now, return a text file that can be opened instead of complex PDF
+    let content = `RELATÓRIO: ${exportData.title}\n`;
+    content += '='.repeat(50) + '\n\n';
     
     if (exportData.filters && exportData.filters.length > 0) {
-      content += exportData.filters.join('\n') + '\n\n';
+      content += 'FILTROS APLICADOS:\n';
+      exportData.filters.forEach(filter => {
+        content += `- ${filter}\n`;
+      });
+      content += '\n';
     }
     
     // Add headers
-    const headers = exportData.columns.map(col => col.label).join('\t');
+    const headers = exportData.columns.map(col => col.label).join(' | ');
     content += headers + '\n';
     content += '-'.repeat(headers.length) + '\n';
     
@@ -33,13 +39,14 @@ export class ExportService {
       const row = exportData.columns.map(col => {
         const value = this.getNestedValue(item, col.key);
         return this.formatValue(value);
-      }).join('\t');
+      }).join(' | ');
       content += row + '\n';
     });
     
-    content += `\nGerado em: ${new Date().toLocaleString('pt-BR')}`;
+    content += '\n' + '='.repeat(50) + '\n';
+    content += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
+    content += 'Sistema de Almoxarifado - Relatório de Movimentações\n';
     
-    // For now, return as plain text buffer (can be improved later with actual PDF library)
     return Buffer.from(content, 'utf-8');
   }
   

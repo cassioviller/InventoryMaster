@@ -9,7 +9,7 @@ import { SearchableSelect, useSearchableSelectOptions } from "@/components/ui/se
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Calendar, Filter, Download, FileText, TrendingUp, TrendingDown, RefreshCcw } from "lucide-react";
+import { Calendar, Filter, Download, FileText, TrendingUp, TrendingDown, RefreshCcw, FileSpreadsheet } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -47,6 +47,53 @@ export default function Reports() {
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     };
+  };
+
+
+
+  // Export functions
+  const handleExport = async (format: 'pdf' | 'excel') => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Token de autenticação não encontrado');
+        return;
+      }
+
+      // Build query parameters from current filters
+      const queryParams = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value) {
+          queryParams.append(key, value);
+        }
+      });
+
+      const url = `/api/export/movements/${format}?${queryParams.toString()}`;
+      
+      const response = await fetch(url, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao exportar relatório');
+      }
+
+      // Create download link
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `relatorio-movimentacoes.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error exporting:', error);
+      alert('Erro ao exportar relatório. Tente novamente.');
+    }
   };
 
   // Fetch report data
@@ -344,6 +391,12 @@ export default function Reports() {
             <Button onClick={clearFilters} variant="outline" size="sm">
               Limpar Filtros
             </Button>
+            <Button onClick={() => handleExport('pdf')} variant="outline" size="sm">
+              Exportar PDF
+            </Button>
+            <Button onClick={() => handleExport('excel')} variant="outline" size="sm">
+              Exportar Excel
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -399,6 +452,14 @@ export default function Reports() {
           <CardTitle className="flex items-center justify-between">
             <span>Movimentações</span>
             <div className="flex gap-2">
+              <Button onClick={() => handleExport('pdf')} variant="outline" size="sm" disabled={isLoading}>
+                <FileText className="h-4 w-4 mr-2" />
+                Exportar PDF
+              </Button>
+              <Button onClick={() => handleExport('excel')} variant="outline" size="sm" disabled={isLoading}>
+                <FileSpreadsheet className="h-4 w-4 mr-2" />
+                Exportar Excel
+              </Button>
               <Button onClick={() => refetch()} variant="outline" size="sm" disabled={isLoading}>
                 <RefreshCcw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
                 Atualizar

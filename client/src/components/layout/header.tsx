@@ -1,5 +1,6 @@
 import { useAuth } from '@/hooks/use-auth';
-import { Bell, Warehouse, LogOut } from 'lucide-react';
+import { useTheme } from '@/contexts/theme-context';
+import { Bell, Warehouse, LogOut, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import { authenticatedRequest } from '@/lib/auth-request';
 
 export function Header() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   // Buscar materiais com estoque baixo para notificações
   const { data: lowStockItems } = useQuery({
@@ -30,7 +32,7 @@ export function Header() {
   const notificationCount = lowStockItems?.length || 0;
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white dark:bg-gray-900 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo and Title */}
@@ -38,11 +40,20 @@ export function Header() {
             <div className="flex items-center justify-center w-8 h-8 bg-primary text-white rounded">
               <Warehouse className="w-4 h-4" />
             </div>
-            <h1 className="text-xl font-semibold text-gray-900">Almoxarifado</h1>
+            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Almoxarifado</h1>
           </div>
 
           {/* User Info */}
           <div className="flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </Button>
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-gray-400 hover:text-gray-600 relative">
@@ -82,7 +93,7 @@ export function Header() {
                       {user?.username ? user.username.slice(0, 2).toUpperCase() : 'AD'}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     {user?.role === 'admin' ? 'Administrador' : 'Usuário'}
                   </span>
                 </Button>

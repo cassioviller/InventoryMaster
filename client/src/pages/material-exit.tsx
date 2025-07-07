@@ -262,11 +262,13 @@ export default function MaterialExit() {
         return;
       }
     } else {
-      // Validate against total stock if no specific lot selected
-      if (material.currentStock < requestedQty) {
+      // Calculate available stock from lots (more reliable than currentStock)
+      const totalAvailableStock = selectedMaterialLots.reduce((total, lot) => total + lot.availableQuantity, 0);
+      
+      if (totalAvailableStock < requestedQty) {
         toast({
           title: "Estoque insuficiente",
-          description: `Estoque disponível: ${material.currentStock}`,
+          description: `Estoque disponível nos lotes: ${totalAvailableStock}`,
           variant: "destructive",
         });
         return;
@@ -279,10 +281,10 @@ export default function MaterialExit() {
       const updatedItems = [...addedItems];
       const newQuantity = updatedItems[existingItemIndex].quantity + requestedQty;
       
-      // Re-validate combined quantity
+      // Re-validate combined quantity using lots instead of currentStock
       const stockLimit = selectedLotPrice 
         ? selectedMaterialLots.find(lot => lot.unitPrice === selectedLotPrice)?.availableQuantity || 0
-        : material.currentStock;
+        : selectedMaterialLots.reduce((total, lot) => total + lot.availableQuantity, 0);
         
       if (newQuantity > stockLimit) {
         toast({
@@ -496,10 +498,14 @@ export default function MaterialExit() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Material</label>
                   <SearchableSelect
-                    options={materialOptions.map(option => ({
-                      ...option,
-                      label: `${option.label} (Estoque: ${materials.find(m => m.id.toString() === option.value)?.currentStock || 0})`
-                    }))}
+                    options={materialOptions.map(option => {
+                      const material = materials.find(m => m.id.toString() === option.value);
+                      // Show currentStock for now but it will be updated by lots when selected
+                      return {
+                        ...option,
+                        label: `${option.label} (Estoque: ${material?.currentStock || 0})`
+                      };
+                    })}
                     value={selectedMaterial}
                     onValueChange={handleMaterialChange}
                     placeholder="Selecione um material"
@@ -531,9 +537,15 @@ export default function MaterialExit() {
               {selectedMaterial && selectedMaterialLots.length > 0 && (
                 <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
                   <h4 className="text-sm font-medium text-blue-900 mb-3">
-                    Lotes Disponíveis 
+                    Lotes Disponíveis
                     <span className="text-xs text-blue-600 ml-2">(clique para selecionar um lote específico)</span>
                   </h4>
+                  {/* Display real stock from lots */}
+                  <div className="mb-3 p-2 bg-green-100 rounded border-l-4 border-green-500">
+                    <span className="text-sm font-medium text-green-800">
+                      Estoque Real Total: {selectedMaterialLots.reduce((total, lot) => total + lot.availableQuantity, 0)} unidades
+                    </span>
+                  </div>
                   <div className="space-y-2">
                     {selectedMaterialLots.map((lot, index) => (
                       <div 

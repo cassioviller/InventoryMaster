@@ -1756,41 +1756,40 @@ export class DatabaseStorage implements IStorage {
     return calculatedStock;
   }
 
-  // Calculate material stock from movements (without updating database)
+  // Calculate material stock from movements (simplified and safe)
   async calculateMaterialStockFromMovements(materialId: number): Promise<number> {
-    console.log(`Calculating stock for material ${materialId} from movements...`);
-    
-    const movements = await db
-      .select({
-        type: materialMovements.type,
-        quantity: materialMovements.quantity,
-        isReturn: materialMovements.isReturn,
-        createdAt: materialMovements.createdAt,
-        date: materialMovements.date,
-      })
-      .from(materialMovements)
-      .where(eq(materialMovements.materialId, materialId))
-      .orderBy(sql`COALESCE(${materialMovements.date}, ${materialMovements.createdAt}) ASC`);
+    try {
+      console.log(`Calculating stock for material ${materialId} from movements...`);
+      
+      // Get all movements for this material with simple query
+      const movements = await db
+        .select()
+        .from(materialMovements)
+        .where(eq(materialMovements.materialId, materialId));
 
-    let stock = 0;
-    
-    for (const movement of movements) {
-      if (movement.type === 'entry') {
-        stock += movement.quantity;
-      } else if (movement.type === 'exit') {
-        if (movement.isReturn) {
-          // Devolução aumenta o estoque
+      let stock = 0;
+      
+      for (const movement of movements) {
+        if (movement.type === 'entry') {
           stock += movement.quantity;
-        } else {
-          // Saída normal diminui o estoque
-          stock -= movement.quantity;
+        } else if (movement.type === 'exit') {
+          if (movement.isReturn) {
+            // Devolução aumenta o estoque
+            stock += movement.quantity;
+          } else {
+            // Saída normal diminui o estoque
+            stock -= movement.quantity;
+          }
         }
       }
-    }
 
-    const finalStock = Math.max(0, stock);
-    console.log(`Material ${materialId}: Calculated stock = ${finalStock} (from ${movements.length} movements)`);
-    return finalStock;
+      const finalStock = Math.max(0, stock);
+      console.log(`Material ${materialId}: Calculated stock = ${finalStock} (from ${movements.length} movements)`);
+      return finalStock;
+    } catch (error) {
+      console.error(`Error calculating stock for material ${materialId}:`, error);
+      return 0; // Safe fallback
+    }
   }
 
   // Recalculate all material stocks

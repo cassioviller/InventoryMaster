@@ -190,6 +190,53 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Material methods
+  // Auto-fix stock discrepancies when getting materials
+  async autoFixStockDiscrepancies(ownerId?: number): Promise<void> {
+    try {
+      console.log('🔧 Auto-checking stock discrepancies...');
+      
+      const conditions = [];
+      if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
+      
+      const materialsList = await db
+        .select({ 
+          id: materials.id, 
+          name: materials.name, 
+          currentStock: materials.currentStock 
+        })
+        .from(materials)
+        .where(conditions.length > 0 ? and(...conditions) : undefined);
+
+      let fixedCount = 0;
+      for (const material of materialsList) {
+        try {
+          const calculatedStock = await this.calculateMaterialStockFromMovements(material.id);
+          
+          if (material.currentStock !== calculatedStock) {
+            console.log(`🔧 Auto-fixing ${material.name}: ${material.currentStock} → ${calculatedStock}`);
+            
+            await db
+              .update(materials)
+              .set({ currentStock: calculatedStock })
+              .where(eq(materials.id, material.id));
+            
+            fixedCount++;
+          }
+        } catch (error) {
+          console.error(`Error fixing stock for material ${material.id}:`, error);
+          // Continue with other materials if one fails
+        }
+      }
+      
+      if (fixedCount > 0) {
+        console.log(`✅ Auto-fixed ${fixedCount} stock discrepancies`);
+      }
+    } catch (error) {
+      console.error('Error in autoFixStockDiscrepancies:', error);
+      // Don't throw error to avoid breaking the main operation
+    }
+  }
+
   async getMaterials(ownerId?: number): Promise<MaterialWithDetails[]> {
     const materialsWithCategories = await db
       .select({
@@ -1694,6 +1741,43 @@ export class DatabaseStorage implements IStorage {
       .where(eq(materials.id, materialId));
 
     return calculatedStock;
+  }
+
+  // Calculate material stock from movements (without updating database)
+  async calculateMaterialStockFromMovements(materialId: number): Promise<number> {
+    console.log(`Calculating stock for material ${materialId} from movements...`);
+    
+    const movements = await db
+      .select({
+        type: materialMovements.type,
+        quantity: materialMovements.quantity,
+        isReturn: materialMovements.isReturn,
+        createdAt: materialMovements.createdAt,
+        date: materialMovements.date,
+      })
+      .from(materialMovements)
+      .where(eq(materialMovements.materialId, materialId))
+      .orderBy(sql`COALESCE(${materialMovements.date}, ${materialMovements.createdAt}) ASC`);
+
+    let stock = 0;
+    
+    for (const movement of movements) {
+      if (movement.type === 'entry') {
+        stock += movement.quantity;
+      } else if (movement.type === 'exit') {
+        if (movement.isReturn) {
+          // Devolução aumenta o estoque
+          stock += movement.quantity;
+        } else {
+          // Saída normal diminui o estoque
+          stock -= movement.quantity;
+        }
+      }
+    }
+
+    const finalStock = Math.max(0, stock);
+    console.log(`Material ${materialId}: Calculated stock = ${finalStock} (from ${movements.length} movements)`);
+    return finalStock;
   }
 
   // Recalculate all material stocks

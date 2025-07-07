@@ -596,6 +596,9 @@ export class DatabaseStorage implements IStorage {
           .update(materials)
           .set(updateData)
           .where(eq(materials.id, item.materialId));
+        
+        // Recalculate stock to ensure accuracy
+        await this.recalculateMaterialStock(item.materialId);
       }
     }
 
@@ -657,13 +660,8 @@ export class DatabaseStorage implements IStorage {
         });
       }
 
-      // Update material stock
-      await db
-        .update(materials)
-        .set({
-          currentStock: Math.max(0, currentMaterial.currentStock - item.quantity),
-        })
-        .where(eq(materials.id, item.materialId));
+      // Update material stock using accurate recalculation
+      await this.recalculateMaterialStock(item.materialId);
     }
 
     console.log('Exit created successfully with FIFO logic. Total movements:', movements.length);

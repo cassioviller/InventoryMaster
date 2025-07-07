@@ -1087,6 +1087,52 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
     }
   });
 
+  // Validate and fix stock discrepancies 
+  app.post("/api/materials/validate-stocks", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      console.log('Validating stock discrepancies...');
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      // Get current materials and their calculated stocks
+      const materials = await storage.getMaterials(ownerId);
+      const discrepancies = [];
+      
+      for (const material of materials) {
+        const calculatedStock = await storage.calculateMaterialStockFromMovements(material.id);
+        if (material.currentStock !== calculatedStock) {
+          discrepancies.push({
+            materialId: material.id,
+            materialName: material.name,
+            storedStock: material.currentStock,
+            calculatedStock: calculatedStock,
+            difference: calculatedStock - material.currentStock
+          });
+          
+          // Auto-fix the discrepancy
+          await storage.recalculateStock(material.id);
+        }
+      }
+      
+      if (discrepancies.length > 0) {
+        console.log(`Fixed ${discrepancies.length} stock discrepancies:`, discrepancies);
+        res.json({ 
+          success: true, 
+          message: `Found and fixed ${discrepancies.length} stock discrepancies`,
+          discrepancies 
+        });
+      } else {
+        res.json({ 
+          success: true, 
+          message: "No stock discrepancies found - all stocks are accurate",
+          discrepancies: [] 
+        });
+      }
+    } catch (error) {
+      console.error('Error validating stocks:', error);
+      res.status(500).json({ message: "Failed to validate stocks" });
+    }
+  });
+
   // Movement management routes
   app.delete('/api/movements/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {

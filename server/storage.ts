@@ -607,56 +607,64 @@ export class DatabaseStorage implements IStorage {
     console.log('=== CREATE ENTRY ===');
     console.log('Entry data:', entry);
     
-    // For entries, create one movement record per item
-    const firstItem = entry.items[0];
-    const result = await db.insert(materialMovements).values({
-      type: entry.type,
-      date: new Date(), // Always use current timestamp for proper ordering
-      userId: userId,
-      materialId: firstItem.materialId,
-      quantity: firstItem.quantity,
-      unitPrice: firstItem.unitPrice,
-      originType: entry.originType,
-      supplierId: entry.supplierId,
-      returnEmployeeId: entry.returnEmployeeId,
-      returnThirdPartyId: entry.returnThirdPartyId,
-      costCenterId: entry.costCenterId,
-      notes: entry.notes,
-      ownerId: userId,
-    }).returning();
-
-    // Update material stock for each item
+    // Create ONE movement record for EACH item (this was the bug!)
+    const movements: MaterialMovement[] = [];
+    
     for (const item of entry.items) {
-      // Get current stock first
-      const [currentMaterial] = await db
-        .select({ currentStock: materials.currentStock })
-        .from(materials)
-        .where(eq(materials.id, item.materialId));
+      console.log(`Creating movement for material ${item.materialId}, quantity: ${item.quantity}`);
+      
+      // Create individual movement for each item
+      const [movement] = await db.insert(materialMovements).values({
+        type: entry.type,
+        date: new Date(), // Always use current timestamp for proper ordering
+        userId: userId,
+        materialId: item.materialId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        originType: entry.originType,
+        supplierId: entry.supplierId,
+        returnEmployeeId: entry.returnEmployeeId,
+        returnThirdPartyId: entry.returnThirdPartyId,
+        costCenterId: entry.costCenterId,
+        notes: entry.notes,
+        ownerId: userId,
+      }).returning();
 
-      if (currentMaterial) {
-        const newStock = currentMaterial.currentStock + item.quantity;
-        console.log(`Updating stock for material ${item.materialId}: ${currentMaterial.currentStock} -> ${newStock}`);
+      if (movement) {
+        movements.push(movement);
         
-        const updateData: any = {
-          currentStock: newStock,
-        };
-        
-        // Only update unit price for supplier entries
-        if (entry.originType === 'supplier') {
-          updateData.unitPrice = item.unitPrice;
-        }
-        
-        await db
-          .update(materials)
-          .set(updateData)
+        // Update material stock for this item
+        const [currentMaterial] = await db
+          .select({ currentStock: materials.currentStock })
+          .from(materials)
           .where(eq(materials.id, item.materialId));
-        
-        // Recalculate stock to ensure accuracy
-        await this.recalculateMaterialStock(item.materialId);
+
+        if (currentMaterial) {
+          const newStock = currentMaterial.currentStock + item.quantity;
+          console.log(`Updating stock for material ${item.materialId}: ${currentMaterial.currentStock} -> ${newStock}`);
+          
+          const updateData: any = {
+            currentStock: newStock,
+          };
+          
+          // Only update unit price for supplier entries
+          if (entry.originType === 'supplier') {
+            updateData.unitPrice = item.unitPrice;
+          }
+          
+          await db
+            .update(materials)
+            .set(updateData)
+            .where(eq(materials.id, item.materialId));
+          
+          // Use the correct method name: recalculateStock (not recalculateMaterialStock)
+          await this.recalculateStock(item.materialId);
+        }
       }
     }
 
-    return result[0];
+    console.log(`Created ${movements.length} movements for ${entry.items.length} items`);
+    return movements[0]; // Return first movement for API compatibility
   }
 
   async createExit(exit: CreateExit, userId: number): Promise<MaterialMovement> {

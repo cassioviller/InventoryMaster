@@ -238,6 +238,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMaterials(ownerId?: number): Promise<MaterialWithDetails[]> {
+    // Execute auto-fix before returning materials to ensure data consistency
+    try {
+      await this.autoFixStockDiscrepancies(ownerId);
+    } catch (error) {
+      console.error('Auto-fix failed, continuing with normal operation:', error);
+    }
+    
     const materialsWithCategories = await db
       .select({
         id: materials.id,
@@ -1435,6 +1442,12 @@ export class DatabaseStorage implements IStorage {
     lots: Array<{ unitPrice: string; quantity: number; }>;
     totalValue: number;
   }> {
+    // Auto-fix before processing exit to ensure accurate stock data
+    try {
+      await this.autoFixStockDiscrepancies(ownerId);
+    } catch (error) {
+      console.error('Auto-fix failed during FIFO processing:', error);
+    }
     const availableLots = await this.getMaterialLots(materialId, ownerId);
     const totalAvailable = availableLots.reduce((sum, lot) => sum + lot.availableQuantity, 0);
 

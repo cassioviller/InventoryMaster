@@ -63,6 +63,8 @@ export default function MaterialExit() {
       const data = await res.json();
       return Array.isArray(data) ? data : [];
     },
+    staleTime: 0, // Always consider data stale
+    gcTime: 0, // Don't cache data
   });
 
   const { data: employeesData } = useQuery({
@@ -135,10 +137,11 @@ export default function MaterialExit() {
 
   const destinationType = form.watch('destinationType');
 
-  // Fetch material lots when material is selected
+  // Fetch material lots when material is selected (with fresh data)
   const fetchMaterialLots = async (materialId: number) => {
     try {
-      const res = await authenticatedRequest(`/api/materials/${materialId}/lots`);
+      // Force fresh data by adding timestamp
+      const res = await authenticatedRequest(`/api/materials/${materialId}/lots?t=${Date.now()}`);
       const lots = await res.json();
       setSelectedMaterialLots(Array.isArray(lots) ? lots : []);
     } catch (error) {

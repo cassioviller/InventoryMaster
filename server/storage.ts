@@ -723,7 +723,7 @@ export class DatabaseStorage implements IStorage {
       }
 
       // Update material stock using accurate recalculation
-      await this.recalculateMaterialStock(item.materialId);
+      await this.recalculateStock(item.materialId);
     }
 
     console.log('Exit created successfully with FIFO logic. Total movements:', movements.length);

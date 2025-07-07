@@ -274,6 +274,11 @@ export const insertMaterialSchema = createInsertSchema(materials, {
   createdAt: true,
 });
 
+// Schema for material updates that excludes currentStock to prevent overwriting
+export const updateMaterialSchema = insertMaterialSchema.omit({
+  currentStock: true,
+});
+
 export const selectMaterialSchema = createSelectSchema(materials);
 export type Material = z.infer<typeof selectMaterialSchema>;
 export type InsertMaterial = z.infer<typeof insertMaterialSchema>;

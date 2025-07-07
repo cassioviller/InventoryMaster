@@ -22,6 +22,7 @@ import {
   insertUserSchema,
   insertCategorySchema,
   insertMaterialSchema,
+  updateMaterialSchema,
   insertSupplierSchema,
   insertEmployeeSchema,
   insertThirdPartySchema,
@@ -463,12 +464,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/materials/:id", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const id = parseInt(req.params.id);
-      const materialData = insertMaterialSchema.partial().parse(req.body);
+      
+      // Remove currentStock from request body to prevent overwriting
+      const { currentStock, ...cleanData } = req.body;
+      
+      const materialData = insertMaterialSchema.partial().parse(cleanData);
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const material = await storage.updateMaterial(id, materialData, ownerId);
       res.json(material);
     } catch (error) {
-      res.status(400).json({ message: "Failed to update material" });
+      console.error('Material update error:', error);
+      res.status(400).json({ 
+        message: "Failed to update material",
+        error: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
+      });
     }
   });
 

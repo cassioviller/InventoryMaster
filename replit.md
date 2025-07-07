@@ -94,7 +94,15 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 - Eliminadas todas as referências problemáticas
 - Código limpo e estável para desenvolvimento e produção
 
-## Status Atual (03/07/2025 - 11:38)
+## Status Atual (07/07/2025 - 14:10)
+**BUG CRÍTICO DE ESTOQUE CORRIGIDO**:
+- ✅ **PROBLEMA IDENTIFICADO**: Schema insertMaterialSchema tinha currentStock com .default(0) causando zeragem incorreta
+- ✅ **SOLUÇÃO IMPLEMENTADA**: Rota PUT /api/materials/:id agora remove currentStock do body antes da atualização
+- ✅ **TESTE VALIDADO**: DISCO DE CORTE 7 manteve currentStock=6 ao alterar minimumStock de 5→2
+- ✅ **PROTEÇÃO GARANTIDA**: Estoque atual preservado durante edições de materiais
+- ✅ **SISTEMA SEGURO**: Apenas movimentações (entradas/saídas) podem alterar currentStock
+
+## Status Anterior (03/07/2025 - 11:38)
 **CORREÇÕES DARK MODE E EXPORTAÇÃO CONCLUÍDAS**:
 - ✅ **DARK MODE CORRIGIDO**: Textos de títulos e labels agora ficam brancos no tema escuro
   * Dashboard: "Total de Materiais", "Entradas Hoje", "Saídas Hoje", "Itens Críticos"

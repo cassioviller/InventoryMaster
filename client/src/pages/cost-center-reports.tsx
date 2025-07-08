@@ -42,13 +42,54 @@ export default function CostCenterReports() {
   // Fetch cost center report
   const { data: reportData = [], isLoading: reportLoading } = useQuery({
     queryKey: ["/api/reports/cost-center", selectedCostCenter, startDate, endDate],
-    enabled: !!selectedCostCenter,
+    enabled: !!selectedCostCenter && selectedCostCenter !== "all",
+    queryFn: () => {
+      let url = "/api/reports/cost-center";
+      const params = new URLSearchParams();
+      
+      if (selectedCostCenter && selectedCostCenter !== "all") {
+        params.append("costCenterId", selectedCostCenter);
+      }
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      
+      if (params.toString()) {
+        url += "?" + params.toString();
+      }
+      
+      return fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }).then(res => res.json());
+    }
   });
 
   // Fetch general movements with cost center filter
   const { data: movementsData = [], isLoading: movementsLoading } = useQuery({
     queryKey: ["/api/reports/general-movements", startDate, endDate, "", selectedCostCenter],
-    enabled: reportType === "movements",
+    enabled: reportType === "movements" && !!selectedCostCenter,
+    queryFn: () => {
+      let url = "/api/reports/general-movements";
+      const params = new URLSearchParams();
+      
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      params.append("type", ""); // empty type for all
+      if (selectedCostCenter && selectedCostCenter !== "all") {
+        params.append("costCenterId", selectedCostCenter);
+      }
+      
+      if (params.toString()) {
+        url += "?" + params.toString();
+      }
+      
+      return fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      }).then(res => res.json());
+    }
   });
 
   const calculateTotals = (data: any[]) => {
@@ -77,7 +118,12 @@ export default function CostCenterReports() {
     });
   };
 
-  const totals = calculateTotals(reportType === "movements" ? movementsData : reportData);
+  // Use the appropriate data source and handle "all" option
+  const currentData = reportType === "movements" 
+    ? (selectedCostCenter === "all" ? movementsData : movementsData)
+    : (selectedCostCenter === "all" ? [] : reportData);
+  
+  const totals = calculateTotals(currentData);
 
   const formatCurrency = (value: number) => {
     return `R$ ${value.toFixed(2).replace('.', ',')}`;
@@ -308,7 +354,7 @@ export default function CostCenterReports() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filterData(reportType === "movements" ? movementsData : reportData).map((movement: any) => {
+                  {filterData(currentData).map((movement: any) => {
                     const unitPrice = parseFloat(movement.unitPrice || '0');
                     const totalValue = movement.quantity * unitPrice;
                     

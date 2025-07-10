@@ -51,15 +51,38 @@ export default function MovementsManagement() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   // Fetch movements
   const { data: movements = [], isLoading: movementsLoading } = useQuery({
     queryKey: ['/api/reports/general-movements'],
+    queryFn: async () => {
+      const response = await fetch('/api/reports/general-movements', {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Failed to fetch movements');
+      return response.json();
+    },
     select: (data: any) => Array.isArray(data) ? data : []
   });
 
   // Fetch materials for filter
   const { data: materials = [] } = useQuery({
     queryKey: ['/api/materials'],
+    queryFn: async () => {
+      const response = await fetch('/api/materials', {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Failed to fetch materials');
+      return response.json();
+    },
     select: (data: any) => Array.isArray(data) ? data : []
   });
 

@@ -40,6 +40,15 @@ export default function Reports() {
     }).format(numValue || 0);
   };
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   // Fetch enhanced movements data with totals
   const { data: reportData, isLoading, refetch } = useQuery({
     queryKey: ['/api/reports/general-movements-enhanced', filters],
@@ -56,15 +65,6 @@ export default function Reports() {
       return response.json();
     }
   });
-
-  // Helper function to get auth headers
-  const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
-    return {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    };
-  };
 
   // Fetch lookup data for filters
   const { data: categories } = useQuery({

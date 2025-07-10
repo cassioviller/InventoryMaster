@@ -30,11 +30,23 @@ export default function FinancialReports() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [materialSearch, setMaterialSearch] = useState('');
 
+  // Helper function to get auth headers
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('token');
+    return {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    };
+  };
+
   const { data: reportData, isLoading, error } = useQuery({
     queryKey: ['/api/reports/financial-stock'],
     queryFn: async () => {
-      const res = await authenticatedRequest('/api/reports/financial-stock');
-      const data = await res.json();
+      const response = await fetch('/api/reports/financial-stock', {
+        headers: getAuthHeaders()
+      });
+      if (!response.ok) throw new Error('Failed to fetch financial report data');
+      const data = await response.json();
       
       // Process data to ensure proper calculations
       const processedData = Array.isArray(data) ? data.map((item: any) => {

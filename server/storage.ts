@@ -373,6 +373,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           lte(materials.currentStock, materials.minimumStock),
+          gt(materials.minimumStock, 0), // Only show materials with minimumStock > 0
           ownerId ? eq(materials.ownerId, ownerId) : undefined
         )
       );
@@ -527,14 +528,62 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  async searchMaterials(query: string, ownerId?: number): Promise<Material[]> {
+  async searchMaterials(query: string, ownerId?: number): Promise<MaterialWithDetails[]> {
     try {
       const conditions = [
-        ilike(materials.name, `%${query}%`)
+        or(
+          ilike(materials.name, `%${query}%`),
+          ilike(materials.description, `%${query}%`)
+        )
       ];
       if (ownerId) conditions.push(eq(materials.ownerId, ownerId));
       
-      return await db.select().from(materials).where(and(...conditions));
+      const materialsWithCategories = await db
+        .select({
+          id: materials.id,
+          name: materials.name,
+          description: materials.description,
+          categoryId: materials.categoryId,
+          currentStock: materials.currentStock,
+          minimumStock: materials.minimumStock,
+          unit: materials.unit,
+          unitPrice: materials.unitPrice,
+          lastSupplierId: materials.lastSupplierId,
+          ownerId: materials.ownerId,
+          createdAt: materials.createdAt,
+          category: {
+            id: categories.id,
+            name: categories.name,
+            description: categories.description,
+            ownerId: categories.ownerId,
+            createdAt: categories.createdAt,
+          }
+        })
+        .from(materials)
+        .leftJoin(categories, eq(materials.categoryId, categories.id))
+        .where(and(...conditions));
+
+      return materialsWithCategories.map(item => ({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        categoryId: item.categoryId,
+        currentStock: item.currentStock,
+        minimumStock: item.minimumStock,
+        unit: item.unit,
+        unitPrice: item.unitPrice,
+        lastSupplierId: item.lastSupplierId,
+        ownerId: item.ownerId,
+        createdAt: item.createdAt,
+        stockStatus: (item.currentStock <= item.minimumStock) ? 'low_stock' as const : 'ok' as const,
+        category: item.category || {
+          id: 0,
+          name: 'Sem categoria',
+          description: null,
+          ownerId: ownerId || 1,
+          createdAt: new Date(),
+        }
+      }));
     } catch (error) {
       console.error('Error searching materials:', error);
       throw new Error('Failed to search materials');

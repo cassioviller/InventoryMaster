@@ -140,6 +140,26 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO CORRIGIDO**: Sistema de devoluções agora funciona corretamente - funcionários podem devolver materiais sem restrições de estoque, já que estão retornando itens ao inventário.
 
+## Status Atual (21/07/2025 - 13:45)
+**TRÊS PROBLEMAS CRÍTICOS CORRIGIDOS COMPLETAMENTE**:
+- ✅ **PROBLEMA 1 - FILTRO NÃO FUNCIONAVA**: 
+  * Função `searchMaterials` reformulada para incluir dados de categoria
+  * Busca agora funciona por nome E descrição do material
+  * Retorna MaterialWithDetails com categoria completa
+  * Teste validado: busca por "DISCO" retorna 1 resultado correto
+- ✅ **PROBLEMA 2 - CATEGORIA NÃO APARECIA**:
+  * SearchMaterials agora usa leftJoin com categories igual getMaterials
+  * Cada material retorna com dados completos da categoria
+  * Fallback "Sem categoria" implementado para materiais sem categoria
+  * Interface mostra categoria.name corretamente
+- ✅ **PROBLEMA 3 - ESTOQUE MÍNIMO 0 APARECIA NO DASHBOARD**:
+  * Condição `gt(materials.minimumStock, 0)` adicionada em getLowStockMaterials
+  * Dashboard agora exclui materiais com minimumStock = 0
+  * Teste validado: apenas 5 itens mostrados (antes mostrava todos)
+  * Lógica correta: só alertar para materiais com estoque mínimo configurado > 0
+
+**SISTEMA CORRIGIDO**: Busca, categorias e alertas de estoque funcionando perfeitamente conforme especificado.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

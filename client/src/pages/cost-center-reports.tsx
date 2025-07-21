@@ -120,8 +120,8 @@ export default function CostCenterReports() {
 
   // Use the appropriate data source and handle "all" option
   const currentData = reportType === "movements" 
-    ? (selectedCostCenter === "all" ? movementsData : movementsData)
-    : (selectedCostCenter === "all" ? [] : reportData);
+    ? movementsData
+    : reportData;
   
   const totals = calculateTotals(currentData);
 

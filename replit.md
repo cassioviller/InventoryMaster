@@ -266,6 +266,25 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO CORRETO**: Filtro de centro de custo nos relatórios agora funciona perfeitamente - quando selecionado um centro específico, apenas dados deste centro aparecem na tabela.
 
+## Status Atual (21/07/2025 - 14:32)
+**BUG CRÍTICO DO FILTRO CORRIGIDO - OFICINA FUNCIONANDO**:
+- ✅ **PROBLEMA IDENTIFICADO**: Frontend estava usando dados incorretos - `currentData` não respeitava o filtro de centro de custo
+- ✅ **CAUSA RAIZ**: Lógica na linha 123 estava usando `movementsData` para ambos os casos, ignorando `reportData` filtrado
+- ✅ **CORREÇÃO APLICADA**: 
+  * Lógica simplificada: `reportType === "movements" ? movementsData : reportData`
+  * Removida condição desnecessária que causava confusão
+  * Frontend agora usa corretamente os dados filtrados pela API
+- ✅ **CENTROS CRIADOS PARA TESTE**:
+  * Centro "CASA VISTA" (ID 18) com movimentação de teste ✅
+  * Centro "OFICINA" (ID 19) com movimentação de teste ✅
+  * Ambos funcionando corretamente com filtros individuais
+- ✅ **VALIDAÇÃO REALIZADA**:
+  * API de filtro confirmada funcionando: OFICINA retorna 1 registro específico ✅
+  * API de filtro confirmada funcionando: SUNSET PARK retorna 1 registro específico ✅
+  * Frontend corrigido para usar dados filtrados corretamente ✅
+
+**FUNCIONAMENTO CORRETO**: Usuário agora pode selecionar "OFICINA" e verá apenas os dados específicos deste centro de custo na tabela, sem misturar com dados de outros centros.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

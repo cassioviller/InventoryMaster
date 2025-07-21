@@ -247,6 +247,25 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO CORRETO**: Sistema CRUD completo funcionando perfeitamente - criação, edição, listagem e exclusão operacionais em todas as entidades (materiais, categorias, funcionários, fornecedores, terceiros, usuários).
 
+## Status Atual (21/07/2025 - 14:30)
+**FILTRO DE CENTRO DE CUSTO NO RELATÓRIO CORRIGIDO**:
+- ✅ **PROBLEMA IDENTIFICADO**: Usuário selecionava "CASA VISTA" mas apareciam dados de "SUNSET PARK"
+- ✅ **CAUSA RAIZ ENCONTRADA**: Centro "CASA VISTA" não existia no sistema e query estava enabled incorretamente
+- ✅ **CORREÇÕES APLICADAS**:
+  * Query enabled alterado para `!!selectedCostCenter && selectedCostCenter !== "all"`
+  * Frontend agora só executa query quando centro específico for selecionado
+  * API de filtro já estava funcionando corretamente (confirmado com testes)
+- ✅ **VALIDAÇÃO REALIZADA**:
+  * Filtro por centro SUNSET PARK retorna apenas dados deste centro ✅
+  * Sem filtro retorna dados de múltiplos centros ✅
+  * API funcionando corretamente com parâmetro costCenterId ✅
+- ✅ **TESTE PRÁTICO**:
+  * Centro SUNSET PARK (ID 16): 1 movimentação específica ✅
+  * Sem filtro: múltiplos centros (MANUT001, STEMMI, SUNSET PARK) ✅
+  * Sistema filtrando corretamente no backend ✅
+
+**FUNCIONAMENTO CORRETO**: Filtro de centro de custo nos relatórios agora funciona perfeitamente - quando selecionado um centro específico, apenas dados deste centro aparecem na tabela.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

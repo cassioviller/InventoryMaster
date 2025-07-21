@@ -281,11 +281,20 @@ export default function Management() {
         queryKey: [queryKey],
         type: 'active'
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting item:', error);
+      
+      // Extract the error message from the server response
+      let errorMessage = 'Erro ao excluir item. Tente novamente.';
+      if (error?.message) {
+        errorMessage = error.message;
+      } else if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       toast({
         title: 'Erro',
-        description: 'Erro ao excluir item. Tente novamente.',
+        description: errorMessage,
         variant: 'destructive',
       });
     }

@@ -235,19 +235,14 @@ export default function MaterialEntry() {
         return;
       }
 
-      // Validar quantidade contra o lote selecionado
+      // Para devoluções, não validamos quantidade contra disponibilidade
+      // porque estamos RETORNANDO material ao estoque, não retirando
       const targetLot = availableReturnLots.length === 1 
         ? availableReturnLots[0] 
         : availableReturnLots.find(lot => lot.unitPrice === selectedReturnLot);
       
-      if (targetLot && parseInt(quantity) > targetLot.availableQuantity) {
-        toast({
-          title: "Quantidade excede lote",
-          description: `Disponível no lote R$ ${targetLot.unitPrice}: ${targetLot.availableQuantity} unidades.`,
-          variant: "destructive",
-        });
-        return;
-      }
+      // REMOVIDA VALIDAÇÃO DE QUANTIDADE PARA DEVOLUÇÕES
+      // Na devolução, o funcionário/terceiro pode devolver qualquer quantidade
     }
 
     const material = materials?.find((m: any) => m.id === parseInt(selectedMaterial));

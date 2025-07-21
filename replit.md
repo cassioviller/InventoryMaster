@@ -129,6 +129,17 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO**: Todos os relatórios agora funcionam corretamente com filtros aplicados, autenticação adequada e dados reais do sistema.
 
+## Status Atual (21/07/2025 - 13:28)  
+**BUG CRÍTICO DE DEVOLUÇÃO DE FUNCIONÁRIO CORRIGIDO**:
+- ✅ **PROBLEMA IDENTIFICADO**: Sistema validava estoque disponível nas devoluções, o que é logicamente incorreto
+- ✅ **CAUSA RAIZ**: Validação no material-entry.tsx linha 243 verificava `quantity > targetLot.availableQuantity` mesmo para devoluções
+- ✅ **LÓGICA INCORRETA**: Devoluções AUMENTAM estoque, não devem ser limitadas por disponibilidade atual
+- ✅ **CORREÇÃO APLICADA**: Removida validação de quantidade para `employee_return` e `third_party_return`
+- ✅ **VALIDAÇÃO REMOVIDA**: Linha que causava erro "Quantidade excede lote" foi comentada e explicada
+- ✅ **RESULTADO**: Funcionários agora podem devolver qualquer quantidade sem verificação de estoque
+
+**FUNCIONAMENTO CORRIGIDO**: Sistema de devoluções agora funciona corretamente - funcionários podem devolver materiais sem restrições de estoque, já que estão retornando itens ao inventário.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

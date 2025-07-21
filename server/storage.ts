@@ -938,6 +938,9 @@ export class DatabaseStorage implements IStorage {
     lowStockItems: number;
     totalValue: number;
     totalMovements: number;
+    entriesToday: number;
+    exitsToday: number;
+    criticalItems: number;
   }> {
     try {
       const statsConditions = ownerId ? eq(materials.ownerId, ownerId) : undefined;
@@ -967,6 +970,42 @@ export class DatabaseStorage implements IStorage {
         })
         .from(materialMovements);
 
+      // Calculate today's entries and exits
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+
+      const movementConditions = ownerId ? eq(materialMovements.ownerId, ownerId) : undefined;
+
+      const [todayEntries] = await db
+        .select({
+          entriesToday: count(),
+        })
+        .from(materialMovements)
+        .where(
+          and(
+            eq(materialMovements.type, 'entry'),
+            gte(materialMovements.date, today),
+            lt(materialMovements.date, tomorrow),
+            movementConditions
+          )
+        );
+
+      const [todayExits] = await db
+        .select({
+          exitsToday: count(),
+        })
+        .from(materialMovements)
+        .where(
+          and(
+            eq(materialMovements.type, 'exit'),
+            gte(materialMovements.date, today),
+            lt(materialMovements.date, tomorrow),
+            movementConditions
+          )
+        );
+
       // Calculate total value manually
       const allMaterials = await db
         .select({
@@ -987,6 +1026,9 @@ export class DatabaseStorage implements IStorage {
         lowStockItems: lowStockStats?.lowStockItems || 0,
         totalValue: totalValue,
         totalMovements: movementStats?.totalMovements || 0,
+        entriesToday: todayEntries?.entriesToday || 0,
+        exitsToday: todayExits?.exitsToday || 0,
+        criticalItems: lowStockStats?.lowStockItems || 0, // Same as lowStockItems
       };
     } catch (error) {
       console.error('Error getting dashboard stats:', error);

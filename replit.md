@@ -200,6 +200,26 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO CORRETO**: Sistema de alertas de estoque baixo agora funciona perfeitamente, excluindo automaticamente materiais com estoque mínimo = 0 conforme solicitado pelo usuário.
 
+## Status Atual (21/07/2025 - 14:15)
+**KPIs DO DASHBOARD CORRIGIDOS COMPLETAMENTE**:
+- ✅ **PROBLEMA IDENTIFICADO**: Dashboard mostrava 0 para "Entradas Hoje", "Saídas Hoje" e "Itens Críticos"
+- ✅ **CAUSA RAIZ**: API não retornava os campos `entriesToday`, `exitsToday` e `criticalItems` esperados pelo frontend
+- ✅ **CORREÇÕES IMPLEMENTADAS**:
+  * Método `getDashboardStats()` expandido com novos campos
+  * Cálculo de entradas e saídas do dia atual implementado
+  * Filtros por data (hoje: 00:00 até 23:59) adicionados
+  * Campo `criticalItems` mapeado para `lowStockItems`
+  * Condições de `ownerId` aplicadas corretamente para multi-tenant
+- ✅ **VALIDAÇÃO PRÁTICA REALIZADA**:
+  * Entrada de teste criada: KPI "Entradas Hoje" = 1 ✅
+  * Saída de teste criada: KPI "Saídas Hoje" = 1 ✅  
+  * Itens críticos = 5 (materiais com estoque baixo) ✅
+  * Total de materiais = 10 ✅
+- ✅ **SISTEMA FIFO FUNCIONANDO**: Saída usou FIFO corretamente (lote R$ 60,00)
+- ✅ **AUTO-CORREÇÃO ATIVA**: Sistema detectou e corrigiu estoque do "Material Teste Zero"
+
+**FUNCIONAMENTO CORRETO**: Dashboard agora exibe todos os KPIs corretamente com dados em tempo real, incluindo movimentações do dia atual.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

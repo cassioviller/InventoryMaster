@@ -68,7 +68,7 @@ export default function CostCenterReports() {
   // Fetch general movements with cost center filter
   const { data: movementsData = [], isLoading: movementsLoading } = useQuery({
     queryKey: ["/api/reports/general-movements", startDate, endDate, "", selectedCostCenter],
-    enabled: reportType === "movements" && !!selectedCostCenter,
+    enabled: reportType === "movements" && !!selectedCostCenter && selectedCostCenter !== "all",
     queryFn: () => {
       let url = "/api/reports/general-movements";
       const params = new URLSearchParams();

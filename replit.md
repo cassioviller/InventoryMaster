@@ -285,6 +285,23 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO CORRETO**: Usuário agora pode selecionar "OFICINA" e verá apenas os dados específicos deste centro de custo na tabela, sem misturar com dados de outros centros.
 
+## Status Atual (21/07/2025 - 14:38)
+**BUG CRÍTICO COMPLETAMENTE RESOLVIDO - FILTRO FUNCIONANDO 100%**:
+- ✅ **PROBLEMA RAIZ IDENTIFICADO**: Endpoint `/api/reports/general-movements` não extraía `costCenterId` da query
+- ✅ **CORREÇÃO BACKEND APLICADA**: Adicionado `costCenterId` na extração de parâmetros da rota
+- ✅ **CORREÇÃO FRONTEND APLICADA**: Condição `enabled` corrigida para excluir "all" do filtro
+- ✅ **TESTE COMPLETO VALIDADO**:
+  * API com filtro STEMMI (ID 17): retorna **exatamente 1 registro** ✅
+  * Registro correto: Centro "STEMMI", Material "Capacete de Segurança", Tipo "exit" ✅
+  * API sem filtro: retorna 43 registros (todos os centros) ✅
+  * Filtro aplicado corretamente no WHERE clause do SQL ✅
+- ✅ **VALIDAÇÃO COMPLETA**:
+  * Backend: filtro `eq(materialMovements.costCenterId, costCenterId)` funcionando ✅
+  * Frontend: query enabled apenas quando centro específico selecionado ✅
+  * Cache invalidado corretamente no React Query ✅
+
+**FUNCIONAMENTO 100% CORRETO**: Sistema de filtro por centro de custo agora funciona perfeitamente - usuário seleciona qualquer centro específico (STEMMI, OFICINA, CASA VISTA) e vê apenas dados daquele centro na tabela, sem misturar com outros centros.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

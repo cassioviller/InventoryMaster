@@ -864,7 +864,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/reports/general-movements", authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
-      const { startDate, endDate, type } = req.query;
+      const { startDate, endDate, type, costCenterId } = req.query;
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       
       let adjustedStartDate: Date | undefined;
@@ -885,7 +885,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         adjustedStartDate,
         adjustedEndDate,
         type as 'entry' | 'exit',
-        ownerId
+        ownerId,
+        costCenterId ? parseInt(costCenterId as string) : undefined
       );
       res.json(Array.isArray(report) ? report : []);
     } catch (error) {

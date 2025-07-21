@@ -241,12 +241,6 @@ export default function Management() {
 
   const handleModalClose = () => {
     setEditingItem(null);
-    setMaterialModalOpen(false);
-    setCategoryModalOpen(false);
-    setEmployeeModalOpen(false);
-    setSupplierModalOpen(false);
-    setThirdPartyModalOpen(false);
-    setUserModalOpen(false);
   };
 
   const handleDelete = async (id: number, type: string) => {
@@ -850,38 +844,61 @@ export default function Management() {
       {/* Modals */}
       <MaterialModal
         open={materialModalOpen}
+        onOpenChange={(open) => {
+          setMaterialModalOpen(open);
+          if (!open) handleModalClose();
+        }}
         onClose={handleModalClose}
         material={editingItem}
       />
 
       <CategoryModal
         open={categoryModalOpen}
+        onOpenChange={(open) => {
+          setCategoryModalOpen(open);
+          if (!open) handleModalClose();
+        }}
         onClose={handleModalClose}
         category={editingItem}
       />
 
       <EmployeeModal
         open={employeeModalOpen}
+        onOpenChange={(open) => {
+          setEmployeeModalOpen(open);
+          if (!open) handleModalClose();
+        }}
         onClose={handleModalClose}
         employee={editingItem}
       />
 
       <SupplierModal
         open={supplierModalOpen}
+        onOpenChange={(open) => {
+          setSupplierModalOpen(open);
+          if (!open) handleModalClose();
+        }}
         onClose={handleModalClose}
         supplier={editingItem}
       />
 
       <ThirdPartyModal
         open={thirdPartyModalOpen}
+        onOpenChange={(open) => {
+          setThirdPartyModalOpen(open);
+          if (!open) handleModalClose();
+        }}
         onClose={handleModalClose}
         thirdParty={editingItem}
       />
 
       <UserModal
         open={userModalOpen}
-        onClose={handleModalClose}
-        user={editingItem}
+        onOpenChange={(open) => {
+          setUserModalOpen(open);
+          if (!open) handleModalClose();
+        }}
+        editingUser={editingItem}
       />
     </div>
   );

@@ -466,6 +466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const materials = await storage.getLowStockMaterials(ownerId);
       res.json(materials);
     } catch (error) {
+      console.error('Error fetching low stock materials:', error);
       res.status(500).json({ message: "Failed to fetch low stock alerts" });
     }
   });

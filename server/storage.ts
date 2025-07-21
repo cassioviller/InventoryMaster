@@ -8,7 +8,7 @@ import {
   type MaterialWithDetails, type MovementWithDetails, type CostCenter, type InsertCostCenter
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, gte, lte, lt, count, sum, desc, asc, ilike, ne, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, gte, lte, lt, gt, count, sum, desc, asc, ilike, ne, isNotNull, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User methods
@@ -800,7 +800,6 @@ export class DatabaseStorage implements IStorage {
         user: {
           id: users.id,
           username: users.username,
-          name: users.name,
         },
         supplier: {
           id: suppliers.id,
@@ -864,7 +863,6 @@ export class DatabaseStorage implements IStorage {
           unitPrice: item.unitPrice,
           originType: 'employee_return',
           returnEmployeeId: returnData.employeeId,
-          isReturn: true,
           returnReason: item.reason,
           materialCondition: item.condition,
           notes: returnData.notes,
@@ -919,7 +917,6 @@ export class DatabaseStorage implements IStorage {
           unitPrice: item.unitPrice,
           originType: 'third_party_return',
           returnThirdPartyId: returnData.thirdPartyId,
-          isReturn: true,
           returnReason: item.reason,
           materialCondition: item.condition,
           notes: returnData.notes,
@@ -1830,7 +1827,7 @@ export class DatabaseStorage implements IStorage {
         if (movement.type === 'entry') {
           stock += movement.quantity;
         } else if (movement.type === 'exit') {
-          if (movement.isReturn) {
+          if (movement.originType === 'employee_return' || movement.originType === 'third_party_return') {
             // Devolução aumenta o estoque
             stock += movement.quantity;
           } else {

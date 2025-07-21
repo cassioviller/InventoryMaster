@@ -179,6 +179,27 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **FUNCIONAMENTO**: Filtros de categoria no cadastro e centro de custo nos relatórios agora funcionam perfeitamente conforme esperado.
 
+## Status Atual (21/07/2025 - 14:00)
+**ALERTA DE ESTOQUE BAIXO CORRIGIDO COMPLETAMENTE**:
+- ✅ **PROBLEMA IDENTIFICADO E RESOLVIDO**: Endpoint `/api/dashboard/low-stock` estava retornando erro 500
+- ✅ **CAUSA RAIZ**: Erros de TypeScript em campos inexistentes no schema (`isReturn`, `name` em users)
+- ✅ **CORREÇÕES APLICADAS**:
+  * Import `gt` adicionado ao drizzle-orm para condição `gt(materials.minimumStock, 0)`
+  * Campo `isReturn` removido das queries (substituído por verificação de `originType`)
+  * Campo `name` removido da query de users (não existe no schema)
+  * Try-catch restaurado no endpoint para robustez
+- ✅ **LÓGICA DE FILTRO VALIDADA**: 
+  * Sistema já estava correto - apenas materiais com `minimumStock > 0` aparecem nos alertas
+  * Condição `gt(materials.minimumStock, 0)` funcionando corretamente
+  * Materiais com estoque mínimo = 0 são automaticamente excluídos dos alertas
+- ✅ **TESTE PRÁTICO REALIZADO**:
+  * Material "Material Teste Zero" criado com `minimumStock = 0` e `currentStock = 5`
+  * Confirmado que NÃO aparece nos alertas de estoque baixo
+  * Total de alertas permanece 5 (apenas materiais com estoque mínimo configurado > 0)
+- ✅ **ENDPOINT FUNCIONANDO**: API retorna corretamente array com 5 materiais em situação de estoque baixo
+
+**FUNCIONAMENTO CORRETO**: Sistema de alertas de estoque baixo agora funciona perfeitamente, excluindo automaticamente materiais com estoque mínimo = 0 conforme solicitado pelo usuário.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

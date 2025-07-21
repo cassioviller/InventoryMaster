@@ -50,7 +50,7 @@ export default function Management() {
   const { canCreateUsers } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('materials');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
   const [materialModalOpen, setMaterialModalOpen] = useState(false);
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [employeeModalOpen, setEmployeeModalOpen] = useState(false);
@@ -89,7 +89,7 @@ export default function Management() {
     queryFn: async () => {
       try {
         let url = '/api/categories';
-        if (searchQuery) url += '?search=' + encodeURIComponent(searchQuery);
+        if (searchQuery && activeTab === 'categories') url += '?search=' + encodeURIComponent(searchQuery);
         
         const res = await authenticatedRequest(url);
         const data = await res.json();
@@ -99,7 +99,7 @@ export default function Management() {
         return [];
       }
     },
-    enabled: activeTab === 'categories' && !!localStorage.getItem('token'),
+    enabled: (activeTab === 'categories' || activeTab === 'materials') && !!localStorage.getItem('token'),
   });
 
   const { data: employeesData, isLoading: employeesLoading } = useQuery({

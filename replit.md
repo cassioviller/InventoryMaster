@@ -160,6 +160,25 @@ Sistema completo de gestão de almoxarifado desenvolvido como SaaS multi-tenant 
 
 **SISTEMA CORRIGIDO**: Busca, categorias e alertas de estoque funcionando perfeitamente conforme especificado.
 
+## Status Atual (21/07/2025 - 13:55) 
+**NOVOS PROBLEMAS CORRIGIDOS - FILTROS FUNCIONANDO**:
+- ✅ **FILTRO POR CATEGORIA NO CADASTRO CORRIGIDO**:
+  * Problema: Query de categorias só carregava na aba "Categorias", não em "Materiais"
+  * Solução: Enabled query para ambas abas (categories || materials)
+  * Filtro backend implementado corretamente no endpoint /api/materials
+  * Teste validado: categoria 1 = 3 materiais, categoria 2 = 1 material, categoria 3 = 1 material
+- ✅ **RELATÓRIO DE CENTRO DE CUSTO CORRIGIDO**:
+  * Problema: Query enabled apenas quando não era "all"
+  * Solução: Enabled sempre que centro estiver selecionado
+  * Filtro funcionando: centro 3 retorna 2 movimentações específicas
+  * Interface correta: mostra apenas dados do centro selecionado
+- ✅ **AMBOS FILTROS TESTADOS E VALIDADOS**:
+  * Filtro categoria: resultados específicos por categoria
+  * Filtro centro custo: movimentações filtradas corretamente
+  * Frontend e backend integrados e funcionais
+
+**FUNCIONAMENTO**: Filtros de categoria no cadastro e centro de custo nos relatórios agora funcionam perfeitamente conforme esperado.
+
 ## Status Anterior (07/07/2025 - 14:42)
 **SISTEMA DE CORREÇÃO AUTOMÁTICA IMPLEMENTADO**:
 - ✅ **BUG CRÍTICO IDENTIFICADO**: Estoque mostrado na listagem diferente do estoque real calculado pelos lotes

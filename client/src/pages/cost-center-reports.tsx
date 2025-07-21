@@ -42,7 +42,7 @@ export default function CostCenterReports() {
   // Fetch cost center report
   const { data: reportData = [], isLoading: reportLoading } = useQuery({
     queryKey: ["/api/reports/cost-center", selectedCostCenter, startDate, endDate],
-    enabled: !!selectedCostCenter && selectedCostCenter !== "all",
+    enabled: !!selectedCostCenter,
     queryFn: () => {
       let url = "/api/reports/cost-center";
       const params = new URLSearchParams();

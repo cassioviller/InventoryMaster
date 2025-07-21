@@ -401,6 +401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       const search = req.query.search as string;
+      const category = req.query.category as string;
       
       let materials;
       if (search) {
@@ -409,8 +410,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         materials = await storage.getMaterials(ownerId);
       }
       
+      // Apply category filter if specified
+      if (category && category !== 'all' && materials) {
+        const categoryNum = parseInt(category);
+        materials = materials.filter(material => 
+          material.categoryId === categoryNum
+        );
+      }
+      
       res.json(materials);
     } catch (error) {
+      console.error('Materials API error:', error);
       res.status(500).json({ message: "Failed to fetch materials" });
     }
   });

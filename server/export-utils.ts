@@ -1,13 +1,14 @@
+const { jsPDF } = require('jspdf');
 import * as XLSX from 'xlsx';
-import { jsPDF } from 'jspdf';
 
-export interface ExportColumn {
+// Types for export data
+interface ExportColumn {
   key: string;
   label: string;
   width?: number;
 }
 
-export interface ExportData {
+interface ExportData {
   title: string;
   columns: ExportColumn[];
   data: any[];
@@ -16,209 +17,248 @@ export interface ExportData {
 }
 
 export class ExportService {
-  // Generate real PDF using jsPDF
+  // Generate professional PDF with no truncation
   static generatePDF(exportData: ExportData): Buffer {
-    const doc = new jsPDF();
+    // Create document in landscape for maximum width
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+    const pageW = 297; // A4 Landscape width
+    const pageH = 210; // A4 Landscape height
     
-    // Set font for Portuguese characters
-    doc.setFont('helvetica');
+    // Professional header
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text(exportData.title, 15, 15);
     
-    // Add title
-    doc.setFontSize(16);
-    doc.text(exportData.title, 20, 20);
+    // Timestamp
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    const timestamp = new Date().toLocaleString('pt-BR');
+    doc.text(`Gerado em: ${timestamp}`, pageW - 60, 15);
     
-    // Add filters if present
-    let yPosition = 35;
+    // Filters in compact format
+    let yPos = 25;
     if (exportData.filters && exportData.filters.length > 0) {
-      doc.setFontSize(12);
-      doc.text('FILTROS APLICADOS:', 20, yPosition);
-      yPosition += 8;
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text('FILTROS:', 15, yPos);
       
-      doc.setFontSize(10);
-      exportData.filters.forEach(filter => {
-        doc.text(`• ${filter}`, 25, yPosition);
-        yPosition += 6;
-      });
-      yPosition += 5;
+      doc.setFont('helvetica', 'normal');
+      const filtersText = exportData.filters.join(' • ');
+      doc.text(filtersText, 35, yPos);
+      yPos += 8;
     }
     
-    // Create table with proper column widths
-    const pageWidth = 210; // A4 width in mm
-    const margins = 40; // Left + right margins
-    const availableWidth = pageWidth - margins;
+    // Dynamic column width calculation
+    const margins = 30;
+    const availableWidth = pageW - margins;
     
-    // Define specific column widths optimized for content type
-    const columnWidths = {
-      'Data': 23,            // Increased by 3 characters
-      'Tipo': 19,            // Increased by 3 to fit one more character
-      'Material': 40,        // Increased since removed Responsável
-      'Quantidade': 20,      // Will use abbreviations
-      'Valor Total': 22,     
-      'Origem/Destino': 40,  // Increased since removed Responsável
-      'Centro de Custo': 45, // Multiline text field
-      // Default for other columns
-      'default': Math.floor(availableWidth / exportData.columns.length)
+    const baseWidths: { [key: string]: number } = {
+      'Data': 25,
+      'Tipo': 20,
+      'Material': 55,
+      'Quantidade': 30,
+      'Valor Total': 30,
+      'Origem/Destino': 50,
+      'Centro de Custo': 60
     };
     
-    // Calculate actual column positions
-    const colPositions = [];
-    let currentPos = 20;
+    // Calculate proportional widths
+    let totalWidth = 0;
     exportData.columns.forEach(col => {
-      colPositions.push(currentPos);
-      const width = columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default;
-      currentPos += width;
+      totalWidth += baseWidths[col.label] || 35;
     });
     
-    let currentY = yPosition;
+    const scaleFactor = availableWidth / totalWidth;
+    const colWidths: { [key: string]: number } = {};
+    exportData.columns.forEach(col => {
+      const baseW = baseWidths[col.label] || 35;
+      colWidths[col.label] = Math.floor(baseW * scaleFactor);
+    });
     
-    // Draw headers with proper spacing
-    doc.setFontSize(9);
+    // Column positions
+    const colPositions: number[] = [];
+    let currentX = 15;
+    exportData.columns.forEach(col => {
+      colPositions.push(currentX);
+      currentX += colWidths[col.label];
+    });
+    
+    // Professional table header
+    doc.setFillColor(240, 240, 240);
+    doc.rect(15, yPos - 2, currentX - 15, 8, 'F');
+    
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
+    doc.setTextColor(60, 60, 60);
     
     exportData.columns.forEach((col, index) => {
-      doc.text(col.label, colPositions[index], currentY);
+      const headerText = col.label;
+      const words = headerText.split(' ');
+      
+      if (words.length > 1 && headerText.length > colWidths[col.label] / 3) {
+        // Multi-line header for long titles
+        doc.text(words[0], colPositions[index] + 1, yPos + 2);
+        if (words[1]) {
+          doc.text(words.slice(1).join(' '), colPositions[index] + 1, yPos + 5);
+        }
+      } else {
+        doc.text(headerText, colPositions[index] + 1, yPos + 3);
+      }
     });
     
-    // Draw separator line
-    currentY += 3;
-    doc.setLineWidth(0.5);
-    doc.line(20, currentY, currentPos - 10, currentY);
-    currentY += 5;
+    // Header separator
+    yPos += 8;
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(180, 180, 180);
+    doc.line(15, yPos, currentX - 5, yPos);
+    yPos += 3;
     
-    // Draw data rows with better formatting
+    // Data rows with smart formatting
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(6.5); // Compact font for more content
+    doc.setTextColor(40, 40, 40);
     
     exportData.data.forEach((item, rowIndex) => {
-      let maxRowHeight = 0;
-      const rowTexts: { text: string[], x: number }[] = [];
+      const cellContents: { text: string[], x: number, width: number }[] = [];
+      let maxLines = 1;
       
-      // First pass: calculate text lines and row height
+      // Prepare all cell contents with intelligent text wrapping
       exportData.columns.forEach((col, colIndex) => {
         const value = this.getNestedValue(item, col.key);
-        const formattedValue = this.formatValue(value);
-        const colWidth = columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default;
-        const maxCharsPerLine = Math.floor(colWidth * 0.35);
+        let formattedValue = this.formatValue(value);
         
-        // Fields that should stay on single line
-        const singleLineFields = ['Data', 'Tipo', 'Quantidade', 'Valor Total'];
+        // Apply abbreviations for Quantidade
+        if (col.label === 'Quantidade') {
+          formattedValue = this.abbreviateUnit(formattedValue);
+        }
+        
+        const colW = colWidths[col.label];
+        const maxCharsPerLine = Math.floor(colW * 0.5);
         
         const lines: string[] = [];
         
-        // Apply abbreviations for Quantidade field
-        let displayValue = formattedValue;
-        if (col.label === 'Quantidade') {
-          displayValue = this.abbreviateUnit(formattedValue);
-        }
-        
-        if (singleLineFields.includes(col.label) || displayValue.length <= maxCharsPerLine) {
-          // Keep short fields on single line, truncate if necessary
-          if (singleLineFields.includes(col.label) && displayValue.length > maxCharsPerLine) {
-            lines.push(displayValue.substring(0, maxCharsPerLine - 2) + '..');
-          } else {
-            lines.push(displayValue);
-          }
+        if (!formattedValue || formattedValue === '-' || formattedValue === 'N/A') {
+          lines.push('-');
+        } else if (formattedValue.length <= maxCharsPerLine) {
+          lines.push(formattedValue);
         } else {
-          // Apply multiline logic only for long text fields
-          let remainingText = displayValue;
+          // Smart text wrapping - NO TRUNCATION
+          let remainingText = formattedValue;
           while (remainingText.length > 0) {
             if (remainingText.length <= maxCharsPerLine) {
               lines.push(remainingText);
               break;
-            } else {
-              let breakPoint = maxCharsPerLine;
-              for (let i = maxCharsPerLine; i > maxCharsPerLine * 0.7; i--) {
-                if (remainingText[i] === ' ' || remainingText[i] === '-') {
-                  breakPoint = i;
-                  break;
-                }
-              }
-              lines.push(remainingText.substring(0, breakPoint));
-              remainingText = remainingText.substring(breakPoint).trim();
             }
             
-            // Limit to 2 lines for better layout
-            if (lines.length >= 2) {
-              if (remainingText.length > 0) {
-                lines[1] = lines[1].substring(0, lines[1].length - 2) + '..';
+            // Find optimal break point
+            let breakPoint = maxCharsPerLine;
+            let foundBreak = false;
+            
+            // Look for space, hyphen, or punctuation
+            for (let i = maxCharsPerLine; i > Math.floor(maxCharsPerLine * 0.6); i--) {
+              if (/[\s\-.,;:()]/.test(remainingText[i])) {
+                breakPoint = i;
+                foundBreak = true;
+                break;
               }
-              break;
             }
+            
+            // If no good break point, force break but don't lose characters
+            if (!foundBreak) {
+              breakPoint = maxCharsPerLine - 1;
+            }
+            
+            lines.push(remainingText.substring(0, breakPoint).trim());
+            remainingText = remainingText.substring(breakPoint).trim();
           }
         }
         
-        rowTexts.push({ text: lines, x: colPositions[colIndex] });
-        maxRowHeight = Math.max(maxRowHeight, lines.length);
+        cellContents.push({
+          text: lines,
+          x: colPositions[colIndex] + 1,
+          width: colW
+        });
+        
+        maxLines = Math.max(maxLines, lines.length);
       });
       
-      // Alternate row background with proper height
-      if (rowIndex % 2 === 1) {
-        doc.setFillColor(248, 248, 248);
-        const rowHeight = Math.max(6, maxRowHeight * 4 + 2);
-        doc.rect(20, currentY - 3, currentPos - 30, rowHeight, 'F');
+      // Calculate row height
+      const rowHeight = Math.max(8, maxLines * 3.5 + 2);
+      
+      // Zebra striping
+      if (rowIndex % 2 === 0) {
+        doc.setFillColor(252, 252, 252);
+        doc.rect(15, yPos - 1, currentX - 15, rowHeight, 'F');
       }
       
-
+      // Draw cell borders for professional look
+      doc.setDrawColor(230, 230, 230);
+      doc.setLineWidth(0.1);
+      cellContents.forEach((cell, colIndex) => {
+        doc.rect(colPositions[colIndex], yPos - 1, colWidths[exportData.columns[colIndex].label], rowHeight);
+      });
       
-      // Draw all text lines for this row
-      for (let lineIndex = 0; lineIndex < maxRowHeight; lineIndex++) {
-        rowTexts.forEach(({ text, x }) => {
-          if (text[lineIndex]) {
-            doc.text(text[lineIndex], x, currentY + (lineIndex * 4));
+      // Draw text content
+      cellContents.forEach(cell => {
+        cell.text.forEach((line, lineIndex) => {
+          if (line && line.trim()) {
+            doc.text(line, cell.x, yPos + 2 + (lineIndex * 3.5));
           }
         });
-      }
+      });
       
-      // Adjust row height based on number of text lines
-      currentY += Math.max(6, maxRowHeight * 4 + 2);
+      yPos += rowHeight;
       
-      // Add new page if needed
-      if (currentY > 270) {
-        doc.addPage();
-        currentY = 20;
+      // Smart page break with header repetition
+      if (yPos > pageH - 30) {
+        doc.addPage('landscape', 'a4');
+        yPos = 20;
         
-        // Redraw headers on new page
+        // Repeat headers on new page
+        doc.setFillColor(240, 240, 240);
+        doc.rect(15, yPos - 2, currentX - 15, 8, 'F');
+        
+        doc.setFontSize(7);
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        
         exportData.columns.forEach((col, index) => {
-          doc.text(col.label, colPositions[index], currentY);
+          doc.text(col.label, colPositions[index] + 1, yPos + 3);
         });
-        currentY += 3;
-        doc.line(20, currentY, currentPos - 10, currentY);
-        currentY += 5;
+        
+        yPos += 8;
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
+        doc.setFontSize(6.5);
+        doc.setTextColor(40, 40, 40);
       }
     });
     
     // Add totals if provided
     if (exportData.totals && exportData.totals.length > 0) {
-      currentY += 10;
-      doc.setFontSize(12);
+      yPos += 10;
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text('TOTALIZADORES:', 20, currentY);
+      doc.text('TOTALIZADORES:', 15, yPos);
       
-      doc.setFontSize(10);
+      doc.setFontSize(8);
       doc.setFont('helvetica', 'normal');
-      currentY += 8;
+      yPos += 6;
       exportData.totals.forEach(total => {
-        doc.text(`• ${total}`, 25, currentY);
-        currentY += 6;
+        doc.text(`• ${total}`, 20, yPos);
+        yPos += 4;
       });
     }
     
-    // Add footer
-    const pageHeight = doc.internal.pageSize.height;
-    doc.setFontSize(8);
-    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, pageHeight - 20);
-    doc.text('Sistema de Gerenciamento de Almoxarifado', 20, pageHeight - 14);
+    // Footer
+    doc.setFontSize(7);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Sistema de Gerenciamento de Almoxarifado', 15, pageH - 10);
     
     return Buffer.from(doc.output('arraybuffer'));
   }
   
   // Generate Excel export
   static generateExcel(exportData: ExportData): Buffer {
-    // Create workbook
     const workbook = XLSX.utils.book_new();
     
     // Prepare data with headers
@@ -255,14 +295,12 @@ export class ExportService {
     
     // Set column widths
     const columnWidths = exportData.columns.map(col => ({
-      wch: col.width ? col.width / 4 : 15 // Convert to Excel width units
+      wch: col.width ? col.width / 4 : 15
     }));
     worksheet['!cols'] = columnWidths;
     
-    // Add worksheet to workbook
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Dados');
     
-    // Generate buffer
     const excelBuffer = XLSX.write(workbook, { 
       type: 'buffer', 
       bookType: 'xlsx' 
@@ -284,7 +322,6 @@ export class ExportService {
     if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
     if (value instanceof Date) return value.toLocaleString('pt-BR');
     if (typeof value === 'number') {
-      // Check if it's a currency value (has decimal places)
       if (value % 1 !== 0 && value < 1000000) {
         return `R$ ${value.toFixed(2).replace('.', ',')}`;
       }
@@ -297,7 +334,6 @@ export class ExportService {
   private static abbreviateUnit(value: string): string {
     if (!value || value === '-') return value;
     
-    // Common unit abbreviations
     const abbreviations: { [key: string]: string } = {
       'unidade': 'un.',
       'unidades': 'un.',
@@ -327,96 +363,80 @@ export class ExportService {
   }
 }
 
-// Export configurations for different entities
+// Export configurations for different data types
 export const EXPORT_CONFIGS = {
   materials: {
     title: 'Relatório de Materiais',
     columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'name', label: 'Nome', width: 100 },
-      { key: 'category.name', label: 'Categoria', width: 80 },
-      { key: 'currentStock', label: 'Estoque Atual', width: 60 },
-      { key: 'minimumStock', label: 'Estoque Mínimo', width: 60 },
-      { key: 'unit', label: 'Unidade', width: 50 },
-      { key: 'unitPrice', label: 'Preço Unitário', width: 70 },
-      { key: 'description', label: 'Descrição', width: 120 },
+      { key: 'name', label: 'Nome' },
+      { key: 'description', label: 'Descrição' },
+      { key: 'category.name', label: 'Categoria' },
+      { key: 'supplier.name', label: 'Fornecedor' },
+      { key: 'unit', label: 'Unidade' },
+      { key: 'currentStock', label: 'Estoque Atual' },
+      { key: 'minStock', label: 'Estoque Mínimo' },
+      { key: 'location', label: 'Localização' }
     ]
   },
   categories: {
     title: 'Relatório de Categorias',
     columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'name', label: 'Nome', width: 100 },
-      { key: 'description', label: 'Descrição', width: 150 },
-      { key: 'createdAt', label: 'Data de Criação', width: 80 },
+      { key: 'name', label: 'Nome' },
+      { key: 'description', label: 'Descrição' },
+      { key: 'code', label: 'Código' }
     ]
   },
   employees: {
     title: 'Relatório de Funcionários',
     columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'name', label: 'Nome', width: 100 },
-      { key: 'department', label: 'Departamento', width: 80 },
-      { key: 'email', label: 'E-mail', width: 120 },
-      { key: 'phone', label: 'Telefone', width: 80 },
-      { key: 'isActive', label: 'Status', width: 50 },
-      { key: 'createdAt', label: 'Data de Criação', width: 80 },
+      { key: 'name', label: 'Nome' },
+      { key: 'department', label: 'Departamento' },
+      { key: 'position', label: 'Cargo' },
+      { key: 'email', label: 'E-mail' },
+      { key: 'phone', label: 'Telefone' },
+      { key: 'isActive', label: 'Status' }
     ]
   },
   suppliers: {
     title: 'Relatório de Fornecedores',
     columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'name', label: 'Nome', width: 100 },
-      { key: 'cnpj', label: 'CNPJ', width: 80 },
-      { key: 'email', label: 'E-mail', width: 120 },
-      { key: 'phone', label: 'Telefone', width: 80 },
-      { key: 'address', label: 'Endereço', width: 150 },
-      { key: 'isActive', label: 'Status', width: 50 },
-      { key: 'createdAt', label: 'Data de Criação', width: 80 },
+      { key: 'name', label: 'Nome' },
+      { key: 'cnpj', label: 'CNPJ' },
+      { key: 'contact', label: 'Contato' },
+      { key: 'email', label: 'E-mail' },
+      { key: 'phone', label: 'Telefone' },
+      { key: 'address', label: 'Endereço' },
+      { key: 'isActive', label: 'Status' }
     ]
   },
   thirdParties: {
     title: 'Relatório de Terceiros',
     columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'name', label: 'Nome', width: 100 },
-      { key: 'documentType', label: 'Tipo Doc', width: 60 },
-      { key: 'document', label: 'Documento', width: 80 },
-      { key: 'email', label: 'E-mail', width: 120 },
-      { key: 'phone', label: 'Telefone', width: 80 },
-      { key: 'address', label: 'Endereço', width: 150 },
-      { key: 'isActive', label: 'Status', width: 50 },
-      { key: 'createdAt', label: 'Data de Criação', width: 80 },
+      { key: 'name', label: 'Nome' },
+      { key: 'company', label: 'Empresa' },
+      { key: 'contact', label: 'Contato' },
+      { key: 'email', label: 'E-mail' },
+      { key: 'phone', label: 'Telefone' },
+      { key: 'isActive', label: 'Status' }
     ]
   },
   costCenters: {
     title: 'Relatório de Centros de Custo',
     columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'code', label: 'Código', width: 60 },
-      { key: 'name', label: 'Nome', width: 100 },
-      { key: 'description', label: 'Descrição', width: 120 },
-      { key: 'department', label: 'Departamento', width: 80 },
-      { key: 'manager', label: 'Responsável', width: 80 },
-      { key: 'monthlyBudget', label: 'Orçamento Mensal', width: 80 },
-      { key: 'annualBudget', label: 'Orçamento Anual', width: 80 },
-      { key: 'isActive', label: 'Status', width: 50 },
-    ]
-  },
-  movements: {
-    title: 'Relatório de Movimentações',
-    columns: [
-      { key: 'id', label: 'ID', width: 30 },
-      { key: 'date', label: 'Data', width: 70 },
-      { key: 'displayType', label: 'Tipo', width: 60 },
-      { key: 'materialName', label: 'Material', width: 100 },
-      { key: 'quantity', label: 'Quantidade', width: 60 },
-      { key: 'unitPrice', label: 'Preço Unit.', width: 60 },
-      { key: 'totalValue', label: 'Valor Total', width: 70 },
-      { key: 'originDestination', label: 'Origem/Destino', width: 100 },
-      { key: 'costCenter', label: 'Centro de Custo', width: 80 },
-      { key: 'notes', label: 'Observações', width: 120 },
+      { key: 'code', label: 'Código' },
+      { key: 'name', label: 'Nome' },
+      { key: 'department', label: 'Departamento' },
+      { key: 'budget', label: 'Orçamento' },
+      { key: 'isActive', label: 'Status' },
+      { key: 'description', label: 'Descrição' }
     ]
   }
 };
+
+// Legacy class for backward compatibility
+export class PDFGenerator {
+  static generatePDFText(exportData: ExportData): string {
+    // This method is deprecated, use ExportService.generatePDF instead
+    return ExportService.generatePDF(exportData).toString();
+  }
+}

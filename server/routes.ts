@@ -4,8 +4,7 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { storage } from "./storage";
 import { db } from "./db";
-import { ExportService, EXPORT_CONFIGS } from "./export-utils";
-import { PDFGenerator } from "./pdf-generator";
+import { SimpleExporter } from "./simple-export";
 import { 
   users, 
   categories, 
@@ -1280,24 +1279,45 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
       
       const materials = await storage.getMaterials(ownerId);
-      const config = EXPORT_CONFIGS.materials;
-      
-      const exportData = {
-        ...config,
-        data: materials,
-        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`]
+      const config = {
+        title: 'Relatório de Materiais',
+        columns: [
+          { key: 'name', label: 'Nome' },
+          { key: 'description', label: 'Descrição' },
+          { key: 'category.name', label: 'Categoria' },
+          { key: 'supplier.name', label: 'Fornecedor' },
+          { key: 'unit', label: 'Unidade' },
+          { key: 'currentStock', label: 'Estoque Atual' },
+          { key: 'minStock', label: 'Estoque Mínimo' },
+          { key: 'location', label: 'Localização' }
+        ]
       };
       
+      const simpleData = {
+        title: config.title,
+        filters: [`Usuário: ${req.user?.username}`, `Data: ${new Date().toLocaleString('pt-BR')}`],
+        headers: config.columns.map(col => col.label),
+        rows: materials.map((item: any) => 
+          config.columns.map(col => {
+            const value = SimpleExporter.getNestedValue(item, col.key);
+            if (col.key === 'currentStock' && value !== undefined) {
+              return `${value} ${SimpleExporter.abbreviateUnit(item.unit || '')}`;
+            }
+            return String(value || '-');
+          })
+        )
+      };
+
       if (format === 'pdf') {
-        const pdfBuffer = ExportService.generatePDF(exportData);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename="materiais.pdf"');
-        res.send(pdfBuffer);
+        const buffer = SimpleExporter.generatePDFText(simpleData);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="materiais.txt"');
+        res.send(buffer);
       } else {
-        const excelBuffer = ExportService.generateExcel(exportData);
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename="materiais.xlsx"');
-        res.send(excelBuffer);
+        const buffer = SimpleExporter.generateExcelText(simpleData);
+        res.setHeader('Content-Type', 'text/tab-separated-values');
+        res.setHeader('Content-Disposition', 'attachment; filename="materiais.tsv"');
+        res.send(buffer);
       }
     } catch (error) {
       console.error('Error exporting materials:', error);
@@ -1583,16 +1603,37 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       };
 
       if (format === 'pdf') {
-        // Use the same PDF system as other exports for consistency
-        const pdfBuffer = ExportService.generatePDF(exportData);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.pdf"');
+        // Use SimpleExporter for reliable and professional PDF generation
+        const simpleMovementsData = {
+          title: 'Relatório de Movimentações',
+          filters: appliedFilters.concat([`Usuário: ${req.user?.username}`, `Gerado: ${new Date().toLocaleString('pt-BR')}`]),
+          headers: ['Data', 'Tipo', 'Material', 'Quantidade', 'Valor Total', 'Origem/Destino', 'Centro de Custo'],
+          rows: (report.movements || []).map((movement: any) => [
+            new Date(movement.date || movement.createdAt).toLocaleDateString('pt-BR'),
+            movement.displayType || (movement.type === 'entry' ? 'Entrada' : movement.type === 'exit' ? 'Saída' : 'Devolução'),
+            movement.material?.name || '-',
+            `${movement.quantity || 0} ${SimpleExporter.abbreviateUnit(movement.material?.unit || 'un.')}`,
+            SimpleExporter.formatCurrency(movement.totalValue || 0),
+            movement.originDestination || '-',
+            movement.costCenter ? `${movement.costCenter.code} - ${movement.costCenter.name}` : '-'
+          ]),
+          totals: report.totals ? [
+            `Total de Entradas: ${SimpleExporter.formatCurrency(report.totals.totalEntries || 0)}`,
+            `Total de Saídas: ${SimpleExporter.formatCurrency(report.totals.totalExits || 0)}`,
+            `Total de Devoluções: ${SimpleExporter.formatCurrency(report.totals.totalReturns || 0)}`,
+            `TOTAL GERAL: ${SimpleExporter.formatCurrency(report.totals.totalGeneral || 0)}`
+          ] : []
+        };
+
+        const pdfBuffer = SimpleExporter.generatePDFText(simpleMovementsData);
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.txt"');
         res.send(pdfBuffer);
       } else {
-        // Keep using the existing Excel generator
-        const excelBuffer = ExportService.generateExcel(exportData);
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.xlsx"');
+        // Use SimpleExporter for Excel generation  
+        const excelBuffer = SimpleExporter.generateExcelText(simpleMovementsData);
+        res.setHeader('Content-Type', 'text/tab-separated-values');
+        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.tsv"');
         res.send(excelBuffer);
       }
     } catch (error) {

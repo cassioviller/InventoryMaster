@@ -1583,29 +1583,10 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       };
 
       if (format === 'pdf') {
-        // Use new PDF generator
-        const pdfData = {
-          title: 'Relatório de Movimentações',
-          filters: appliedFilters.length > 0 ? [
-            'Relatório de Movimentações',
-            `Filtros aplicados: ${appliedFilters.join(', ')}`
-          ] : [
-            'Relatório de Movimentações',
-            'Filtros aplicados: Todos os dados'
-          ],
-          headers: ['Data', 'Tipo', 'Material', 'Quantidade', 'Valor Total', 'Origem/Destino', 'Responsável', 'Centro de Custo'],
-          rows: (report.movements || []).map((movement: any) => PDFGenerator.formatRowData(movement)),
-          totals: report.totals ? [
-            `Total de Entradas: R$ ${(report.totals.totalEntries || 0).toFixed(2).replace('.', ',')}`,
-            `Total de Saídas: R$ ${(report.totals.totalExits || 0).toFixed(2).replace('.', ',')}`,
-            `Total de Devoluções: R$ ${(report.totals.totalReturns || 0).toFixed(2).replace('.', ',')}`,
-            `Total Geral: R$ ${(report.totals.totalGeneral || 0).toFixed(2).replace('.', ',')}`
-          ] : []
-        };
-        
-        const pdfBuffer = PDFGenerator.generatePDFText(pdfData);
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.txt"');
+        // Use the same PDF system as other exports for consistency
+        const pdfBuffer = ExportService.generatePDF(exportData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.pdf"');
         res.send(pdfBuffer);
       } else {
         // Keep using the existing Excel generator

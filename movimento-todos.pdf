@@ -1,0 +1,68 @@
+═══════════════════════════════════════════════════════════════════════════════
+                           RELATÓRIO DE MOVIMENTAÇÕES
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 FILTROS APLICADOS:
+───────────────────────────────────────────────────────────────────────────────
+   • Relatório de Movimentações
+   • Filtros aplicados: Todos os dados
+
+📊 DADOS:
+───────────────────────────────────────────────────────────────────────────────
+Data │ Tipo │ Material │ Quantidade │ Valor Total │ Origem/Destino │ Responsável │ Centro de Custo
+──────────────────────────────────────────────────────────────────────────────────────────────────
+21/07/2025 │ Saída │ DISCO DE CORTE 7 │ 1 unidade │ R$ 70,00 │ N/A │ - │ OFICINA001 - OFICINA
+21/07/2025 │ Saída │ Capacete de Segurança │ 2 unidade │ R$ 90,00 │ N/A │ - │ CASA001 - CASA VISTA
+21/07/2025 │ Saída │ DISCO DE CORTE 7 │ 1 unidade │ R$ 60,00 │ João Silva Santos │ João Silva Santos │ MANUT001 - Manutenção Predial
+21/07/2025 │ Entrada │ DISCO DE CORTE 7 │ 2 unidade │ R$ 160,00 │ N/A │ - │ -
+08/07/2025 │ Saída │ Capacete de Segurança │ 2 unidade │ R$ 90,00 │ N/A │ - │ STE001 - STEMMI
+08/07/2025 │ Saída │ DISCO DE CORTE 7 │ 3 unidade │ R$ 180,00 │ N/A │ - │ SUN001 - SUNSET PARK
+08/07/2025 │ Saída │ Capacete de Segurança │ 2 unidade │ R$ 90,00 │ N/A │ - │ PROD001 - Produção Linha A
+08/07/2025 │ Saída │ DISCO DE CORTE 7 │ 1 unidade │ R$ 60,00 │ N/A │ - │ MANUT001 - Manutenção Predial
+02/07/2025 │ Entrada │ Capacete de Segurança │ 1 unidade │ R$ 45,00 │ N/A │ - │ MANUT001 - Manutenção Predial
+01/07/2025 │ Saída │ Tomada 2P+T 20A │ 5 unidade │ R$ 75,00 │ N/A │ - │ TESTE001 - Centro de Teste
+01/07/2025 │ Entrada │ Cabo Elétrico │ 1 metro │ R$ 12,30 │ N/A │ - │ -
+01/07/2025 │ Entrada │ Teclado │ 2 unidade │ R$ 31,00 │ N/A │ - │ -
+01/07/2025 │ Saída │ Capacete de Segurança │ 3 unidade │ R$ 135,00 │ N/A │ - │ MANUT001 - Manutenção Predial
+01/07/2025 │ Entrada │ Capacete de Segurança │ 10 unidade │ R$ 450,00 │ N/A │ - │ MANUT001 - Manutenção Predial
+01/07/2025 │ Saída │ Cabo Elétrico │ 2 metro │ R$ 51,00 │ N/A │ - │ ADM001 - Administração Geral
+01/07/2025 │ Entrada │ a │ 1 unidade │ R$ 1,00 │ N/A │ - │ -
+01/07/2025 │ Saída │ Cabo Elétrico │ 5 metro │ R$ 127,50 │ N/A │ - │ TEST001 - Centro de Teste
+01/07/2025 │ Entrada │ Cabo Elétrico │ 20 metro │ R$ 510,00 │ Segurança Total EPI │ - │ -
+01/07/2025 │ Saída │ Chave de Fenda │ 1 unidade │ R$ 22,75 │ Funcionário Teste 2 │ Funcionário Teste 2 │ TESTE001 - Centro de Teste
+01/07/2025 │ Saída │ Chave de Fenda │ 2 unidade │ R$ 37,00 │ Funcionário Teste 2 │ Funcionário Teste 2 │ TESTE001 - Centro de Teste
+01/07/2025 │ Saída │ Chave de Fenda │ 5 unidade │ R$ 92,50 │ Funcionário Teste 3 │ Funcionário Teste 3 │ ADM001 - Administração Geral
+01/07/2025 │ Saída │ Chave de Fenda │ 8 unidade │ R$ 148,00 │ Funcionário Teste 2 │ Funcionário Teste 2 │ -
+01/07/2025 │ Saída │ Chave de Fenda │ 10 unidade │ R$ 185,00 │ N/A │ - │ -
+01/07/2025 │ Entrada │ Chave de Fenda │ 30 unidade │ R$ 682,50 │ N/A │ - │ MANUT001 - Manutenção Predial
+01/07/2025 │ Entrada │ Chave de Fenda │ 25 unidade │ R$ 462,50 │ N/A │ - │ -
+01/07/2025 │ Entrada │ DISCO DE CORTE 7 │ 2 unidade │ R$ 120,00 │ N/A │ - │ ADM001 - Administração Geral
+01/07/2025 │ Entrada │ DISCO DE CORTE 7 │ 1 unidade │ R$ 70,00 │ N/A │ - │ ADM001 - Administração Geral
+01/07/2025 │ Entrada │ DISCO DE CORTE 7 │ 3 unidade │ R$ 180,00 │ N/A │ - │ ADM001 - Administração Geral
+01/07/2025 │ Entrada │ Tomada 2P+T 20A │ 500 unidade │ R$ 7500,00 │ HidroMax Conexões │ - │ -
+30/06/2025 │ Entrada │ Martelo │ 8 unidade │ R$ 80,00 │ N/A │ - │ -
+30/06/2025 │ Saída │ Martelo │ 4 unidade │ R$ 80,00 │ Funcionário Teste 2 │ Funcionário Teste 2 │ -
+30/06/2025 │ Saída │ Martelo │ 3 unidade │ R$ 60,00 │ N/A │ - │ -
+30/06/2025 │ Saída │ Martelo │ 1 unidade │ R$ 0,00 │ N/A │ - │ -
+30/06/2025 │ Entrada │ Martelo │ 4 unidade │ R$ 68,00 │ N/A │ - │ -
+30/06/2025 │ Entrada │ Mouse │ 3 unidade │ R$ 72,00 │ Fornecedor Teste 2 │ - │ -
+30/06/2025 │ Saída │ Martelo │ 1 unidade │ R$ 0,00 │ Funcionário Teste 2 │ Funcionário Teste 2 │ -
+30/06/2025 │ Entrada │ Teclado │ 10 unidade │ R$ 120,00 │ Fornecedor Teste 2 │ - │ -
+30/06/2025 │ Saída │ Martelo │ 8 unidade │ R$ 160,00 │ N/A │ - │ -
+30/06/2025 │ Entrada │ Martelo │ 15 unidade │ R$ 300,00 │ N/A │ - │ -
+30/06/2025 │ Saída │ Martelo │ 5 unidade │ R$ 77,50 │ N/A │ - │ -
+30/06/2025 │ Entrada │ Martelo │ 10 unidade │ R$ 155,00 │ N/A │ - │ -
+01/01/2025 │ Entrada │ Mouse │ 3 unidade │ R$ 46,50 │ N/A │ - │ -
+01/01/2025 │ Entrada │ Cimento │ 2 saco │ R$ 50,00 │ N/A │ - │ -
+
+💰 TOTALIZADORES:
+───────────────────────────────────────────────────────────────────────────────
+   • Total de Entradas: R$ 11115,80
+   • Total de Saídas: R$ 1891,25
+   • Total de Devoluções: R$ 0,00
+   • Total Geral: R$ 13007,05
+
+═══════════════════════════════════════════════════════════════════════════════
+📅 Gerado em: 14/08/2025, 10:48:25
+🏢 Sistema de Almoxarifado - Relatório de Movimentações
+═══════════════════════════════════════════════════════════════════════════════

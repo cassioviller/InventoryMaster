@@ -47,16 +47,16 @@ export class ExportService {
     const margins = 40; // Left + right margins
     const availableWidth = pageWidth - margins;
     
-    // Define specific column widths for better layout - increased for text fields
+    // Define specific column widths optimized for content type
     const columnWidths = {
-      'Data': 22,
-      'Tipo': 18, 
-      'Material': 32,
-      'Quantidade': 22,
-      'Valor Total': 22,
-      'Origem/Destino': 38, // Increased for better readability
-      'Responsável': 32,     // Increased for better readability
-      'Centro de Custo': 40, // Increased for better readability
+      'Data': 20,
+      'Tipo': 16, 
+      'Material': 35,
+      'Quantidade': 20,
+      'Valor Total': 20,
+      'Origem/Destino': 35, // Multiline text field
+      'Responsável': 35,     // Multiline text field  
+      'Centro de Custo': 45, // Increased significantly - multiline text field
       // Default for other columns
       'default': Math.floor(availableWidth / exportData.columns.length)
     };
@@ -101,10 +101,20 @@ export class ExportService {
         const colWidth = columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default;
         const maxCharsPerLine = Math.floor(colWidth * 0.35);
         
+        // Fields that should stay on single line
+        const singleLineFields = ['Data', 'Tipo', 'Quantidade', 'Valor Total'];
+        
         const lines: string[] = [];
-        if (formattedValue.length <= maxCharsPerLine) {
-          lines.push(formattedValue);
+        
+        if (singleLineFields.includes(col.label) || formattedValue.length <= maxCharsPerLine) {
+          // Keep short fields on single line, truncate if necessary
+          if (singleLineFields.includes(col.label) && formattedValue.length > maxCharsPerLine) {
+            lines.push(formattedValue.substring(0, maxCharsPerLine - 2) + '..');
+          } else {
+            lines.push(formattedValue);
+          }
         } else {
+          // Apply multiline logic only for long text fields
           let remainingText = formattedValue;
           while (remainingText.length > 0) {
             if (remainingText.length <= maxCharsPerLine) {
@@ -122,9 +132,10 @@ export class ExportService {
               remainingText = remainingText.substring(breakPoint).trim();
             }
             
-            if (lines.length >= 3) {
+            // Limit to 2 lines for better layout
+            if (lines.length >= 2) {
               if (remainingText.length > 0) {
-                lines[2] = lines[2].substring(0, lines[2].length - 2) + '..';
+                lines[1] = lines[1].substring(0, lines[1].length - 2) + '..';
               }
               break;
             }

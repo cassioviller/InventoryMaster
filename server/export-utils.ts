@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx';
-import PDFDocument from 'pdfkit';
+import { jsPDF } from 'jspdf';
 
 export interface ExportColumn {
   key: string;
@@ -16,48 +16,98 @@ export interface ExportData {
 }
 
 export class ExportService {
-  // Generate PDF export - return as text for now
+  // Generate real PDF using jsPDF
   static generatePDF(exportData: ExportData): Buffer {
-    // For now, return a text file that can be opened instead of complex PDF
-    let content = `RELATÓRIO: ${exportData.title}\n`;
-    content += '='.repeat(50) + '\n\n';
+    const doc = new jsPDF();
     
+    // Set font for Portuguese characters
+    doc.setFont('helvetica');
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text(exportData.title, 20, 20);
+    
+    // Add filters if present
+    let yPosition = 35;
     if (exportData.filters && exportData.filters.length > 0) {
-      content += 'FILTROS APLICADOS:\n';
+      doc.setFontSize(12);
+      doc.text('FILTROS APLICADOS:', 20, yPosition);
+      yPosition += 8;
+      
+      doc.setFontSize(10);
       exportData.filters.forEach(filter => {
-        content += `- ${filter}\n`;
+        doc.text(`• ${filter}`, 25, yPosition);
+        yPosition += 6;
       });
-      content += '\n';
+      yPosition += 5;
     }
     
-    // Add headers
-    const headers = exportData.columns.map(col => col.label).join(' | ');
-    content += headers + '\n';
-    content += '-'.repeat(headers.length) + '\n';
+    // Add table headers
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    let currentY = yPosition;
     
-    // Add data rows
+    // Draw headers
+    const headers = exportData.columns.map(col => col.label);
+    const colWidth = (170 / headers.length); // Distribute available width
+    let currentX = 20;
+    
+    headers.forEach(header => {
+      doc.text(header, currentX, currentY);
+      currentX += colWidth;
+    });
+    
+    currentY += 8;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    
+    // Draw data rows
     exportData.data.forEach(item => {
-      const row = exportData.columns.map(col => {
+      currentX = 20;
+      const rowValues = exportData.columns.map(col => {
         const value = this.getNestedValue(item, col.key);
         return this.formatValue(value);
-      }).join(' | ');
-      content += row + '\n';
+      });
+      
+      rowValues.forEach(value => {
+        // Truncate long values to fit column width
+        const truncatedValue = value.length > 15 ? value.substring(0, 12) + '...' : value;
+        doc.text(truncatedValue, currentX, currentY);
+        currentX += colWidth;
+      });
+      
+      currentY += 6;
+      
+      // Add new page if needed
+      if (currentY > 270) {
+        doc.addPage();
+        currentY = 20;
+      }
     });
     
     // Add totals if provided
     if (exportData.totals && exportData.totals.length > 0) {
-      content += '\n' + '='.repeat(50) + '\n';
-      content += 'TOTALIZADORES:\n';
+      currentY += 10;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text('TOTALIZADORES:', 20, currentY);
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      currentY += 8;
       exportData.totals.forEach(total => {
-        content += `- ${total}\n`;
+        doc.text(`• ${total}`, 25, currentY);
+        currentY += 6;
       });
     }
     
-    content += '\n' + '='.repeat(50) + '\n';
-    content += `Gerado em: ${new Date().toLocaleString('pt-BR')}\n`;
-    content += 'Sistema de Almoxarifado - Relatório de Movimentações\n';
+    // Add footer
+    const pageHeight = doc.internal.pageSize.height;
+    doc.setFontSize(8);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 20, pageHeight - 20);
+    doc.text('Sistema de Gerenciamento de Almoxarifado', 20, pageHeight - 14);
     
-    return Buffer.from(content, 'utf-8');
+    return Buffer.from(doc.output('arraybuffer'));
   }
   
   // Generate Excel export

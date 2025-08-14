@@ -7,6 +7,7 @@ This project is a comprehensive multi-tenant SaaS warehouse management system. I
 - **Movement Editing System**: Complete CRUD functionality implemented with PUT route /api/movements/:id and frontend interface with edit buttons and modal dialogs for editing movements including date modification capabilities
 - **PDF Export System Fully Fixed**: Successfully corrected all PDF generation issues - PDFs now generate properly with application/pdf content-type, valid PDF headers, and can be opened by Adobe Acrobat. Fixed PDFKit pagination bug and replaced deprecated generatePDFText methods with proper generatePDF implementation
 - **Export Architecture Refined**: All export routes updated to use proper PDF generation methods with professional formatting, landscape layout, and multi-page support
+- **Export Column Order Fixed**: Corrected column mapping issue in movement reports where Centro de Custo column was incorrectly showing Responsável data due to wrong column order in export function. Fixed headers sequence to match frontend display
 - **System Status**: All core functionalities operational - material management, movement tracking, PDF/Excel exports, user authentication, and inventory control working perfectly
 
 ## User Preferences

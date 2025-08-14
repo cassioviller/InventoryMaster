@@ -49,14 +49,13 @@ export class ExportService {
     
     // Define specific column widths optimized for content type
     const columnWidths = {
-      'Data': 20,
-      'Tipo': 16, 
-      'Material': 35,
-      'Quantidade': 20,
-      'Valor Total': 20,
-      'Origem/Destino': 35, // Multiline text field
-      'Responsável': 35,     // Multiline text field  
-      'Centro de Custo': 45, // Increased significantly - multiline text field
+      'Data': 23,            // Increased by 3 characters
+      'Tipo': 19,            // Increased by 3 to fit one more character
+      'Material': 40,        // Increased since removed Responsável
+      'Quantidade': 20,      // Will use abbreviations
+      'Valor Total': 22,     
+      'Origem/Destino': 40,  // Increased since removed Responsável
+      'Centro de Custo': 45, // Multiline text field
       // Default for other columns
       'default': Math.floor(availableWidth / exportData.columns.length)
     };
@@ -106,16 +105,22 @@ export class ExportService {
         
         const lines: string[] = [];
         
-        if (singleLineFields.includes(col.label) || formattedValue.length <= maxCharsPerLine) {
+        // Apply abbreviations for Quantidade field
+        let displayValue = formattedValue;
+        if (col.label === 'Quantidade') {
+          displayValue = this.abbreviateUnit(formattedValue);
+        }
+        
+        if (singleLineFields.includes(col.label) || displayValue.length <= maxCharsPerLine) {
           // Keep short fields on single line, truncate if necessary
-          if (singleLineFields.includes(col.label) && formattedValue.length > maxCharsPerLine) {
-            lines.push(formattedValue.substring(0, maxCharsPerLine - 2) + '..');
+          if (singleLineFields.includes(col.label) && displayValue.length > maxCharsPerLine) {
+            lines.push(displayValue.substring(0, maxCharsPerLine - 2) + '..');
           } else {
-            lines.push(formattedValue);
+            lines.push(displayValue);
           }
         } else {
           // Apply multiline logic only for long text fields
-          let remainingText = formattedValue;
+          let remainingText = displayValue;
           while (remainingText.length > 0) {
             if (remainingText.length <= maxCharsPerLine) {
               lines.push(remainingText);
@@ -286,6 +291,39 @@ export class ExportService {
       return value.toLocaleString('pt-BR');
     }
     return String(value);
+  }
+
+  // Helper method to abbreviate units in Quantidade field
+  private static abbreviateUnit(value: string): string {
+    if (!value || value === '-') return value;
+    
+    // Common unit abbreviations
+    const abbreviations: { [key: string]: string } = {
+      'unidade': 'un.',
+      'unidades': 'un.',
+      'kilogram': 'kg',
+      'kilograms': 'kg',
+      'quilogram': 'kg',
+      'quilogramas': 'kg',
+      'metro': 'm',
+      'metros': 'm',
+      'litro': 'L',
+      'litros': 'L',
+      'peça': 'pç',
+      'peças': 'pç',
+      'caixa': 'cx',
+      'caixas': 'cx',
+      'pacote': 'pct',
+      'pacotes': 'pct'
+    };
+    
+    let result = value;
+    for (const [full, abbrev] of Object.entries(abbreviations)) {
+      const regex = new RegExp(`\\b${full}\\b`, 'gi');
+      result = result.replace(regex, abbrev);
+    }
+    
+    return result;
   }
 }
 

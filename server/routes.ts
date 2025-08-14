@@ -1145,6 +1145,37 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
   });
 
   // Movement management routes
+  app.put('/api/movements/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
+    try {
+      const movementId = parseInt(req.params.id);
+      const ownerId = req.user?.role === 'super_admin' ? undefined : req.user?.id;
+      
+      if (isNaN(movementId)) {
+        return res.status(400).json({ error: 'Invalid movement ID' });
+      }
+
+      // Parse and validate the update data
+      const updateData = req.body;
+      console.log('Updating movement:', movementId, 'with data:', updateData);
+      
+      // Convert date string to Date object if provided
+      if (updateData.date) {
+        updateData.date = new Date(updateData.date);
+      }
+      
+      const updatedMovement = await storage.updateMovement(movementId, updateData, ownerId);
+      
+      if (!updatedMovement) {
+        return res.status(404).json({ error: 'Movement not found' });
+      }
+      
+      res.json(updatedMovement);
+    } catch (error) {
+      console.error('Error updating movement:', error);
+      res.status(500).json({ error: 'Failed to update movement' });
+    }
+  });
+
   app.delete('/api/movements/:id', authenticateToken, async (req: AuthenticatedRequest, res: Response) => {
     try {
       const movementId = parseInt(req.params.id);

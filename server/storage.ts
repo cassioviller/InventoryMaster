@@ -65,6 +65,8 @@ export interface IStorage {
   createEmployeeReturn(returnData: any, userId: number): Promise<MaterialMovement>;
   createThirdPartyReturn(returnData: any, userId: number): Promise<MaterialMovement>;
   getMovements(ownerId?: number): Promise<MovementWithDetails[]>;
+  updateMovement(id: number, updateData: Partial<MaterialMovement>, ownerId?: number): Promise<MaterialMovement | undefined>;
+  deleteMovement(id: number, ownerId?: number): Promise<boolean>;
 
   // Dashboard methods
   getDashboardStats(ownerId?: number): Promise<{
@@ -1944,6 +1946,49 @@ export class DatabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error deleting movement:', error);
       return false;
+    }
+  }
+
+  // Update movement and recalculate stock
+  async updateMovement(id: number, updateData: Partial<MaterialMovement>, ownerId?: number): Promise<MaterialMovement | undefined> {
+    try {
+      console.log(`Updating movement ${id}`);
+      
+      // Get current movement to check if material changed
+      const conditions = [eq(materialMovements.id, id)];
+      if (ownerId) conditions.push(eq(materialMovements.ownerId, ownerId));
+      
+      const [currentMovement] = await db
+        .select()
+        .from(materialMovements)
+        .where(and(...conditions));
+      
+      if (!currentMovement) {
+        console.log(`Movement ${id} not found`);
+        return undefined;
+      }
+      
+      // Update the movement
+      const [updatedMovement] = await db
+        .update(materialMovements)
+        .set(updateData)
+        .where(and(...conditions))
+        .returning();
+      
+      // If material changed, recalculate both old and new material stocks
+      if (updateData.materialId && updateData.materialId !== currentMovement.materialId) {
+        await this.recalculateStock(currentMovement.materialId);
+        await this.recalculateStock(updateData.materialId);
+      } else {
+        // Just recalculate current material stock
+        await this.recalculateStock(currentMovement.materialId);
+      }
+      
+      console.log(`Movement ${id} updated successfully`);
+      return updatedMovement;
+    } catch (error) {
+      console.error('Error updating movement:', error);
+      return undefined;
     }
   }
 

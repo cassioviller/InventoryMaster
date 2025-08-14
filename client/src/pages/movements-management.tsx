@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Edit, Plus, RefreshCw, AlertTriangle } from "lucide-react";
+import { Trash2, Edit, Plus, RefreshCw, AlertTriangle, Edit3, Save, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -48,6 +50,8 @@ export default function MovementsManagement() {
   const [materialFilter, setMaterialFilter] = useState<string>("all");
   const [selectedMovement, setSelectedMovement] = useState<Movement | null>(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editFormData, setEditFormData] = useState<Partial<Movement>>({});
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -121,6 +125,44 @@ export default function MovementsManagement() {
     }
   });
 
+  // Update movement mutation
+  const updateMovementMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number, data: Partial<Movement> }) => {
+      const response = await fetch(`/api/movements/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update movement');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/reports/general-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/materials'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+      toast({
+        title: "Sucesso",
+        description: "Movimentação atualizada com sucesso. Estoque recalculado automaticamente.",
+        variant: "default"
+      });
+      setShowEditDialog(false);
+      setSelectedMovement(null);
+      setEditFormData({});
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao atualizar movimentação",
+        variant: "destructive"
+      });
+    }
+  });
+
   // Recalculate all stocks mutation
   const recalculateStocksMutation = useMutation({
     mutationFn: async () => {
@@ -175,6 +217,29 @@ export default function MovementsManagement() {
     if (selectedMovement) {
       deleteMovementMutation.mutate(selectedMovement.id);
     }
+  };
+
+  const openEditDialog = (movement: Movement) => {
+    setSelectedMovement(movement);
+    setEditFormData({
+      date: movement.date?.split('T')[0] || '',
+      quantity: movement.quantity,
+      unitPrice: movement.unitPrice,
+      notes: movement.notes || ''
+    });
+    setShowEditDialog(true);
+  };
+
+  const handleEditSubmit = () => {
+    if (!selectedMovement) return;
+    
+    const updateData: any = {};
+    if (editFormData.date) updateData.date = editFormData.date;
+    if (editFormData.quantity !== undefined) updateData.quantity = editFormData.quantity;
+    if (editFormData.unitPrice !== undefined) updateData.unitPrice = editFormData.unitPrice;
+    if (editFormData.notes !== undefined) updateData.notes = editFormData.notes;
+
+    updateMovementMutation.mutate({ id: selectedMovement.id, data: updateData });
   };
 
   const formatDate = (dateString: string) => {
@@ -344,6 +409,14 @@ export default function MovementsManagement() {
                     
                     <div className="flex gap-2">
                       <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => openEditDialog(movement)}
+                        disabled={updateMovementMutation.isPending}
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+                      <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteMovement(movement)}
@@ -400,6 +473,80 @@ export default function MovementsManagement() {
               disabled={deleteMovementMutation.isPending}
             >
               {deleteMovementMutation.isPending ? 'Excluindo...' : 'Excluir'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Movimentação #{selectedMovement?.id}</DialogTitle>
+            <DialogDescription>
+              Material: {selectedMovement?.material?.name} | 
+              Tipo: {selectedMovement?.type === 'entry' ? 'Entrada' : 'Saída'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editDate">Data *</Label>
+              <Input
+                id="editDate"
+                type="date"
+                value={editFormData.date || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, date: e.target.value })}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="editQuantity">Quantidade *</Label>
+              <Input
+                id="editQuantity"
+                type="number"
+                min="0"
+                step="1"
+                value={editFormData.quantity || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, quantity: parseFloat(e.target.value) || 0 })}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="editUnitPrice">Preço Unitário (R$) *</Label>
+              <Input
+                id="editUnitPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={editFormData.unitPrice || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, unitPrice: e.target.value })}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="editNotes">Observações</Label>
+              <Textarea
+                id="editNotes"
+                value={editFormData.notes || ''}
+                onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                placeholder="Observações sobre a movimentação..."
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-2 justify-end mt-6">
+            <Button 
+              variant="outline" 
+              onClick={() => setShowEditDialog(false)}
+              disabled={updateMovementMutation.isPending}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleEditSubmit}
+              disabled={updateMovementMutation.isPending}
+            >
+              {updateMovementMutation.isPending ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </div>
         </DialogContent>

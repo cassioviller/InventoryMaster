@@ -105,7 +105,7 @@ export const materialMovements = pgTable("material_movements", {
   date: timestamp("date").defaultNow().notNull(),
   userId: integer("user_id").notNull().references(() => users.id),
   materialId: integer("material_id").notNull().references(() => materials.id),
-  quantity: integer("quantity").notNull(),
+  quantity: decimal("quantity", { precision: 10, scale: 2 }).notNull(),
   unitPrice: text("unit_price"),
   originType: originTypeEnum("origin_type"),
   supplierId: integer("supplier_id").references(() => suppliers.id),
@@ -312,7 +312,7 @@ export type InsertThirdParty = z.infer<typeof insertThirdPartySchema>;
 // Movement schemas
 export const movementItemSchema = z.object({
   materialId: z.number(),
-  quantity: z.number().min(1),
+  quantity: z.number().min(0.01),
   unitPrice: z.string().optional(),
 });
 

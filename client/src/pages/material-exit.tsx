@@ -184,10 +184,10 @@ export default function MaterialExit() {
     setFifoSimulation(null);
     
     // If we have a quantity and a selected lot, calculate the value for this specific lot
-    if (quantity && parseInt(quantity) > 0) {
+    if (quantity && parseFloat(quantity) > 0) {
       const selectedLot = selectedMaterialLots.find(lot => lot.unitPrice === lotPrice);
       if (selectedLot) {
-        const requestedQty = parseInt(quantity);
+        const requestedQty = parseFloat(quantity);
         const availableQty = selectedLot.availableQuantity;
         const finalQty = Math.min(requestedQty, availableQty);
         
@@ -203,12 +203,12 @@ export default function MaterialExit() {
   const handleQuantityChange = (newQuantity: string) => {
     setQuantity(newQuantity);
     
-    if (selectedMaterial && newQuantity && parseInt(newQuantity) > 0) {
+    if (selectedMaterial && newQuantity && parseFloat(newQuantity) > 0) {
       // If user has selected a specific lot, calculate for that lot only
       if (selectedLotPrice) {
         const selectedLot = selectedMaterialLots.find(lot => lot.unitPrice === selectedLotPrice);
         if (selectedLot) {
-          const requestedQty = parseInt(newQuantity);
+          const requestedQty = parseFloat(newQuantity);
           const availableQty = selectedLot.availableQuantity;
           const finalQty = Math.min(requestedQty, availableQty);
           
@@ -219,7 +219,7 @@ export default function MaterialExit() {
         }
       } else {
         // Otherwise, use FIFO simulation
-        simulateFifoExit(parseInt(selectedMaterial), parseInt(newQuantity));
+        simulateFifoExit(parseInt(selectedMaterial), parseFloat(newQuantity));
       }
     } else {
       setFifoSimulation(null);
@@ -227,7 +227,7 @@ export default function MaterialExit() {
   };
 
   const addMaterial = () => {
-    if (!selectedMaterial || !quantity || parseInt(quantity) <= 0) {
+    if (!selectedMaterial || !quantity || parseFloat(quantity) <= 0) {
       toast({
         title: "Dados inválidos",
         description: "Selecione um material e informe uma quantidade válida.",
@@ -239,7 +239,7 @@ export default function MaterialExit() {
     const material = materials?.find((m: any) => m.id === parseInt(selectedMaterial));
     if (!material) return;
 
-    const requestedQty = parseInt(quantity);
+    const requestedQty = parseFloat(quantity);
 
     // If user selected a specific lot, validate against that lot's available quantity
     if (selectedLotPrice) {
@@ -517,7 +517,8 @@ export default function MaterialExit() {
                   <label className="block text-sm font-medium text-gray-700 dark:text-white mb-2">Quantidade</label>
                   <Input
                     type="number"
-                    min="1"
+                    min="0.01"
+                    step="0.01"
                     placeholder="1"
                     value={quantity}
                     onChange={(e) => handleQuantityChange(e.target.value)}

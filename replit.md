@@ -3,6 +3,12 @@
 ## Overview
 This project is a comprehensive multi-tenant SaaS warehouse management system. Its core purpose is to provide robust inventory control, material tracking, financial reporting, and supplier management. The system supports full data isolation per tenant and is designed for Docker deployment via EasyPanel. Key capabilities include managing users, categories, materials, employees, suppliers, third parties, material movements, and audit logs. The business vision is to offer a scalable and efficient solution for warehouse operations, streamlining processes and providing critical insights for businesses.
 
+## Recent Updates (August 2025)
+- **Movement Editing System**: Complete CRUD functionality implemented with PUT route /api/movements/:id and frontend interface with edit buttons and modal dialogs for editing movements including date modification capabilities
+- **PDF Export System Fully Fixed**: Successfully corrected all PDF generation issues - PDFs now generate properly with application/pdf content-type, valid PDF headers, and can be opened by Adobe Acrobat. Fixed PDFKit pagination bug and replaced deprecated generatePDFText methods with proper generatePDF implementation
+- **Export Architecture Refined**: All export routes updated to use proper PDF generation methods with professional formatting, landscape layout, and multi-page support
+- **System Status**: All core functionalities operational - material management, movement tracking, PDF/Excel exports, user authentication, and inventory control working perfectly
+
 ## User Preferences
 - **Linguagem**: Português brasileiro
 - **Preservação de Dados**: Crítica - nunca perder dados existentes

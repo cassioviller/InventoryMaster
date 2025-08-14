@@ -1340,9 +1340,9 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       };
 
       if (format === 'pdf') {
-        const buffer = SimpleExporter.generatePDFText(simpleData);
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', 'attachment; filename="materiais.txt"');
+        const buffer = await SimpleExporter.generatePDF(simpleData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="materiais.pdf"');
         res.send(buffer);
       } else {
         const buffer = SimpleExporter.generateExcelText(simpleData);
@@ -1595,73 +1595,34 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
         appliedFilters.push(`Categoria filtrada`);
       }
 
-      // Format data for export
-      const exportData = {
+      // Prepare data for SimpleExporter
+      const simpleMovementsData = {
         title: 'Relatório de Movimentações',
-        columns: [
-          { key: 'data', label: 'Data' },
-          { key: 'tipo', label: 'Tipo' },
-          { key: 'material', label: 'Material' },
-          { key: 'quantidade', label: 'Quantidade' },
-          { key: 'valor', label: 'Valor Total' },
-          { key: 'origem', label: 'Origem/Destino' },
-          { key: 'responsavel', label: 'Responsável' },
-          { key: 'centro', label: 'Centro de Custo' }
-        ],
-        data: (report.movements || []).map((movement: any) => ({
-          data: new Date(movement.date || movement.createdAt).toLocaleDateString('pt-BR'),
-          tipo: movement.displayType || (movement.type === 'entry' ? 'Entrada' : movement.type === 'exit' ? 'Saída' : 'Devolução'),
-          material: movement.material?.name || '-',
-          quantidade: `${movement.quantity || 0} ${movement.material?.unit || ''}`,
-          valor: `R$ ${(movement.totalValue || 0).toFixed(2).replace('.', ',')}`,
-          origem: movement.originDestination || '-',
-          responsavel: movement.responsiblePerson || '-',
-          centro: movement.costCenter ? `${movement.costCenter.code} - ${movement.costCenter.name}` : '-'
-        })),
-        filters: appliedFilters.length > 0 ? [
-          'Relatório de Movimentações',
-          `Filtros aplicados: ${appliedFilters.join(', ')}`
-        ] : [
-          'Relatório de Movimentações',
-          'Filtros aplicados: Todos os dados'
-        ],
+        filters: appliedFilters.concat([`Usuário: ${req.user?.username}`, `Gerado: ${new Date().toLocaleString('pt-BR')}`]),
+        headers: ['Data', 'Tipo', 'Material', 'Quantidade', 'Valor Total', 'Origem/Destino', 'Centro de Custo'],
+        rows: (report.movements || []).map((movement: any) => [
+          new Date(movement.date || movement.createdAt).toLocaleDateString('pt-BR'),
+          movement.displayType || (movement.type === 'entry' ? 'Entrada' : movement.type === 'exit' ? 'Saída' : 'Devolução'),
+          movement.material?.name || '-',
+          `${movement.quantity || 0} ${SimpleExporter.abbreviateUnit(movement.material?.unit || 'un.')}`,
+          SimpleExporter.formatCurrency(movement.totalValue || 0),
+          movement.originDestination || '-',
+          movement.costCenter ? `${movement.costCenter.code} - ${movement.costCenter.name}` : '-'
+        ]),
         totals: report.totals ? [
-          `Total de Entradas: R$ ${(report.totals.totalEntries || 0).toFixed(2).replace('.', ',')}`,
-          `Total de Saídas: R$ ${(report.totals.totalExits || 0).toFixed(2).replace('.', ',')}`,
-          `Total de Devoluções: R$ ${(report.totals.totalReturns || 0).toFixed(2).replace('.', ',')}`,
-          `Total Geral: R$ ${(report.totals.totalGeneral || 0).toFixed(2).replace('.', ',')}`
+          `Total de Entradas: ${SimpleExporter.formatCurrency(report.totals.totalEntries || 0)}`,
+          `Total de Saídas: ${SimpleExporter.formatCurrency(report.totals.totalExits || 0)}`,
+          `Total de Devoluções: ${SimpleExporter.formatCurrency(report.totals.totalReturns || 0)}`,
+          `TOTAL GERAL: ${SimpleExporter.formatCurrency(report.totals.totalGeneral || 0)}`
         ] : []
       };
 
       if (format === 'pdf') {
-        // Use SimpleExporter for reliable and professional PDF generation
-        const simpleMovementsData = {
-          title: 'Relatório de Movimentações',
-          filters: appliedFilters.concat([`Usuário: ${req.user?.username}`, `Gerado: ${new Date().toLocaleString('pt-BR')}`]),
-          headers: ['Data', 'Tipo', 'Material', 'Quantidade', 'Valor Total', 'Origem/Destino', 'Centro de Custo'],
-          rows: (report.movements || []).map((movement: any) => [
-            new Date(movement.date || movement.createdAt).toLocaleDateString('pt-BR'),
-            movement.displayType || (movement.type === 'entry' ? 'Entrada' : movement.type === 'exit' ? 'Saída' : 'Devolução'),
-            movement.material?.name || '-',
-            `${movement.quantity || 0} ${SimpleExporter.abbreviateUnit(movement.material?.unit || 'un.')}`,
-            SimpleExporter.formatCurrency(movement.totalValue || 0),
-            movement.originDestination || '-',
-            movement.costCenter ? `${movement.costCenter.code} - ${movement.costCenter.name}` : '-'
-          ]),
-          totals: report.totals ? [
-            `Total de Entradas: ${SimpleExporter.formatCurrency(report.totals.totalEntries || 0)}`,
-            `Total de Saídas: ${SimpleExporter.formatCurrency(report.totals.totalExits || 0)}`,
-            `Total de Devoluções: ${SimpleExporter.formatCurrency(report.totals.totalReturns || 0)}`,
-            `TOTAL GERAL: ${SimpleExporter.formatCurrency(report.totals.totalGeneral || 0)}`
-          ] : []
-        };
-
-        const pdfBuffer = SimpleExporter.generatePDFText(simpleMovementsData);
-        res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.txt"');
+        const pdfBuffer = await SimpleExporter.generatePDF(simpleMovementsData);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.pdf"');
         res.send(pdfBuffer);
       } else {
-        // Use SimpleExporter for Excel generation  
         const excelBuffer = SimpleExporter.generateExcelText(simpleMovementsData);
         res.setHeader('Content-Type', 'text/tab-separated-values');
         res.setHeader('Content-Disposition', 'attachment; filename="relatorio-movimentacoes.tsv"');

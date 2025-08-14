@@ -47,16 +47,16 @@ export class ExportService {
     const margins = 40; // Left + right margins
     const availableWidth = pageWidth - margins;
     
-    // Define specific column widths for better layout
+    // Define specific column widths for better layout - increased for text fields
     const columnWidths = {
-      'Data': 25,
-      'Tipo': 20, 
-      'Material': 35,
-      'Quantidade': 25,
-      'Valor Total': 25,
-      'Origem/Destino': 30,
-      'Responsável': 30,
-      'Centro de Custo': 35,
+      'Data': 22,
+      'Tipo': 18, 
+      'Material': 32,
+      'Quantidade': 22,
+      'Valor Total': 22,
+      'Origem/Destino': 38, // Increased for better readability
+      'Responsável': 32,     // Increased for better readability
+      'Centro de Custo': 40, // Increased for better readability
       // Default for other columns
       'default': Math.floor(availableWidth / exportData.columns.length)
     };
@@ -91,27 +91,70 @@ export class ExportService {
     doc.setFontSize(8);
     
     exportData.data.forEach((item, rowIndex) => {
-      // Alternate row background
-      if (rowIndex % 2 === 1) {
-        doc.setFillColor(248, 248, 248);
-        doc.rect(20, currentY - 3, currentPos - 30, 6, 'F');
-      }
+      let maxRowHeight = 0;
+      const rowTexts: { text: string[], x: number }[] = [];
       
+      // First pass: calculate text lines and row height
       exportData.columns.forEach((col, colIndex) => {
         const value = this.getNestedValue(item, col.key);
         const formattedValue = this.formatValue(value);
-        const maxWidth = (columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default) - 2;
+        const colWidth = columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default;
+        const maxCharsPerLine = Math.floor(colWidth * 0.35);
         
-        // Truncate text to fit column width
-        let truncatedValue = formattedValue;
-        if (formattedValue.length > maxWidth / 2) {
-          truncatedValue = formattedValue.substring(0, Math.floor(maxWidth / 2) - 2) + '..';
+        const lines: string[] = [];
+        if (formattedValue.length <= maxCharsPerLine) {
+          lines.push(formattedValue);
+        } else {
+          let remainingText = formattedValue;
+          while (remainingText.length > 0) {
+            if (remainingText.length <= maxCharsPerLine) {
+              lines.push(remainingText);
+              break;
+            } else {
+              let breakPoint = maxCharsPerLine;
+              for (let i = maxCharsPerLine; i > maxCharsPerLine * 0.7; i--) {
+                if (remainingText[i] === ' ' || remainingText[i] === '-') {
+                  breakPoint = i;
+                  break;
+                }
+              }
+              lines.push(remainingText.substring(0, breakPoint));
+              remainingText = remainingText.substring(breakPoint).trim();
+            }
+            
+            if (lines.length >= 3) {
+              if (remainingText.length > 0) {
+                lines[2] = lines[2].substring(0, lines[2].length - 2) + '..';
+              }
+              break;
+            }
+          }
         }
         
-        doc.text(truncatedValue, colPositions[colIndex], currentY);
+        rowTexts.push({ text: lines, x: colPositions[colIndex] });
+        maxRowHeight = Math.max(maxRowHeight, lines.length);
       });
       
-      currentY += 6;
+      // Alternate row background with proper height
+      if (rowIndex % 2 === 1) {
+        doc.setFillColor(248, 248, 248);
+        const rowHeight = Math.max(6, maxRowHeight * 4 + 2);
+        doc.rect(20, currentY - 3, currentPos - 30, rowHeight, 'F');
+      }
+      
+
+      
+      // Draw all text lines for this row
+      for (let lineIndex = 0; lineIndex < maxRowHeight; lineIndex++) {
+        rowTexts.forEach(({ text, x }) => {
+          if (text[lineIndex]) {
+            doc.text(text[lineIndex], x, currentY + (lineIndex * 4));
+          }
+        });
+      }
+      
+      // Adjust row height based on number of text lines
+      currentY += Math.max(6, maxRowHeight * 4 + 2);
       
       // Add new page if needed
       if (currentY > 270) {

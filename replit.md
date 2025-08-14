@@ -9,7 +9,8 @@ This project is a comprehensive multi-tenant SaaS warehouse management system. I
 - **Export Architecture Refined**: All export routes updated to use proper PDF generation methods with professional formatting, landscape layout, and multi-page support
 - **Export Column Order Fixed**: Corrected column mapping issue in movement reports where Centro de Custo column was incorrectly showing Responsável data due to wrong column order in export function. Fixed headers sequence to match frontend display
 - **Export Layout Improved**: Removed Responsável column from movement exports as requested and implemented intelligent line spacing in PDF generation to prevent text overlapping when content breaks into multiple lines
-- **System Status**: All core functionalities operational - material management, movement tracking, PDF/Excel exports, user authentication, and inventory control working perfectly
+- **Movement Management Enhancement**: Complete editing functionality already implemented and tested - users can edit movement dates, quantities, prices, and notes through intuitive interface with automatic stock recalculation
+- **System Status**: All core functionalities operational - material management, movement tracking with full CRUD operations, PDF/Excel exports, user authentication, and inventory control working perfectly
 
 ## User Preferences
 - **Linguagem**: Português brasileiro

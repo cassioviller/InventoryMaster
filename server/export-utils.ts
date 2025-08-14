@@ -42,38 +42,73 @@ export class ExportService {
       yPosition += 5;
     }
     
-    // Add table headers
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    let currentY = yPosition;
+    // Create table with proper column widths
+    const pageWidth = 210; // A4 width in mm
+    const margins = 40; // Left + right margins
+    const availableWidth = pageWidth - margins;
     
-    // Draw headers
-    const headers = exportData.columns.map(col => col.label);
-    const colWidth = (170 / headers.length); // Distribute available width
-    let currentX = 20;
+    // Define specific column widths for better layout
+    const columnWidths = {
+      'Data': 25,
+      'Tipo': 20, 
+      'Material': 35,
+      'Quantidade': 25,
+      'Valor Total': 25,
+      'Origem/Destino': 30,
+      'Responsável': 30,
+      'Centro de Custo': 35,
+      // Default for other columns
+      'default': Math.floor(availableWidth / exportData.columns.length)
+    };
     
-    headers.forEach(header => {
-      doc.text(header, currentX, currentY);
-      currentX += colWidth;
+    // Calculate actual column positions
+    const colPositions = [];
+    let currentPos = 20;
+    exportData.columns.forEach(col => {
+      colPositions.push(currentPos);
+      const width = columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default;
+      currentPos += width;
     });
     
-    currentY += 8;
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    let currentY = yPosition;
     
-    // Draw data rows
-    exportData.data.forEach(item => {
-      currentX = 20;
-      const rowValues = exportData.columns.map(col => {
-        const value = this.getNestedValue(item, col.key);
-        return this.formatValue(value);
-      });
+    // Draw headers with proper spacing
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'bold');
+    
+    exportData.columns.forEach((col, index) => {
+      doc.text(col.label, colPositions[index], currentY);
+    });
+    
+    // Draw separator line
+    currentY += 3;
+    doc.setLineWidth(0.5);
+    doc.line(20, currentY, currentPos - 10, currentY);
+    currentY += 5;
+    
+    // Draw data rows with better formatting
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    
+    exportData.data.forEach((item, rowIndex) => {
+      // Alternate row background
+      if (rowIndex % 2 === 1) {
+        doc.setFillColor(248, 248, 248);
+        doc.rect(20, currentY - 3, currentPos - 30, 6, 'F');
+      }
       
-      rowValues.forEach(value => {
-        // Truncate long values to fit column width
-        const truncatedValue = value.length > 15 ? value.substring(0, 12) + '...' : value;
-        doc.text(truncatedValue, currentX, currentY);
-        currentX += colWidth;
+      exportData.columns.forEach((col, colIndex) => {
+        const value = this.getNestedValue(item, col.key);
+        const formattedValue = this.formatValue(value);
+        const maxWidth = (columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default) - 2;
+        
+        // Truncate text to fit column width
+        let truncatedValue = formattedValue;
+        if (formattedValue.length > maxWidth / 2) {
+          truncatedValue = formattedValue.substring(0, Math.floor(maxWidth / 2) - 2) + '..';
+        }
+        
+        doc.text(truncatedValue, colPositions[colIndex], currentY);
       });
       
       currentY += 6;
@@ -82,6 +117,18 @@ export class ExportService {
       if (currentY > 270) {
         doc.addPage();
         currentY = 20;
+        
+        // Redraw headers on new page
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        exportData.columns.forEach((col, index) => {
+          doc.text(col.label, colPositions[index], currentY);
+        });
+        currentY += 3;
+        doc.line(20, currentY, currentPos - 10, currentY);
+        currentY += 5;
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
       }
     });
     

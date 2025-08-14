@@ -49,13 +49,14 @@ export class ExportService {
     
     // Define specific column widths optimized for content type
     const columnWidths = {
-      'Data': 18,              // Reduced for smaller font
-      'Tipo': 18,              // Increased by 2mm for one more character
-      'Material': 40,          // Slightly increased to compensate removed Responsável
-      'Quantidade': 22,        // Slightly increased for abbreviated units
+      'Data': 20,
+      'Tipo': 16, 
+      'Material': 35,
+      'Quantidade': 20,
       'Valor Total': 20,
-      'Origem/Destino': 40,    // Increased to use space from removed Responsável
-      'Centro de Custo': 50,   // Maximum space for full center names
+      'Origem/Destino': 35, // Multiline text field
+      'Responsável': 35,     // Multiline text field  
+      'Centro de Custo': 45, // Increased significantly - multiline text field
       // Default for other columns
       'default': Math.floor(availableWidth / exportData.columns.length)
     };
@@ -96,7 +97,7 @@ export class ExportService {
       // First pass: calculate text lines and row height
       exportData.columns.forEach((col, colIndex) => {
         const value = this.getNestedValue(item, col.key);
-        const formattedValue = this.formatValue(value, col.label);
+        const formattedValue = this.formatValue(value);
         const colWidth = columnWidths[col.label as keyof typeof columnWidths] || columnWidths.default;
         const maxCharsPerLine = Math.floor(colWidth * 0.35);
         
@@ -156,21 +157,12 @@ export class ExportService {
       
       // Draw all text lines for this row
       for (let lineIndex = 0; lineIndex < maxRowHeight; lineIndex++) {
-        rowTexts.forEach(({ text, x }, colIndex) => {
+        rowTexts.forEach(({ text, x }) => {
           if (text[lineIndex]) {
-            // Use smaller font for Data column
-            if (exportData.columns[colIndex].label === 'Data') {
-              doc.setFontSize(7); // Smaller font for Data
-            } else {
-              doc.setFontSize(8); // Normal font for other columns
-            }
             doc.text(text[lineIndex], x, currentY + (lineIndex * 4));
           }
         });
       }
-      
-      // Reset font size for consistency
-      doc.setFontSize(8);
       
       // Adjust row height based on number of text lines
       currentY += Math.max(6, maxRowHeight * 4 + 2);
@@ -229,7 +221,7 @@ export class ExportService {
     const rows = exportData.data.map(item => 
       exportData.columns.map(col => {
         const value = this.getNestedValue(item, col.key);
-        return this.formatValue(value, col.label);
+        return this.formatValue(value);
       })
     );
     
@@ -282,7 +274,7 @@ export class ExportService {
   }
   
   // Helper method to format values for display
-  private static formatValue(value: any, columnLabel?: string): string {
+  private static formatValue(value: any): string {
     if (value === null || value === undefined) return '';
     if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
     if (value instanceof Date) return value.toLocaleString('pt-BR');
@@ -293,25 +285,7 @@ export class ExportService {
       }
       return value.toLocaleString('pt-BR');
     }
-    
-    let stringValue = String(value);
-    
-    // Abbreviate units for Quantidade column
-    if (columnLabel === 'Quantidade') {
-      stringValue = stringValue
-        .replace(/\bunidade\b/gi, 'un.')
-        .replace(/\bunidades\b/gi, 'un.')
-        .replace(/\bkilogram\b/gi, 'kg')
-        .replace(/\bkilogramas\b/gi, 'kg')
-        .replace(/\bmetro\b/gi, 'm')
-        .replace(/\bmetros\b/gi, 'm')
-        .replace(/\blitro\b/gi, 'l')
-        .replace(/\blitros\b/gi, 'l')
-        .replace(/\bpeça\b/gi, 'pç')
-        .replace(/\bpeças\b/gi, 'pç');
-    }
-    
-    return stringValue;
+    return String(value);
   }
 }
 
@@ -395,13 +369,16 @@ export const EXPORT_CONFIGS = {
   movements: {
     title: 'Relatório de Movimentações',
     columns: [
+      { key: 'id', label: 'ID', width: 30 },
       { key: 'date', label: 'Data', width: 70 },
       { key: 'displayType', label: 'Tipo', width: 60 },
       { key: 'materialName', label: 'Material', width: 100 },
       { key: 'quantity', label: 'Quantidade', width: 60 },
+      { key: 'unitPrice', label: 'Preço Unit.', width: 60 },
       { key: 'totalValue', label: 'Valor Total', width: 70 },
       { key: 'originDestination', label: 'Origem/Destino', width: 100 },
       { key: 'costCenter', label: 'Centro de Custo', width: 80 },
+      { key: 'notes', label: 'Observações', width: 120 },
     ]
   }
 };

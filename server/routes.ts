@@ -1599,7 +1599,7 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
       const simpleMovementsData = {
         title: 'Relatório de Movimentações',
         filters: appliedFilters.concat([`Usuário: ${req.user?.username}`, `Gerado: ${new Date().toLocaleString('pt-BR')}`]),
-        headers: ['Data', 'Tipo', 'Material', 'Quantidade', 'Valor Total', 'Centro de Custo', 'Origem/Destino', 'Responsável'],
+        headers: ['Data', 'Tipo', 'Material', 'Quantidade', 'Valor Total', 'Centro de Custo', 'Origem/Destino'],
         rows: (report.movements || []).map((movement: any) => [
           new Date(movement.date || movement.createdAt).toLocaleDateString('pt-BR'),
           movement.displayType || (movement.type === 'entry' ? 'Entrada' : movement.type === 'exit' ? 'Saída' : 'Devolução'),
@@ -1607,8 +1607,7 @@ app.post("/api/materials/:id/simulate-exit", authenticateToken, async (req: Auth
           `${movement.quantity || 0} ${SimpleExporter.abbreviateUnit(movement.material?.unit || 'un.')}`,
           SimpleExporter.formatCurrency(movement.totalValue || 0),
           movement.costCenter ? `${movement.costCenter.code} - ${movement.costCenter.name}` : 'N/A',
-          movement.originDestination || '-',
-          movement.responsiblePerson || '-'
+          movement.originDestination || '-'
         ]),
         totals: report.totals ? [
           `Total de Entradas: ${SimpleExporter.formatCurrency(report.totals.totalEntries || 0)}`,

@@ -93,12 +93,23 @@ export class SimpleExporter {
               yPosition += 25;
             }
 
+            // Calculate row height based on content length to prevent overlapping
+            let maxLines = 1;
+            row.forEach((cell, i) => {
+              const cellText = String(cell || '');
+              const estimatedLines = Math.ceil(cellText.length / 25); // Rough estimate
+              maxLines = Math.max(maxLines, estimatedLines);
+            });
+
             row.forEach((cell, i) => {
               const x = tableLeft + (i * colWidth);
               const cellText = String(cell || '');
               doc.text(cellText, x, yPosition, { width: colWidth - 5, align: 'left' });
             });
-            yPosition += 15;
+            
+            // Adjust spacing based on content - minimum 18px, more for longer content
+            const lineSpacing = Math.max(18, maxLines * 12);
+            yPosition += lineSpacing;
           });
         } else {
           doc.fontSize(12).font('Helvetica');

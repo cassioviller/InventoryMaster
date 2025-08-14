@@ -8,6 +8,7 @@ This project is a comprehensive multi-tenant SaaS warehouse management system. I
 - **PDF Export System Fully Fixed**: Successfully corrected all PDF generation issues - PDFs now generate properly with application/pdf content-type, valid PDF headers, and can be opened by Adobe Acrobat. Fixed PDFKit pagination bug and replaced deprecated generatePDFText methods with proper generatePDF implementation
 - **Export Architecture Refined**: All export routes updated to use proper PDF generation methods with professional formatting, landscape layout, and multi-page support
 - **Export Column Order Fixed**: Corrected column mapping issue in movement reports where Centro de Custo column was incorrectly showing Responsável data due to wrong column order in export function. Fixed headers sequence to match frontend display
+- **Export Layout Improved**: Removed Responsável column from movement exports as requested and implemented intelligent line spacing in PDF generation to prevent text overlapping when content breaks into multiple lines
 - **System Status**: All core functionalities operational - material management, movement tracking, PDF/Excel exports, user authentication, and inventory control working perfectly
 
 ## User Preferences
